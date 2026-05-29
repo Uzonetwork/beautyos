@@ -135,6 +135,7 @@ export default function App() {
       <LoginView
         onSuccess={(biz) => {
           setAuthBusiness(biz);
+          setShowWelcomeBanner(true);
           navigateTo('public-own');
         }}
         onSignup={() => navigateTo('signup')}
@@ -150,7 +151,6 @@ export default function App() {
         isOwner={true}
         showWelcomeBanner={showWelcomeBanner}
         onWelcomeDismiss={() => setShowWelcomeBanner(false)}
-        onGoDashboard={() => navigateTo('dashboard')}
       />
     );
   }

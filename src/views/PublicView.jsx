@@ -10,7 +10,6 @@ import {
   ChevronDown,
   X,
   Globe,
-  LayoutDashboard,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './PublicView.css';
@@ -67,10 +66,9 @@ function ownerBio(type, ownerName, bizName) {
 
 export default function PublicView({
   businessId: propBusinessId,
-  isOwner         = false,
+  isOwner           = false,
   showWelcomeBanner = false,
   onWelcomeDismiss,
-  onGoDashboard,
 }) {
   const bookingRef = useRef(null);
 
@@ -195,7 +193,7 @@ export default function PublicView({
 
     setFormLoading(false);
     if (error) {
-      console.error('[BookingInsert]', error);
+      console.error('[BookingInsert]', error.code, error.message, error.details, error.hint);
       setFormError('Something went wrong. Please try again.');
     } else {
       setFormSuccess(true);
@@ -243,19 +241,6 @@ export default function PublicView({
           </div>
           <button className="pv-welcome-dismiss" onClick={handleBannerDismiss} aria-label="Dismiss">
             <X size={14} />
-          </button>
-        </div>
-      )}
-
-      {/* ── Owner sticky bar (visible only when viewing own page) ── */}
-      {isOwner && (
-        <div className="pv-owner-bar">
-          <span className="pv-owner-bar-text">
-            You&rsquo;re viewing your public page
-          </span>
-          <button className="pv-owner-bar-btn" onClick={onGoDashboard}>
-            <LayoutDashboard size={13} strokeWidth={2} />
-            Go to Dashboard
           </button>
         </div>
       )}
