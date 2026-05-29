@@ -113,6 +113,7 @@ export default function PublicView({
         return;
       }
       setBusiness(biz);
+      document.title = `${biz.name.toUpperCase()} | BeautyOS`;
 
       // Now fetch services and gallery scoped to this business
       const [svcRes, galRes] = await Promise.all([
@@ -136,6 +137,7 @@ export default function PublicView({
       setGalleryLoading(false);
     }
     loadAll();
+    return () => { document.title = 'BeautyOS'; };
   }, [propBusinessId]);
 
   function handleChange(field) {
