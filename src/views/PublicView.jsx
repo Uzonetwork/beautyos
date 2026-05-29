@@ -66,7 +66,6 @@ function ownerBio(type, ownerName, bizName) {
 }
 
 export default function PublicView({
-  onOwnerLogin,
   businessId: propBusinessId,
   isOwner         = false,
   showWelcomeBanner = false,
@@ -196,6 +195,7 @@ export default function PublicView({
 
     setFormLoading(false);
     if (error) {
+      console.error('[BookingInsert]', error);
       setFormError('Something went wrong. Please try again.');
     } else {
       setFormSuccess(true);
@@ -557,7 +557,6 @@ export default function PublicView({
       {/* Footer */}
       <footer className="pv-footer">
         <p className="pv-footer-copy">© 2026 {business?.name ?? ''}</p>
-        <button className="pv-owner-link" onClick={onOwnerLogin}>Owner Login</button>
       </footer>
     </div>
   );

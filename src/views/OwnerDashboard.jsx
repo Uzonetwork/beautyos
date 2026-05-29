@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
-  LogOut, Plus, Pencil, Trash2, Check, X, Globe,
+  LogOut, Plus, Pencil, Trash2, Check, X,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './OwnerDashboard.css';
@@ -192,10 +192,6 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         <div className="od-header-top">
           <button className="od-brand" onClick={onViewPublicPage}>BeautyOS</button>
           <div className="od-header-actions">
-            <button className="od-view-page-btn" onClick={onViewPublicPage}>
-              <Globe size={14} strokeWidth={1.75} />
-              View Public Page
-            </button>
             <button className="od-logout" onClick={onLogout}>
               <LogOut size={15} strokeWidth={1.75} />
               Log out

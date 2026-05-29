@@ -151,7 +151,6 @@ export default function App() {
         showWelcomeBanner={showWelcomeBanner}
         onWelcomeDismiss={() => setShowWelcomeBanner(false)}
         onGoDashboard={() => navigateTo('dashboard')}
-        onOwnerLogin={() => navigateTo('login')}
       />
     );
   }
@@ -161,7 +160,6 @@ export default function App() {
     return (
       <PublicView
         businessId={DEMO_BUSINESS_ID}
-        onOwnerLogin={() => navigateTo('login')}
       />
     );
   }
@@ -171,7 +169,6 @@ export default function App() {
     return (
       <PublicView
         businessId={publicBusinessId}
-        onOwnerLogin={() => navigateTo('login')}
       />
     );
   }
