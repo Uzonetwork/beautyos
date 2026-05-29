@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getSession, getCurrentBusiness } from './lib/auth';
 import LandingPage    from './views/LandingPage';
@@ -9,6 +9,15 @@ import OwnerDashboard from './views/OwnerDashboard';
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
+// Maps view names → URL hash fragments
+const VIEW_TO_HASH = {
+  landing:      '',
+  signup:       'signup',
+  login:        'login',
+  dashboard:    'dashboard',
+  'public-own': 'page',
+};
+
 export default function App() {
   const [view, setView]                         = useState('loading');
   const [authBusiness, setAuthBusiness]         = useState(null);
@@ -16,7 +25,34 @@ export default function App() {
   // showWelcomeBanner is only true after signup; cleared on dismiss or navigation away
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
 
-  // ── Initialise: URL params → auth session → landing ────────────────────────
+  // ── Navigate and sync URL hash ──────────────────────────────────────────────
+  const navigateTo = useCallback((newView) => {
+    if (newView in VIEW_TO_HASH) {
+      const hash = VIEW_TO_HASH[newView];
+      history.pushState(
+        { view: newView },
+        '',
+        hash ? `#${hash}` : window.location.pathname + window.location.search,
+      );
+    }
+    setView(newView);
+  }, []);
+
+  // ── Browser back / forward ──────────────────────────────────────────────────
+  useEffect(() => {
+    function onPopState() {
+      const hash = window.location.hash.slice(1);
+      if (hash === 'signup')    { setView('signup');                                  return; }
+      if (hash === 'login')     { setView('login');                                   return; }
+      if (hash === 'dashboard') { setView(authBusiness ? 'dashboard'  : 'landing');  return; }
+      if (hash === 'page')      { setView(authBusiness ? 'public-own' : 'landing');  return; }
+      setView(authBusiness ? 'public-own' : 'landing');
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [authBusiness]);
+
+  // ── Initialise: URL params → hash → auth session → landing ─────────────────
   useEffect(() => {
     async function init() {
       const params   = new URLSearchParams(window.location.search);
@@ -32,17 +68,27 @@ export default function App() {
         return;
       }
 
-      // Existing session → go straight to the owner's public page (skip landing)
+      const hash = window.location.hash.slice(1);
+
+      // Public routes — no auth needed on refresh
+      if (hash === 'signup') { setView('signup'); return; }
+      if (hash === 'login')  { setView('login');  return; }
+
+      // Existing session → restore auth-gated view
       const session = await getSession();
       if (session) {
         const biz = await getCurrentBusiness();
         if (biz) {
           setAuthBusiness(biz);
+          if (hash === 'dashboard') { setView('dashboard'); return; }
           setView('public-own');
+          history.replaceState({ view: 'public-own' }, '', '#page');
           return;
         }
       }
 
+      // Not authenticated — always land on landing, clear any stale hash
+      if (hash) history.replaceState({}, '', window.location.pathname + window.location.search);
       setView('landing');
     }
     init();
@@ -61,23 +107,24 @@ export default function App() {
   if (view === 'landing') {
     return (
       <LandingPage
-        onGetStarted={() => setView('signup')}
-        onSeeDemo={()    => setView('demo')}
-        onLogin={()      => setView('login')}
+        onGetStarted={() => navigateTo('signup')}
+        onSeeDemo={()    => navigateTo('demo')}
+        onLogin={()      => navigateTo('login')}
       />
     );
   }
 
-  // ── Sign up — on success go to owner's public page with welcome banner ───────
+  // ── Sign up — on success go to owner's public page with welcome banner ──────
   if (view === 'signup') {
     return (
       <SignupView
+        onBack={() => navigateTo('landing')}
         onSuccess={(biz) => {
           setAuthBusiness(biz);
           setShowWelcomeBanner(true);
-          setView('public-own');
+          navigateTo('public-own');
         }}
-        onLogin={() => setView('login')}
+        onLogin={() => navigateTo('login')}
       />
     );
   }
@@ -88,9 +135,9 @@ export default function App() {
       <LoginView
         onSuccess={(biz) => {
           setAuthBusiness(biz);
-          setView('public-own');
+          navigateTo('public-own');
         }}
-        onSignup={() => setView('signup')}
+        onSignup={() => navigateTo('signup')}
       />
     );
   }
@@ -103,8 +150,8 @@ export default function App() {
         isOwner={true}
         showWelcomeBanner={showWelcomeBanner}
         onWelcomeDismiss={() => setShowWelcomeBanner(false)}
-        onGoDashboard={() => setView('dashboard')}
-        onOwnerLogin={() => setView('login')}
+        onGoDashboard={() => navigateTo('dashboard')}
+        onOwnerLogin={() => navigateTo('login')}
       />
     );
   }
@@ -114,7 +161,7 @@ export default function App() {
     return (
       <PublicView
         businessId={DEMO_BUSINESS_ID}
-        onOwnerLogin={() => setView('login')}
+        onOwnerLogin={() => navigateTo('login')}
       />
     );
   }
@@ -124,7 +171,7 @@ export default function App() {
     return (
       <PublicView
         businessId={publicBusinessId}
-        onOwnerLogin={() => setView('login')}
+        onOwnerLogin={() => navigateTo('login')}
       />
     );
   }
@@ -134,11 +181,11 @@ export default function App() {
     return (
       <OwnerDashboard
         businessId={authBusiness?.id}
-        onViewPublicPage={() => setView('public-own')}
+        onViewPublicPage={() => navigateTo('public-own')}
         onLogout={() => {
           setAuthBusiness(null);
           setShowWelcomeBanner(false);
-          setView('landing');
+          navigateTo('landing');
         }}
       />
     );

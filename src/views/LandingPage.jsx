@@ -60,7 +60,9 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
       {/* ── Nav ──────────────────────────────────────────────── */}
       <nav className="lp-nav">
         <div className="lp-nav-inner">
-          <span className="lp-nav-brand">BeautyOS</span>
+          <button className="lp-nav-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            BeautyOS
+          </button>
           <div className="lp-nav-actions">
             <button className="lp-nav-login" onClick={onLogin}>Log in</button>
             <button className="lp-nav-cta" onClick={onGetStarted}>Get Started</button>

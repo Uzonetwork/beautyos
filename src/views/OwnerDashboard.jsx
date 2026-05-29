@@ -190,7 +190,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     <div className="od-root">
       <header className="od-header">
         <div className="od-header-top">
-          <span className="od-brand">BeautyOS</span>
+          <button className="od-brand" onClick={onViewPublicPage}>BeautyOS</button>
           <div className="od-header-actions">
             <button className="od-view-page-btn" onClick={onViewPublicPage}>
               <Globe size={14} strokeWidth={1.75} />

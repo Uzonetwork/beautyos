@@ -57,7 +57,7 @@ const STEPS = ['Business Info', 'Business Type', 'Account Setup'];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function SignupView({ onSuccess, onLogin }) {
+export default function SignupView({ onBack, onSuccess, onLogin }) {
   const [step, setStep] = useState(1);
 
   // Step 1
@@ -145,8 +145,8 @@ export default function SignupView({ onSuccess, onLogin }) {
     <div className="sv-root">
       <div className="sv-card">
 
-        {/* Brand */}
-        <p className="sv-brand">BeautyOS</p>
+        {/* Brand — click to return to landing */}
+        <button className="sv-brand" onClick={onBack}>BeautyOS</button>
 
         {/* Progress indicator */}
         <div className="sv-progress">

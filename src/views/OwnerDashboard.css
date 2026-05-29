@@ -29,6 +29,10 @@
   font-weight: 500;
   color: var(--text-dark);
   letter-spacing: -0.3px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .od-header-actions {

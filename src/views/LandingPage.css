@@ -32,6 +32,10 @@
   font-weight: 600;
   color: var(--text-dark);
   letter-spacing: -0.3px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .lp-nav-actions {
