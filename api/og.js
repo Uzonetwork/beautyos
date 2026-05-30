@@ -9,9 +9,15 @@ function escapeHtml(str) {
 }
 
 export default async function handler(req, res) {
+  console.log('[og] raw url:', req.url);
+  console.log('[og] query object:', JSON.stringify(req.query));
+
   const { business: businessId } = req.query;
 
+  console.log('[og] businessId:', businessId);
+
   if (!businessId) {
+    console.error('[og] no business param — returning 400');
     res.status(400).send('Missing business parameter');
     return;
   }
@@ -19,18 +25,25 @@ export default async function handler(req, res) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+  console.log('[og] VITE_SUPABASE_URL set:', !!supabaseUrl);
+  console.log('[og] SUPABASE_SERVICE_ROLE_KEY set:', !!serviceRoleKey);
+
   if (!supabaseUrl || !serviceRoleKey) {
+    console.error('[og] missing env vars — returning 500');
     res.status(500).send('Server configuration error');
     return;
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  const { data: biz } = await supabase
+  const { data: biz, error: bizError } = await supabase
     .from('businesses')
     .select('name, tagline')
     .eq('id', businessId)
     .single();
+
+  console.log('[og] supabase data:', JSON.stringify(biz));
+  console.log('[og] supabase error:', bizError ? JSON.stringify(bizError) : null);
 
   const name = biz?.name ?? 'BeautyOS';
   const tagline = biz?.tagline ?? 'Book your beauty appointment online';
