@@ -151,6 +151,7 @@ export default function App() {
         isOwner={true}
         showWelcomeBanner={showWelcomeBanner}
         onWelcomeDismiss={() => setShowWelcomeBanner(false)}
+        onGoToDashboard={() => navigateTo('dashboard')}
       />
     );
   }
@@ -169,6 +170,13 @@ export default function App() {
     return (
       <PublicView
         businessId={publicBusinessId}
+        onGoToDashboard={async () => {
+          const biz = await getCurrentBusiness();
+          if (biz) {
+            setAuthBusiness(biz);
+            navigateTo('dashboard');
+          }
+        }}
       />
     );
   }

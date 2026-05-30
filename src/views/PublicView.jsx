@@ -10,6 +10,7 @@ import {
   ChevronDown,
   X,
   Globe,
+  LayoutDashboard,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './PublicView.css';
@@ -69,12 +70,14 @@ export default function PublicView({
   isOwner           = false,
   showWelcomeBanner = false,
   onWelcomeDismiss,
+  onGoToDashboard,
 }) {
   const bookingRef = useRef(null);
 
   // Welcome banner is locally dismissable; re-appears only if parent resets the prop
   const [bannerVisible, setBannerVisible] = useState(showWelcomeBanner);
 
+  const [sessionUserId, setSessionUserId] = useState(null);
   const [business, setBusiness] = useState(null);
   const [services, setServices] = useState([]);
   const [gallery, setGallery] = useState([]);
@@ -96,12 +99,20 @@ export default function PublicView({
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Check whether the current visitor is the owner of this page.
+  // Runs once on mount — doesn't block the business data load.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSessionUserId(session?.user?.id ?? null);
+    });
+  }, []);
+
   useEffect(() => {
     async function loadAll() {
       // Fetch the business — by id if provided, otherwise the first row
       const bizQuery = propBusinessId
-        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type').eq('id', propBusinessId).single()
-        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type').limit(1).single();
+        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id').eq('id', propBusinessId).single()
+        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id').limit(1).single();
 
       const { data: biz } = await bizQuery;
       if (!biz) {
@@ -221,12 +232,27 @@ export default function PublicView({
     onWelcomeDismiss?.();
   }
 
+  // /api/og?business=ID gives WhatsApp the correct OG preview and redirects
+  // real browsers to the React app automatically.
   const bookingLink = typeof window !== 'undefined'
-    ? `${window.location.origin}/?business=${propBusinessId}`
+    ? `${window.location.origin}/api/og?business=${propBusinessId}`
     : '';
+
+  const isActualOwner = !!sessionUserId && !!business && business.user_id === sessionUserId;
 
   return (
     <div className="pv-root">
+
+      {/* ── Owner sticky bar — visible only to the authenticated owner ── */}
+      {isActualOwner && (
+        <div className="pv-owner-bar">
+          <span className="pv-owner-bar-text">Viewing your public page</span>
+          <button className="pv-owner-bar-btn" onClick={onGoToDashboard}>
+            <LayoutDashboard size={13} />
+            Go to Dashboard
+          </button>
+        </div>
+      )}
 
       {/* ── Welcome banner (new signups only, dismissable) ── */}
       {isOwner && bannerVisible && (
