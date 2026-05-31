@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
-  LogOut, Plus, Pencil, Trash2, Check, X,
+  LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './OwnerDashboard.css';
@@ -36,9 +36,14 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   // ── Gallery ─────────────────────────────────────────────
   const [gallery, setGallery] = useState([]);
   const [galleryLoading, setGalleryLoading] = useState(true);
-  const [newImg, setNewImg] = useState({ url: '', caption: '' });
+  const [imgCaption, setImgCaption] = useState('');
   const [imgError, setImgError] = useState('');
   const [addingImg, setAddingImg] = useState(false);
+
+  // ── Avatar / Profile photo ───────────────────────────────
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
 
   // ── Computed ─────────────────────────────────────────────
   const today = new Date().toISOString().split('T')[0];
@@ -61,11 +66,12 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     if (!businessId) return;
 
     async function loadAll() {
-      const [bRes, sRes, cRes, gRes] = await Promise.all([
+      const [bRes, sRes, cRes, gRes, bizRes] = await Promise.all([
         supabase.from('bookings').select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('services').select('*').eq('business_id', businessId).order('category').order('name'),
         supabase.from('clients').select('*').eq('business_id', businessId).order('visit_count', { ascending: false }),
         supabase.from('gallery').select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
+        supabase.from('businesses').select('avatar_url').eq('id', businessId).single(),
       ]);
       setBookings(bRes.data || []);
       setBookingsLoading(false);
@@ -75,6 +81,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       setClientsLoading(false);
       setGallery(gRes.data || []);
       setGalleryLoading(false);
+      if (bizRes.data?.avatar_url) setAvatarUrl(bizRes.data.avatar_url);
     }
 
     loadAll();
@@ -93,10 +100,57 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
 
   // ── Booking actions ──────────────────────────────────────
   async function setBookingStatus(id, status) {
-    const original = bookings.find(b => b.id === id)?.status;
+    const booking = bookings.find(b => b.id === id);
+    const original = booking?.status;
     setBookings(bs => bs.map(b => b.id === id ? { ...b, status } : b));
     const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
-    if (error) setBookings(bs => bs.map(b => b.id === id ? { ...b, status: original } : b));
+    if (error) {
+      setBookings(bs => bs.map(b => b.id === id ? { ...b, status: original } : b));
+      return;
+    }
+
+    if (status === 'confirmed' && booking) {
+      const { client_name, client_phone, service_name, date } = booking;
+      const initials = client_name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('');
+
+      const { data: existing } = await supabase
+        .from('clients')
+        .select('id, visit_count')
+        .eq('business_id', businessId)
+        .eq('name', client_name)
+        .eq('phone', client_phone)
+        .maybeSingle();
+
+      if (existing) {
+        const updated = {
+          visit_count: (existing.visit_count || 1) + 1,
+          last_service: service_name,
+          last_visit: date,
+        };
+        await supabase.from('clients').update(updated).eq('id', existing.id);
+        setClients(cs => cs.map(c => c.id === existing.id ? { ...c, ...updated } : c));
+      } else {
+        const { data: newClient } = await supabase
+          .from('clients')
+          .insert({
+            business_id: businessId,
+            name: client_name,
+            phone: client_phone,
+            initials,
+            visit_count: 1,
+            last_service: service_name,
+            last_visit: date,
+          })
+          .select()
+          .single();
+        if (newClient) setClients(cs => [newClient, ...cs]);
+      }
+    }
   }
 
   async function removeBooking(id) {
@@ -150,26 +204,64 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   }
 
   // ── Gallery actions ──────────────────────────────────────
-  async function submitNewImage() {
+  async function uploadGalleryImage(file) {
+    if (!file) return;
     setImgError('');
-    if (!newImg.url.trim()) return setImgError('Image URL is required');
+    if (!file.type.startsWith('image/')) {
+      setImgError('Only image files are allowed');
+      return;
+    }
     setAddingImg(true);
-
+    const ext = file.name.split('.').pop();
+    const path = `${businessId}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('gallery')
+      .upload(path, file, { cacheControl: '3600', upsert: false });
+    if (uploadError) {
+      setImgError('Upload failed. Please try again.');
+      setAddingImg(false);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('gallery').getPublicUrl(path);
     const { data, error } = await supabase
       .from('gallery')
-      .insert({ business_id: businessId, image_url: newImg.url.trim(), caption: newImg.caption.trim() || null })
+      .insert({ business_id: businessId, image_url: publicUrl, caption: imgCaption.trim() || null })
       .select()
       .single();
-
     setAddingImg(false);
-    if (error) return setImgError('Could not add image');
+    if (error) { setImgError('Could not save image'); return; }
     setGallery(gs => [data, ...gs]);
-    setNewImg({ url: '', caption: '' });
+    setImgCaption('');
   }
 
   async function removeImage(id) {
     setGallery(gs => gs.filter(g => g.id !== id));
     await supabase.from('gallery').delete().eq('id', id);
+  }
+
+  // ── Avatar actions ────────────────────────────────────────
+  async function uploadAvatar(file) {
+    if (!file) return;
+    setAvatarError('');
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Only image files are allowed');
+      return;
+    }
+    setAvatarUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `${businessId}/avatar.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { cacheControl: '3600', upsert: true });
+    if (uploadError) {
+      setAvatarError('Upload failed. Please try again.');
+      setAvatarUploading(false);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+    await supabase.from('businesses').update({ avatar_url: publicUrl }).eq('id', businessId);
+    setAvatarUrl(publicUrl);
+    setAvatarUploading(false);
   }
 
   // ── Helpers ───────────────────────────────────────────────
@@ -218,6 +310,36 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
           {/* ─────────── BOOKINGS ─────────── */}
           {activeTab === 'bookings' && (
             <div className="od-panel">
+
+              {/* Profile photo card */}
+              <div className="od-avatar-card">
+                <div className="od-avatar-circle">
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt="Profile" className="od-avatar-img" />
+                    : <User size={28} strokeWidth={1.25} className="od-avatar-placeholder-icon" />
+                  }
+                  {avatarUploading && (
+                    <div className="od-avatar-overlay">
+                      <Loader2 size={18} className="od-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="od-avatar-info">
+                  <p className="od-avatar-label">Profile Photo</p>
+                  <label className={`od-avatar-upload-btn${avatarUploading ? ' od-avatar-upload-btn--loading' : ''}`}>
+                    {avatarUploading ? 'Uploading…' : 'Upload Photo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      disabled={avatarUploading}
+                      onChange={e => uploadAvatar(e.target.files[0])}
+                    />
+                  </label>
+                  {avatarError && <p className="od-inline-error">{avatarError}</p>}
+                </div>
+              </div>
+
               <div className="od-stats-row">
                 <div className="od-stat-card">
                   <p className="od-stat-label">Today&rsquo;s Earnings</p>
@@ -486,27 +608,24 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
               </div>
 
               <div className="od-gallery-add-form">
-                <input
-                  className="od-input od-input--full"
-                  placeholder="Image URL"
-                  value={newImg.url}
-                  onChange={e => { setNewImg(n => ({ ...n, url: e.target.value })); setImgError(''); }}
-                />
+                <label className={`od-gallery-upload-btn${addingImg ? ' od-gallery-upload-btn--loading' : ''}`}>
+                  <Upload size={13} />
+                  {addingImg ? 'Uploading…' : 'Upload Image'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    disabled={addingImg}
+                    onChange={e => { setImgError(''); uploadGalleryImage(e.target.files[0]); e.target.value = ''; }}
+                  />
+                </label>
                 <input
                   className="od-input od-input--full"
                   placeholder="Caption (optional)"
-                  value={newImg.caption}
-                  onChange={e => setNewImg(n => ({ ...n, caption: e.target.value }))}
+                  value={imgCaption}
+                  onChange={e => setImgCaption(e.target.value)}
                 />
                 {imgError && <p className="od-inline-error">{imgError}</p>}
-                <button
-                  className="od-add-btn"
-                  onClick={submitNewImage}
-                  disabled={addingImg}
-                >
-                  <Plus size={13} />
-                  {addingImg ? 'Adding...' : 'Add Image'}
-                </button>
               </div>
 
               {galleryLoading ? (

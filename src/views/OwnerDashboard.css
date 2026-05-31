@@ -835,3 +835,115 @@
   aspect-ratio: 1;
   height: auto;
 }
+
+/* ── Spinner ────────────────────────────────────────────── */
+@keyframes od-spin {
+  to { transform: rotate(360deg); }
+}
+.od-spin { animation: od-spin 0.7s linear infinite; }
+
+/* ── Avatar / Profile photo card ────────────────────────── */
+.od-avatar-card {
+  background: #fff;
+  border: 1px solid rgba(58, 26, 40, 0.09);
+  border-radius: 6px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.od-avatar-circle {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--blush);
+  border: 1.5px solid rgba(212, 83, 126, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  color: var(--rose);
+}
+
+.od-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.od-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rose);
+}
+
+.od-avatar-placeholder-icon {
+  color: var(--rose);
+  opacity: 0.6;
+}
+
+.od-avatar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.od-avatar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(58, 26, 40, 0.4);
+}
+
+.od-avatar-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rose);
+  background: rgba(212, 83, 126, 0.07);
+  border: 1px solid rgba(212, 83, 126, 0.2);
+  border-radius: 2px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.od-avatar-upload-btn:hover { background: rgba(212, 83, 126, 0.12); }
+.od-avatar-upload-btn--loading { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Gallery file upload button ─────────────────────────── */
+.od-gallery-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rose);
+  background: rgba(212, 83, 126, 0.07);
+  border: 1px solid rgba(212, 83, 126, 0.2);
+  border-radius: 2px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.od-gallery-upload-btn:hover { background: rgba(212, 83, 126, 0.12); }
+.od-gallery-upload-btn--loading { opacity: 0.6; cursor: not-allowed; }

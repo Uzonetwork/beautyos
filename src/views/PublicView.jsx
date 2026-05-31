@@ -111,8 +111,8 @@ export default function PublicView({
     async function loadAll() {
       // Fetch the business — by id if provided, otherwise the first row
       const bizQuery = propBusinessId
-        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id').eq('id', propBusinessId).single()
-        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id').limit(1).single();
+        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url').eq('id', propBusinessId).single()
+        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url').limit(1).single();
 
       const { data: biz } = await bizQuery;
       if (!biz) {
@@ -495,7 +495,10 @@ export default function PublicView({
           </p>
           <div className="pv-profile">
             <div className="pv-avatar">
-              <User size={44} strokeWidth={1.25} />
+              {business?.avatar_url
+                ? <img src={business.avatar_url} alt={business.owner_name} className="pv-avatar-img" />
+                : <User size={44} strokeWidth={1.25} />
+              }
             </div>
             <h3 className="pv-profile-name">
               {business?.owner_name ?? ''}
