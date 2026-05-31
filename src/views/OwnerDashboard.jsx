@@ -103,52 +103,73 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     const booking = bookings.find(b => b.id === id);
     const original = booking?.status;
     setBookings(bs => bs.map(b => b.id === id ? { ...b, status } : b));
-    const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
-    if (error) {
+
+    const { error: bookingErr } = await supabase.from('bookings').update({ status }).eq('id', id);
+    if (bookingErr) {
+      console.error('[setBookingStatus] booking update failed:', bookingErr.code, bookingErr.message);
       setBookings(bs => bs.map(b => b.id === id ? { ...b, status: original } : b));
       return;
     }
 
-    if (status === 'confirmed' && booking) {
-      const { client_name, client_phone, service_name, date } = booking;
-      const initials = client_name
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('');
+    if (status !== 'confirmed' || !booking) return;
 
-      const { data: existing } = await supabase
+    const { client_name, client_phone, service_name, date } = booking;
+    console.log('[ClientUpsert] confirmed booking →', { client_name, client_phone, service_name, date, businessId });
+
+    const initials = (client_name ?? '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(w => w[0]?.toUpperCase() ?? '')
+      .join('');
+
+    const { data: existing, error: selectErr } = await supabase
+      .from('clients')
+      .select('id, visit_count')
+      .eq('business_id', businessId)
+      .eq('name', client_name)
+      .eq('phone', client_phone)
+      .maybeSingle();
+
+    if (selectErr) {
+      console.error('[ClientUpsert] select failed:', selectErr.code, selectErr.message);
+    }
+
+    if (existing) {
+      const updated = {
+        visit_count: (existing.visit_count || 1) + 1,
+        last_service: service_name,
+        last_visit: date,
+      };
+      const { error: updateErr } = await supabase
         .from('clients')
-        .select('id, visit_count')
-        .eq('business_id', businessId)
-        .eq('name', client_name)
-        .eq('phone', client_phone)
-        .maybeSingle();
-
-      if (existing) {
-        const updated = {
-          visit_count: (existing.visit_count || 1) + 1,
+        .update(updated)
+        .eq('id', existing.id);
+      if (updateErr) {
+        console.error('[ClientUpsert] update failed:', updateErr.code, updateErr.message);
+      } else {
+        setClients(cs => cs.map(c => c.id === existing.id ? { ...c, ...updated } : c));
+      }
+    } else {
+      console.log('[ClientUpsert] no existing client — inserting new row');
+      const { data: newClient, error: insertErr } = await supabase
+        .from('clients')
+        .insert({
+          business_id: businessId,
+          name: client_name,
+          phone: client_phone,
+          initials,
+          visit_count: 1,
           last_service: service_name,
           last_visit: date,
-        };
-        await supabase.from('clients').update(updated).eq('id', existing.id);
-        setClients(cs => cs.map(c => c.id === existing.id ? { ...c, ...updated } : c));
-      } else {
-        const { data: newClient } = await supabase
-          .from('clients')
-          .insert({
-            business_id: businessId,
-            name: client_name,
-            phone: client_phone,
-            initials,
-            visit_count: 1,
-            last_service: service_name,
-            last_visit: date,
-          })
-          .select()
-          .single();
-        if (newClient) setClients(cs => [newClient, ...cs]);
+        })
+        .select()
+        .single();
+      if (insertErr) {
+        console.error('[ClientUpsert] insert failed:', insertErr.code, insertErr.message, insertErr.details, insertErr.hint);
+      } else if (newClient) {
+        console.log('[ClientUpsert] inserted:', newClient);
+        setClients(cs => [newClient, ...cs]);
       }
     }
   }
