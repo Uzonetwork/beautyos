@@ -543,8 +543,38 @@
   border-radius: 2px;
 }
 
-.od-cat-tag--nails { background: rgba(212, 83, 126, 0.09); color: var(--rose); }
-.od-cat-tag--lash  { background: rgba(201, 144, 106, 0.11); color: var(--rose-gold); }
+.od-cat-tag--nails      { background: rgba(212, 83, 126, 0.09);  color: var(--rose); }
+.od-cat-tag--lash       { background: rgba(201, 144, 106, 0.11); color: var(--rose-gold); }
+.od-cat-tag--spa,
+.od-cat-tag--body,
+.od-cat-tag--facial,
+.od-cat-tag--massage,
+.od-cat-tag--waxing     { background: rgba(99, 176, 168, 0.12);  color: #3a9a91; }
+.od-cat-tag--barber,
+.od-cat-tag--hair,
+.od-cat-tag--beard      { background: rgba(71, 117, 174, 0.11);  color: #3b6fb0; }
+.od-cat-tag--makeup,
+.od-cat-tag--bridal     { background: rgba(167, 99, 176, 0.11);  color: #8a45b5; }
+.od-cat-tag--fashion,
+.od-cat-tag--alterations { background: rgba(212, 83, 126, 0.09); color: var(--rose); }
+.od-cat-tag--portrait,
+.od-cat-tag--events     { background: rgba(201, 144, 106, 0.11); color: var(--rose-gold); }
+.od-cat-tag--training,
+.od-cat-tag--nutrition,
+.od-cat-tag--wellness   { background: rgba(74, 174, 94, 0.11);   color: #2e8b47; }
+.od-cat-tag--mc,
+.od-cat-tag--dj,
+.od-cat-tag--decoration,
+.od-cat-tag--catering   { background: rgba(201, 144, 106, 0.11); color: var(--rose-gold); }
+.od-cat-tag--primary,
+.od-cat-tag--secondary,
+.od-cat-tag--jamb,
+.od-cat-tag--waec       { background: rgba(71, 117, 174, 0.11);  color: #3b6fb0; }
+.od-cat-tag--plumbing,
+.od-cat-tag--electrical,
+.od-cat-tag--cleaning   { background: rgba(99, 150, 176, 0.12);  color: #3a7a9a; }
+.od-cat-tag--general,
+.od-cat-tag--other      { background: rgba(58, 26, 40, 0.07);    color: rgba(58, 26, 40, 0.5); }
 
 .od-price {
   font-weight: 600;

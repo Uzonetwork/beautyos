@@ -13,6 +13,21 @@ const TABS = [
   { id: 'gallery',   label: 'Gallery',   Icon: ImageIcon },
 ];
 
+const CATEGORY_OPTIONS = {
+  nail_studio:   [['nails', 'Nails'], ['lash', 'Lash'], ['other', 'Other']],
+  lash_studio:   [['lash', 'Lash'], ['nails', 'Nails'], ['other', 'Other']],
+  spa:           [['spa', 'Spa'], ['body', 'Body'], ['facial', 'Facial'], ['massage', 'Massage'], ['waxing', 'Waxing'], ['other', 'Other']],
+  barbershop:    [['barber', 'Barber'], ['hair', 'Hair'], ['beard', 'Beard'], ['other', 'Other']],
+  mua:           [['makeup', 'Makeup'], ['bridal', 'Bridal'], ['other', 'Other']],
+  tailor:        [['fashion', 'Fashion'], ['alterations', 'Alterations'], ['other', 'Other']],
+  photography:   [['portrait', 'Portrait'], ['events', 'Events'], ['other', 'Other']],
+  home_services: [['plumbing', 'Plumbing'], ['electrical', 'Electrical'], ['cleaning', 'Cleaning'], ['other', 'Other']],
+  tutor:         [['primary', 'Primary'], ['secondary', 'Secondary'], ['jamb', 'JAMB'], ['waec', 'WAEC'], ['other', 'Other']],
+  fitness:       [['training', 'Training'], ['nutrition', 'Nutrition'], ['wellness', 'Wellness'], ['other', 'Other']],
+  events:        [['mc', 'MC'], ['dj', 'DJ'], ['decoration', 'Decoration'], ['catering', 'Catering'], ['other', 'Other']],
+  other:         [['general', 'General'], ['other', 'Other']],
+};
+
 export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage }) {
   const [activeTab, setActiveTab] = useState('bookings');
 
@@ -45,7 +60,11 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
 
+  // ── Business type (drives category options) ──────────────
+  const [businessType, setBusinessType] = useState('other');
+
   // ── Computed ─────────────────────────────────────────────
+  const categoryOptions = CATEGORY_OPTIONS[businessType] ?? CATEGORY_OPTIONS.other;
   const today = new Date().toISOString().split('T')[0];
   const currentMonth = today.slice(0, 7);
 
@@ -71,7 +90,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         supabase.from('services').select('*').eq('business_id', businessId).order('category').order('name'),
         supabase.from('clients').select('*').eq('business_id', businessId).order('visit_count', { ascending: false }),
         supabase.from('gallery').select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
-        supabase.from('businesses').select('avatar_url').eq('id', businessId).single(),
+        supabase.from('businesses').select('avatar_url, business_type').eq('id', businessId).single(),
       ]);
       setBookings(bRes.data || []);
       setBookingsLoading(false);
@@ -82,6 +101,12 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       setGallery(gRes.data || []);
       setGalleryLoading(false);
       if (bizRes.data?.avatar_url) setAvatarUrl(bizRes.data.avatar_url);
+      if (bizRes.data?.business_type) {
+        const type = bizRes.data.business_type;
+        setBusinessType(type);
+        const firstCat = (CATEGORY_OPTIONS[type] ?? CATEGORY_OPTIONS.other)[0][0];
+        setNewSvc(s => ({ ...s, category: firstCat }));
+      }
     }
 
     loadAll();
@@ -459,8 +484,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
                     value={newSvc.category}
                     onChange={e => setNewSvc(n => ({ ...n, category: e.target.value }))}
                   >
-                    <option value="nails">Nails</option>
-                    <option value="lash">Lash</option>
+                    {categoryOptions.map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
                   </select>
                   <input
                     className="od-input od-input--price"
@@ -475,7 +501,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
                     <button className="od-save-btn" onClick={submitNewService}>Save</button>
                     <button
                       className="od-ghost-btn"
-                      onClick={() => { setAddingService(false); setSvcError(''); setNewSvc({ name: '', category: 'nails', price: '' }); }}
+                      onClick={() => { setAddingService(false); setSvcError(''); setNewSvc({ name: '', category: categoryOptions[0][0], price: '' }); }}
                     >
                       Cancel
                     </button>
@@ -522,8 +548,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
                                   value={editDraft.category}
                                   onChange={e => setEditDraft(d => ({ ...d, category: e.target.value }))}
                                 >
-                                  <option value="nails">Nails</option>
-                                  <option value="lash">Lash</option>
+                                  {categoryOptions.map(([val, label]) => (
+                                    <option key={val} value={val}>{label}</option>
+                                  ))}
                                 </select>
                               ) : (
                                 <span className={`od-cat-tag od-cat-tag--${svc.category}`}>{svc.category}</span>
