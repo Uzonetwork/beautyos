@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
   LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2, ChevronDown,
+  Settings, Eye, EyeOff,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
@@ -12,6 +13,7 @@ const TABS = [
   { id: 'services',  label: 'Services',  Icon: Scissors  },
   { id: 'clients',   label: 'Clients',   Icon: Users     },
   { id: 'gallery',   label: 'Gallery',   Icon: ImageIcon },
+  { id: 'settings',  label: 'Settings',  Icon: Settings  },
 ];
 
 const CATEGORY_OPTIONS = {
@@ -67,6 +69,13 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   // ── UI state ─────────────────────────────────────────────
   const [showEarningsHistory, setShowEarningsHistory] = useState(false);
 
+  // ── Settings ─────────────────────────────────────────────
+  const [settings, setSettings] = useState({ name: '', owner_name: '', tagline: '', whatsapp: '', pin: '' });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
+  const [showPin, setShowPin] = useState(false);
+
   // ── Computed ─────────────────────────────────────────────
   const categoryOptions = CATEGORY_OPTIONS[businessType] ?? CATEGORY_OPTIONS.other;
 
@@ -120,7 +129,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         supabase.from('services').select('*').eq('business_id', businessId).order('category').order('name'),
         supabase.from('clients').select('*').eq('business_id', businessId).order('visit_count', { ascending: false }),
         supabase.from('gallery').select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
-        supabase.from('businesses').select('avatar_url, business_type').eq('id', businessId).single(),
+        supabase.from('businesses').select('avatar_url, business_type, name, owner_name, tagline, whatsapp, pin').eq('id', businessId).single(),
       ]);
       setBookings(bRes.data || []);
       setBookingsLoading(false);
@@ -130,12 +139,21 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       setClientsLoading(false);
       setGallery(gRes.data || []);
       setGalleryLoading(false);
-      if (bizRes.data?.avatar_url) setAvatarUrl(bizRes.data.avatar_url);
-      if (bizRes.data?.business_type) {
-        const type = bizRes.data.business_type;
-        setBusinessType(type);
-        const firstCat = (CATEGORY_OPTIONS[type] ?? CATEGORY_OPTIONS.other)[0][0];
-        setNewSvc(s => ({ ...s, category: firstCat }));
+      if (bizRes.data) {
+        const biz = bizRes.data;
+        if (biz.avatar_url) setAvatarUrl(biz.avatar_url);
+        if (biz.business_type) {
+          setBusinessType(biz.business_type);
+          const firstCat = (CATEGORY_OPTIONS[biz.business_type] ?? CATEGORY_OPTIONS.other)[0][0];
+          setNewSvc(s => ({ ...s, category: firstCat }));
+        }
+        setSettings({
+          name:       biz.name       ?? '',
+          owner_name: biz.owner_name ?? '',
+          tagline:    biz.tagline    ?? '',
+          whatsapp:   biz.whatsapp   ?? '',
+          pin:        biz.pin        ?? '',
+        });
       }
     }
 
@@ -343,6 +361,34 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     track('avatar_uploaded', { business_id: businessId });
     setAvatarUrl(publicUrl);
     setAvatarUploading(false);
+  }
+
+  // ── Settings actions ─────────────────────────────────────
+  async function saveSettings() {
+    setSettingsError('');
+    setSettingsSuccess(false);
+    if (!settings.name.trim()) {
+      setSettingsError('Business name is required');
+      return;
+    }
+    setSettingsSaving(true);
+    const { error } = await supabase
+      .from('businesses')
+      .update({
+        name:       settings.name.trim(),
+        owner_name: settings.owner_name.trim(),
+        tagline:    settings.tagline.trim(),
+        whatsapp:   settings.whatsapp.trim(),
+        pin:        settings.pin.trim(),
+      })
+      .eq('id', businessId);
+    setSettingsSaving(false);
+    if (error) {
+      setSettingsError('Failed to save changes. Please try again.');
+    } else {
+      setSettingsSuccess(true);
+      setTimeout(() => setSettingsSuccess(false), 3500);
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────
@@ -771,6 +817,108 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ─────────── SETTINGS ─────────── */}
+          {activeTab === 'settings' && (
+            <div className="od-panel">
+              <div className="od-panel-head">
+                <h3 className="od-panel-title">Business Settings</h3>
+              </div>
+
+              <div className="od-settings-card">
+                <div className="od-settings-field">
+                  <label className="od-settings-label">Business Name</label>
+                  <input
+                    className="od-input od-input--full"
+                    value={settings.name}
+                    placeholder="e.g. Chi's Nail Studio"
+                    onChange={e => setSettings(s => ({ ...s, name: e.target.value }))}
+                  />
+                </div>
+
+                <div className="od-settings-field">
+                  <label className="od-settings-label">Owner Full Name</label>
+                  <input
+                    className="od-input od-input--full"
+                    value={settings.owner_name}
+                    placeholder="Your full name"
+                    onChange={e => setSettings(s => ({ ...s, owner_name: e.target.value }))}
+                  />
+                </div>
+
+                <div className="od-settings-field">
+                  <label className="od-settings-label">
+                    Tagline
+                    <span className="od-settings-hint">Shown on your public booking page</span>
+                  </label>
+                  <input
+                    className="od-input od-input--full"
+                    value={settings.tagline}
+                    placeholder="e.g. Nail Technician · Lagos, Nigeria"
+                    onChange={e => setSettings(s => ({ ...s, tagline: e.target.value }))}
+                  />
+                </div>
+
+                <div className="od-settings-field">
+                  <label className="od-settings-label">
+                    WhatsApp Number
+                    <span className="od-settings-hint">Used to confirm bookings with clients</span>
+                  </label>
+                  <input
+                    className="od-input od-input--full"
+                    value={settings.whatsapp}
+                    placeholder="e.g. 2348012345678"
+                    onChange={e => setSettings(s => ({ ...s, whatsapp: e.target.value }))}
+                  />
+                </div>
+
+                <div className="od-settings-field">
+                  <label className="od-settings-label">
+                    Dashboard PIN
+                    <span className="od-settings-hint">Used to log into your dashboard</span>
+                  </label>
+                  <div className="od-settings-pin-wrap">
+                    <input
+                      className="od-input od-input--full"
+                      type={showPin ? 'text' : 'password'}
+                      value={settings.pin}
+                      placeholder="Enter PIN"
+                      onChange={e => setSettings(s => ({ ...s, pin: e.target.value }))}
+                    />
+                    <button
+                      className="od-settings-pin-toggle"
+                      type="button"
+                      onClick={() => setShowPin(v => !v)}
+                      title={showPin ? 'Hide PIN' : 'Show PIN'}
+                    >
+                      {showPin ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+
+                {settingsError && (
+                  <p className="od-settings-feedback od-settings-feedback--error">{settingsError}</p>
+                )}
+                {settingsSuccess && (
+                  <p className="od-settings-feedback od-settings-feedback--success">
+                    <Check size={13} strokeWidth={2.5} />
+                    Changes saved successfully
+                  </p>
+                )}
+
+                <button
+                  className="od-settings-save-btn"
+                  onClick={saveSettings}
+                  disabled={settingsSaving}
+                >
+                  {settingsSaving
+                    ? <><Loader2 size={14} className="od-spin" /> Saving…</>
+                    : 'Save Changes'
+                  }
+                </button>
+              </div>
             </div>
           )}
 
