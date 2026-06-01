@@ -977,3 +977,110 @@
 
 .od-gallery-upload-btn:hover { background: rgba(212, 83, 126, 0.12); }
 .od-gallery-upload-btn--loading { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Earnings Summary ───────────────────────────────────── */
+.od-earnings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.od-earnings-toggle:hover .od-section-title {
+  color: var(--rose);
+}
+
+.od-chevron {
+  color: rgba(58, 26, 40, 0.35);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.od-chevron--open {
+  transform: rotate(180deg);
+}
+
+.od-earnings-panel {
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid rgba(58, 26, 40, 0.09);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.od-earnings-lifetime {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  background: var(--blush);
+  border-bottom: 1px solid rgba(212, 83, 126, 0.12);
+}
+
+.od-earnings-lifetime-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(58, 26, 40, 0.5);
+}
+
+.od-earnings-lifetime-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--rose);
+  line-height: 1;
+}
+
+.od-earnings-month-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.od-earnings-month-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 18px;
+  border-bottom: 1px solid rgba(58, 26, 40, 0.05);
+  transition: background 0.12s;
+}
+
+.od-earnings-month-row:last-child {
+  border-bottom: none;
+}
+
+.od-earnings-month-row--current {
+  background: rgba(212, 83, 126, 0.04);
+}
+
+.od-earnings-month-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-dark);
+  opacity: 0.7;
+}
+
+.od-earnings-month-row--current .od-earnings-month-name {
+  font-weight: 600;
+  opacity: 1;
+  color: var(--text-dark);
+}
+
+.od-earnings-month-total {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rose-gold);
+}
+
+.od-earnings-month-row--current .od-earnings-month-total {
+  color: var(--rose);
+}

@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { track } from '../lib/posthog';
 import './PublicView.css';
 
 // ── Business-type display helpers ─────────────────────────────────────────────
@@ -207,6 +208,10 @@ export default function PublicView({
       console.error('[BookingInsert]', error.code, error.message, error.details, error.hint);
       setFormError('Something went wrong. Please try again.');
     } else {
+      track('booking_submitted', {
+        service_name: form.service_name,
+        business_id:  business.id,
+      });
       setFormSuccess(true);
       setForm({
         client_name: '',

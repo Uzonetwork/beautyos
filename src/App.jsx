@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getSession, getCurrentBusiness } from './lib/auth';
+import { posthog, track } from './lib/posthog';
 import LandingPage    from './views/LandingPage';
 import SignupView     from './views/SignupView';
 import LoginView      from './views/LoginView';
@@ -24,6 +25,13 @@ export default function App() {
   const [publicBusinessId, setPublicBusinessId] = useState(null);
   // showWelcomeBanner is only true after signup; cleared on dismiss or navigation away
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+
+  // ── Analytics — fire page_viewed on every view change ──────────────────────
+  useEffect(() => {
+    if (view !== 'loading') {
+      track('page_viewed', { view });
+    }
+  }, [view]);
 
   // ── Navigate and sync URL hash ──────────────────────────────────────────────
   const navigateTo = useCallback((newView) => {
@@ -107,7 +115,7 @@ export default function App() {
   if (view === 'landing') {
     return (
       <LandingPage
-        onGetStarted={() => navigateTo('signup')}
+        onGetStarted={() => { track('signup_started'); navigateTo('signup'); }}
         onSeeDemo={()    => navigateTo('demo')}
         onLogin={()      => navigateTo('login')}
       />
@@ -120,6 +128,16 @@ export default function App() {
       <SignupView
         onBack={() => navigateTo('landing')}
         onSuccess={(biz) => {
+          if (biz?.user_id) {
+            posthog.identify(biz.user_id, {
+              business_name: biz.name,
+              business_type: biz.business_type,
+            });
+          }
+          track('signup_completed', {
+            business_id:   biz?.id,
+            business_type: biz?.business_type,
+          });
           setAuthBusiness(biz);
           setShowWelcomeBanner(true);
           navigateTo('public-own');
@@ -134,6 +152,13 @@ export default function App() {
     return (
       <LoginView
         onSuccess={(biz) => {
+          if (biz?.user_id) {
+            posthog.identify(biz.user_id, {
+              business_name: biz.name,
+              business_type: biz.business_type,
+            });
+          }
+          track('owner_login', { business_id: biz?.id });
           setAuthBusiness(biz);
           setShowWelcomeBanner(true);
           navigateTo('public-own');

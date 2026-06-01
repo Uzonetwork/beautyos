@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
-  LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2,
+  LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { track } from '../lib/posthog';
 import './OwnerDashboard.css';
 
 const TABS = [
@@ -63,18 +64,47 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   // ── Business type (drives category options) ──────────────
   const [businessType, setBusinessType] = useState('other');
 
+  // ── UI state ─────────────────────────────────────────────
+  const [showEarningsHistory, setShowEarningsHistory] = useState(false);
+
   // ── Computed ─────────────────────────────────────────────
   const categoryOptions = CATEGORY_OPTIONS[businessType] ?? CATEGORY_OPTIONS.other;
-  const today = new Date().toISOString().split('T')[0];
-  const currentMonth = today.slice(0, 7);
 
-  const todayEarnings = bookings
-    .filter(b => b.date === today && b.status === 'confirmed')
+  // Use local clock so dates match what the client enters in date pickers.
+  // new Date().toISOString() is UTC and drifts by 1 h in WAT (Nigeria),
+  // causing the month prefix to be wrong from midnight–1 am.
+  const _now = new Date();
+  const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+  const currentMonth = today.slice(0, 7); // 'YYYY-MM'
+
+  const confirmed = bookings.filter(b => b.status === 'confirmed');
+
+  const todayEarnings = confirmed
+    .filter(b => b.date === today)
     .reduce((s, b) => s + (b.price || 0), 0);
 
-  const monthlyEarnings = bookings
-    .filter(b => typeof b.date === 'string' && b.date.startsWith(currentMonth) && b.status === 'confirmed')
+  const monthlyEarnings = confirmed
+    .filter(b => typeof b.date === 'string' && b.date.startsWith(currentMonth))
     .reduce((s, b) => s + (b.price || 0), 0);
+
+  const lifetimeEarnings = confirmed
+    .reduce((s, b) => s + (b.price || 0), 0);
+
+  // Last 6 calendar months newest-first, each with a YYYY-MM prefix and display label
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(_now.getFullYear(), _now.getMonth() - i, 1);
+    const prefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return { prefix, label };
+  });
+
+  const earningsByMonth = last6Months.map(({ prefix, label }) => ({
+    prefix,
+    label,
+    total: confirmed
+      .filter(b => typeof b.date === 'string' && b.date.startsWith(prefix))
+      .reduce((s, b) => s + (b.price || 0), 0),
+  }));
 
   const todayBookings = [...bookings]
     .filter(b => b.date === today)
@@ -137,6 +167,8 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     }
 
     if (status !== 'confirmed' || !booking) return;
+
+    track('booking_confirmed', { booking_id: id, business_id: businessId });
 
     const { client_name, client_phone, service_name, date } = booking;
     console.log('[ClientUpsert] confirmed booking →', { client_name, client_phone, service_name, date, businessId });
@@ -244,8 +276,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       .single();
 
     if (error) return setSvcError('Could not save service');
+    track('service_added', { service_name: data.name, category: data.category, business_id: businessId });
     setServices(ss => [...ss, data]);
-    setNewSvc({ name: '', category: 'nails', price: '' });
+    setNewSvc({ name: '', category: categoryOptions[0][0], price: '' });
     setAddingService(false);
   }
 
@@ -276,6 +309,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       .single();
     setAddingImg(false);
     if (error) { setImgError('Could not save image'); return; }
+    track('gallery_uploaded', { business_id: businessId });
     setGallery(gs => [data, ...gs]);
     setImgCaption('');
   }
@@ -306,6 +340,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
     await supabase.from('businesses').update({ avatar_url: publicUrl }).eq('id', businessId);
+    track('avatar_uploaded', { business_id: businessId });
     setAvatarUrl(publicUrl);
     setAvatarUploading(false);
   }
@@ -398,9 +433,44 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
                   <p className="od-stat-label">Monthly Earnings</p>
                   <p className="od-stat-value">{fmtMoney(monthlyEarnings)}</p>
                   <p className="od-stat-meta">
-                    {bookings.filter(b => b.date?.startsWith(currentMonth) && b.status === 'confirmed').length} this month
+                    {confirmed.filter(b => typeof b.date === 'string' && b.date.startsWith(currentMonth)).length} confirmed this month
                   </p>
                 </div>
+              </div>
+
+              {/* Earnings Summary — collapsible */}
+              <div className="od-section">
+                <button
+                  className="od-earnings-toggle"
+                  onClick={() => setShowEarningsHistory(v => !v)}
+                  aria-expanded={showEarningsHistory}
+                >
+                  <span className="od-section-title">Earnings Summary</span>
+                  <ChevronDown
+                    size={14}
+                    className={`od-chevron${showEarningsHistory ? ' od-chevron--open' : ''}`}
+                  />
+                </button>
+
+                {showEarningsHistory && (
+                  <div className="od-earnings-panel">
+                    <div className="od-earnings-lifetime">
+                      <span className="od-earnings-lifetime-label">Lifetime Earnings</span>
+                      <span className="od-earnings-lifetime-value">{fmtMoney(lifetimeEarnings)}</span>
+                    </div>
+                    <div className="od-earnings-month-list">
+                      {earningsByMonth.map(({ prefix, label, total }) => (
+                        <div
+                          key={prefix}
+                          className={`od-earnings-month-row${prefix === currentMonth ? ' od-earnings-month-row--current' : ''}`}
+                        >
+                          <span className="od-earnings-month-name">{label}</span>
+                          <span className="od-earnings-month-total">{fmtMoney(total)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="od-section">
