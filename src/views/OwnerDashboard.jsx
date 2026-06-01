@@ -16,6 +16,46 @@ const TABS = [
   { id: 'settings',  label: 'Settings',  Icon: Settings  },
 ];
 
+function buildClientWhatsAppUrl(phone, status, booking) {
+  // Strip all non-digits, then replace a leading 0 with the Nigeria country code.
+  let number = (phone ?? '').replace(/\D/g, '');
+  if (number.startsWith('0')) number = '234' + number.slice(1);
+  if (!number) return null;
+
+  const { client_name, service_name, date, time, ampm } = booking;
+
+  let readableDate = date ?? '';
+  if (date) {
+    const [y, m, d] = date.split('-').map(Number);
+    readableDate = new Date(y, m - 1, d).toLocaleDateString('en-GB', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    });
+  }
+  const timeStr = [time, ampm].filter(Boolean).join(' ');
+
+  const message = status === 'confirmed'
+    ? [
+        '✅ Booking Confirmed!',
+        '',
+        `Hi ${client_name}, your appointment has been confirmed.`,
+        '',
+        `Service: ${service_name}`,
+        `Date: ${readableDate}`,
+        `Time: ${timeStr}`,
+        '',
+        'We look forward to seeing you! If you need to reschedule, please contact us.',
+      ].join('\n')
+    : [
+        '❌ Booking Update',
+        '',
+        `Hi ${client_name}, unfortunately we are unable to accommodate your booking on ${readableDate} at ${timeStr}.`,
+        '',
+        'Please reach out to reschedule at a more convenient time. We apologize for any inconvenience.',
+      ].join('\n');
+
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
 const CATEGORY_OPTIONS = {
   nail_studio:   [['nails', 'Nails'], ['lash', 'Lash'], ['other', 'Other']],
   lash_studio:   [['lash', 'Lash'], ['nails', 'Nails'], ['other', 'Other']],
@@ -182,6 +222,12 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       console.error('[setBookingStatus] booking update failed:', bookingErr.code, bookingErr.message);
       setBookings(bs => bs.map(b => b.id === id ? { ...b, status: original } : b));
       return;
+    }
+
+    // Notify the client via WhatsApp for both confirmed and cancelled
+    if (booking && (status === 'confirmed' || status === 'cancelled')) {
+      const waUrl = buildClientWhatsAppUrl(booking.client_phone, status, booking);
+      if (waUrl) setTimeout(() => window.open(waUrl, '_blank', 'noopener,noreferrer'), 1000);
     }
 
     if (status !== 'confirmed' || !booking) return;
