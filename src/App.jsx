@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getSession, getCurrentBusiness } from './lib/auth';
 import { posthog, track } from './lib/posthog';
-import LandingPage    from './views/LandingPage';
-import SignupView     from './views/SignupView';
-import LoginView      from './views/LoginView';
-import PublicView     from './views/PublicView';
-import OwnerDashboard from './views/OwnerDashboard';
+import LandingPage     from './views/LandingPage';
+import SignupView      from './views/SignupView';
+import LoginView       from './views/LoginView';
+import PublicView      from './views/PublicView';
+import OwnerDashboard  from './views/OwnerDashboard';
+import AdminDashboard  from './views/AdminDashboard';
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -50,6 +51,7 @@ export default function App() {
   useEffect(() => {
     function onPopState() {
       const hash = window.location.hash.slice(1);
+      if (hash === '/admin')    { setView('admin');                                   return; }
       if (hash === 'signup')    { setView('signup');                                  return; }
       if (hash === 'login')     { setView('login');                                   return; }
       if (hash === 'dashboard') { setView(authBusiness ? 'dashboard'  : 'landing');  return; }
@@ -78,6 +80,9 @@ export default function App() {
 
       const hash = window.location.hash.slice(1);
 
+      // Admin route — has its own password gate, skip all auth checks
+      if (hash === '/admin') { setView('admin'); return; }
+
       // Public routes — no auth needed on refresh
       if (hash === 'signup') { setView('signup'); return; }
       if (hash === 'login')  { setView('login');  return; }
@@ -101,6 +106,13 @@ export default function App() {
     }
     init();
   }, []);
+
+  // ── Admin: synchronous hash check — runs on the very first render, before
+  // the async init() resolves, so no loading flash on the deployed site.
+  // All hooks are already declared above, so this early return is safe.
+  if (window.location.hash === '#/admin') {
+    return <AdminDashboard />;
+  }
 
   // ── Loading splash ──────────────────────────────────────────────────────────
   if (view === 'loading') {
@@ -219,6 +231,11 @@ export default function App() {
         }}
       />
     );
+  }
+
+  // ── Admin dashboard (own password gate, no Supabase auth required) ─────────
+  if (view === 'admin') {
+    return <AdminDashboard />;
   }
 
   return null;
