@@ -66,6 +66,39 @@ function ownerBio(type, ownerName, bizName) {
   }
 }
 
+function buildWhatsAppUrl(whatsapp, submittedForm) {
+  // Strip everything that isn't a digit. wa.me requires the full international
+  // number with country code and no leading +.
+  const number = (whatsapp ?? '').replace(/\D/g, '');
+  if (!number) return null;
+
+  const { client_name, client_phone, service_name, date, time, ampm, notes } = submittedForm;
+
+  // Format the date for readability (e.g. "Mon, 2 Jun 2026")
+  let readableDate = date;
+  if (date) {
+    const [y, m, d] = date.split('-').map(Number);
+    readableDate = new Date(y, m - 1, d).toLocaleDateString('en-GB', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    });
+  }
+
+  const lines = [
+    '🔔 New Booking Request!',
+    '',
+    `Client: ${client_name}`,
+    `Phone: ${client_phone}`,
+    `Service: ${service_name}`,
+    `Date: ${readableDate}`,
+    `Time: ${time} ${ampm}`,
+  ];
+  if (notes?.trim()) lines.push(`Notes: ${notes.trim()}`);
+  lines.push('');
+  lines.push('Open your BeautyOS dashboard to confirm or cancel this booking.');
+
+  return `https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
+}
+
 export default function PublicView({
   businessId: propBusinessId,
   isOwner           = false,
@@ -99,6 +132,7 @@ export default function PublicView({
   const [formSuccess, setFormSuccess] = useState(false);
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [whatsappUrl, setWhatsappUrl] = useState(null);
 
   // Check whether the current visitor is the owner of this page.
   // Runs once on mount — doesn't block the business data load.
@@ -112,8 +146,8 @@ export default function PublicView({
     async function loadAll() {
       // Fetch the business — by id if provided, otherwise the first row
       const bizQuery = propBusinessId
-        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url').eq('id', propBusinessId).single()
-        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url').limit(1).single();
+        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp').eq('id', propBusinessId).single()
+        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp').limit(1).single();
 
       const { data: biz } = await bizQuery;
       if (!biz) {
@@ -212,6 +246,10 @@ export default function PublicView({
         service_name: form.service_name,
         business_id:  business.id,
       });
+
+      // Snapshot the form values before resetting — needed for the WA message
+      const snapshot = { ...form };
+
       setFormSuccess(true);
       setForm({
         client_name: '',
@@ -223,6 +261,14 @@ export default function PublicView({
         ampm: 'AM',
         notes: '',
       });
+
+      // Build and fire the WhatsApp notification to the business owner
+      const waUrl = buildWhatsAppUrl(business.whatsapp, snapshot);
+      if (waUrl) {
+        setWhatsappUrl(waUrl);
+        // 1.5 s delay so the client sees the success card first
+        setTimeout(() => window.open(waUrl, '_blank', 'noopener,noreferrer'), 1500);
+      }
     }
   }
 
@@ -334,9 +380,23 @@ export default function PublicView({
                 Thank you for reaching out. Your booking request has been sent and
                 we will confirm your appointment via WhatsApp shortly.
               </p>
+              {whatsappUrl && (
+                <p className="pv-success-wa-note">
+                  Your booking has been sent! We&apos;ll also notify the business via
+                  WhatsApp to confirm your appointment.{' '}
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pv-success-wa-link"
+                  >
+                    Tap here if WhatsApp didn&apos;t open
+                  </a>
+                </p>
+              )}
               <button
                 className="pv-btn-primary"
-                onClick={() => setFormSuccess(false)}
+                onClick={() => { setFormSuccess(false); setWhatsappUrl(null); }}
               >
                 Book Another Appointment
               </button>
