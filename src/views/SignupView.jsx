@@ -2,13 +2,15 @@ import { useState } from 'react';
 import {
   Scissors, Eye, Leaf, User, Sparkles, MoreHorizontal,
   Check, AlertCircle, Loader2, ChevronLeft,
+  Shirt, Camera, Home, GraduationCap, Dumbbell, PartyPopper,
+  ChefHat, Video, Music2, Briefcase,
 } from 'lucide-react';
 import { signUp } from '../lib/auth';
 import './SignupView.css';
 
 // ── Business type config ───────────────────────────────────────────────────────
 
-const BUSINESS_TYPES = [
+const BEAUTY_TYPES = [
   {
     id: 'nail_studio',
     label: 'Nail Studio',
@@ -53,6 +55,81 @@ const BUSINESS_TYPES = [
   },
 ];
 
+const OTHER_TYPES = [
+  {
+    id: 'tailor',
+    label: 'Tailor & Fashion',
+    Icon: Shirt,
+    desc: 'Bespoke outfits, alterations, aso-ebi',
+    services: ['Dress Sewing', 'Trouser', 'Agbada/Senator', 'Skirt & Blouse', 'Alterations', 'Aso-Ebi Sewing'],
+  },
+  {
+    id: 'photography',
+    label: 'Photographer',
+    Icon: Camera,
+    desc: 'Portraits, events, product photography',
+    services: ['Portrait Session', 'Event Coverage', 'Passport Photos', 'Product Photography', 'Editing Only'],
+  },
+  {
+    id: 'home_services',
+    label: 'Home Services',
+    Icon: Home,
+    desc: 'Plumbing, electrical, AC, repairs',
+    services: ['Plumbing Repair', 'Electrical Repair', 'AC Service', 'Painting', 'Tiling'],
+  },
+  {
+    id: 'tutor',
+    label: 'Private Tutor',
+    Icon: GraduationCap,
+    desc: 'Primary, secondary, exam-prep lessons',
+    services: ['Primary Lessons', 'Secondary Lessons', 'JAMB Prep', 'WAEC Prep', 'Coding Lessons'],
+  },
+  {
+    id: 'fitness',
+    label: 'Fitness & Wellness',
+    Icon: Dumbbell,
+    desc: 'Training, nutrition, group classes',
+    services: ['Personal Training Session', 'Monthly Training Plan', 'Nutrition Consultation', 'Group Class'],
+  },
+  {
+    id: 'events',
+    label: 'Event Services',
+    Icon: PartyPopper,
+    desc: 'MC, DJ, decoration, catering',
+    services: ['MC/Compere', 'DJ Services', 'Decoration', 'Catering Per Head', 'Small Chops'],
+  },
+  {
+    id: 'private_chef',
+    label: 'Private Chef',
+    Icon: ChefHat,
+    desc: 'Home dinners, catering, cooking classes',
+    services: ['Home Dinner Experience', 'Meal Prep Weekly', 'Event Catering', 'Cooking Class', 'Diet Meal Plan'],
+  },
+  {
+    id: 'content_creator',
+    label: 'Content Creator',
+    Icon: Video,
+    desc: 'Reels, videos, brand content',
+    services: ['Instagram Reel', 'YouTube Video', 'Product Review', 'Brand Photoshoot', 'Monthly Content Package'],
+  },
+  {
+    id: 'dj',
+    label: 'Music DJ',
+    Icon: Music2,
+    desc: 'Clubs, weddings, parties, corporate events',
+    services: ['Club Night', 'Wedding DJ', 'House Party', 'Corporate Event', 'Mix/Edit Only'],
+  },
+  {
+    id: 'other_professional',
+    label: 'Other — Tell us what you do',
+    Icon: Briefcase,
+    desc: 'Any profession not listed above',
+    services: [],
+  },
+];
+
+const ALL_BUSINESS_TYPES = [...BEAUTY_TYPES, ...OTHER_TYPES];
+
 const STEPS = ['Business Info', 'Business Type', 'Account Setup'];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -68,6 +145,7 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
 
   // Step 2
   const [businessType, setBusinessType] = useState(null);
+  const [customBusinessType, setCustomBusinessType] = useState('');
   const [step2Error, setStep2Error] = useState('');
 
   // Step 3
@@ -121,10 +199,11 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
 
     try {
       const { business } = await signUp(email.trim(), password, {
-        name:         businessName.trim(),
-        ownerName:    ownerName.trim(),
+        name:               businessName.trim(),
+        ownerName:          ownerName.trim(),
         businessType,
-        whatsapp:     whatsapp.trim(),
+        whatsapp:           whatsapp.trim(),
+        customBusinessType: businessType === 'other_professional' ? customBusinessType.trim() : undefined,
       });
       setSuccess(true);
       setTimeout(() => onSuccess(business), 1200);
@@ -137,7 +216,7 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
 
   // ── Selected business type metadata ─────────────────────────────────────────
 
-  const selectedType = BUSINESS_TYPES.find(t => t.id === businessType);
+  const selectedType = ALL_BUSINESS_TYPES.find(t => t.id === businessType);
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -231,24 +310,62 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
             <h1 className="sv-title">What type of business is this?</h1>
             <p className="sv-sub">We&apos;ll set up your services automatically.</p>
 
-            <div className="sv-type-grid">
-              {BUSINESS_TYPES.map(({ id, label, Icon, desc }) => (
-                <button
-                  key={id}
-                  className={`sv-type-card${businessType === id ? ' sv-type-card--selected' : ''}`}
-                  onClick={() => { setBusinessType(id); setStep2Error(''); }}
-                >
-                  <div className="sv-type-icon">
-                    <Icon size={20} strokeWidth={1.5} />
-                  </div>
-                  <p className="sv-type-label">{label}</p>
-                  <p className="sv-type-desc">{desc}</p>
-                  {businessType === id && (
-                    <span className="sv-type-check"><Check size={11} strokeWidth={3} /></span>
-                  )}
-                </button>
-              ))}
+            <div className="sv-type-group">
+              <p className="sv-type-group-label">Beauty &amp; Wellness</p>
+              <div className="sv-type-grid">
+                {BEAUTY_TYPES.map(({ id, label, Icon, desc }) => (
+                  <button
+                    key={id}
+                    className={`sv-type-card${businessType === id ? ' sv-type-card--selected' : ''}`}
+                    onClick={() => { setBusinessType(id); setStep2Error(''); }}
+                  >
+                    <div className="sv-type-icon">
+                      <Icon size={20} strokeWidth={1.5} />
+                    </div>
+                    <p className="sv-type-label">{label}</p>
+                    <p className="sv-type-desc">{desc}</p>
+                    {businessType === id && (
+                      <span className="sv-type-check"><Check size={11} strokeWidth={3} /></span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <div className="sv-type-group">
+              <p className="sv-type-group-label">Other Professionals</p>
+              <div className="sv-type-grid">
+                {OTHER_TYPES.map(({ id, label, Icon, desc }) => (
+                  <button
+                    key={id}
+                    className={`sv-type-card${businessType === id ? ' sv-type-card--selected' : ''}`}
+                    onClick={() => { setBusinessType(id); setStep2Error(''); }}
+                  >
+                    <div className="sv-type-icon">
+                      <Icon size={20} strokeWidth={1.5} />
+                    </div>
+                    <p className="sv-type-label">{label}</p>
+                    <p className="sv-type-desc">{desc}</p>
+                    {businessType === id && (
+                      <span className="sv-type-check"><Check size={11} strokeWidth={3} /></span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom profession input — only for "other_professional" */}
+            {businessType === 'other_professional' && (
+              <div className="sv-custom-type-field">
+                <input
+                  className="sv-input"
+                  placeholder="What's your profession?"
+                  value={customBusinessType}
+                  autoFocus
+                  onChange={e => setCustomBusinessType(e.target.value)}
+                />
+              </div>
+            )}
 
             {/* Services preview */}
             {selectedType && selectedType.services.length > 0 && (

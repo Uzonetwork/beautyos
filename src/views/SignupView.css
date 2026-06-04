@@ -270,12 +270,28 @@
 
 .sv-link:hover { color: #bf4570; }
 
+/* ── Business type groups ───────────────────────────────────── */
+.sv-type-group {
+  margin-bottom: 18px;
+}
+
+.sv-type-group-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dark);
+  opacity: 0.38;
+  margin-bottom: 10px;
+}
+
 /* ── Business type grid ─────────────────────────────────────── */
 .sv-type-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .sv-type-card {
@@ -342,6 +358,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ── Custom profession input ────────────────────────────────── */
+.sv-custom-type-field {
+  margin-bottom: 16px;
 }
 
 /* ── Services preview ───────────────────────────────────────── */

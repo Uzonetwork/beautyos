@@ -48,4 +48,67 @@ insert into default_services (business_type, name, category, default_price) valu
   ('mua', 'Full Glam Makeup', 'makeup', 50000),
   ('mua', 'Natural Makeup',   'makeup', 30000),
   ('mua', 'Bridal Makeup',    'makeup', 80000),
-  ('mua', 'Gele Tying',       'makeup', 15000);
+  ('mua', 'Gele Tying',       'makeup', 15000),
+
+  -- ── Tailor & Fashion ────────────────────────────────────────────────────────
+  ('tailor', 'Dress Sewing',    'fashion', 15000),
+  ('tailor', 'Trouser',         'fashion',  8000),
+  ('tailor', 'Agbada/Senator',  'fashion', 25000),
+  ('tailor', 'Skirt & Blouse',  'fashion', 12000),
+  ('tailor', 'Alterations',     'fashion',  3000),
+  ('tailor', 'Aso-Ebi Sewing',  'fashion', 20000),
+
+  -- ── Photography ─────────────────────────────────────────────────────────────
+  ('photography', 'Portrait Session',    'photography', 30000),
+  ('photography', 'Event Coverage',      'photography', 80000),
+  ('photography', 'Passport Photos',     'photography',  3000),
+  ('photography', 'Product Photography', 'photography', 25000),
+  ('photography', 'Editing Only',        'photography', 10000),
+
+  -- ── Home Services ───────────────────────────────────────────────────────────
+  ('home_services', 'Plumbing Repair',   'home', 15000),
+  ('home_services', 'Electrical Repair', 'home', 12000),
+  ('home_services', 'AC Service',        'home', 20000),
+  ('home_services', 'Painting',          'home', 50000),
+  ('home_services', 'Tiling',            'home', 40000),
+
+  -- ── Private Tutor ───────────────────────────────────────────────────────────
+  ('tutor', 'Primary Lessons',    'education', 8000),
+  ('tutor', 'Secondary Lessons',  'education', 12000),
+  ('tutor', 'JAMB Prep',          'education', 15000),
+  ('tutor', 'WAEC Prep',          'education', 15000),
+  ('tutor', 'Coding Lessons',     'education', 20000),
+
+  -- ── Fitness & Wellness ──────────────────────────────────────────────────────
+  ('fitness', 'Personal Training Session', 'fitness', 10000),
+  ('fitness', 'Monthly Training Plan',     'fitness', 40000),
+  ('fitness', 'Nutrition Consultation',    'fitness', 15000),
+  ('fitness', 'Group Class',               'fitness',  5000),
+
+  -- ── Event Services ──────────────────────────────────────────────────────────
+  ('events', 'MC/Compere',      'events', 50000),
+  ('events', 'DJ Services',     'events', 60000),
+  ('events', 'Decoration',      'events', 80000),
+  ('events', 'Catering Per Head','events',  3000),
+  ('events', 'Small Chops',     'events', 25000),
+
+  -- ── Private Chef ────────────────────────────────────────────────────────────
+  ('private_chef', 'Home Dinner Experience', 'chef',  50000),
+  ('private_chef', 'Meal Prep Weekly',       'chef',  35000),
+  ('private_chef', 'Event Catering',         'chef',  80000),
+  ('private_chef', 'Cooking Class',          'chef',  25000),
+  ('private_chef', 'Diet Meal Plan',         'chef',  20000),
+
+  -- ── Content Creator ─────────────────────────────────────────────────────────
+  ('content_creator', 'Instagram Reel',          'content', 30000),
+  ('content_creator', 'YouTube Video',           'content', 50000),
+  ('content_creator', 'Product Review',          'content', 25000),
+  ('content_creator', 'Brand Photoshoot',        'content', 40000),
+  ('content_creator', 'Monthly Content Package', 'content', 120000),
+
+  -- ── Music DJ ────────────────────────────────────────────────────────────────
+  ('dj', 'Club Night',      'music', 80000),
+  ('dj', 'Wedding DJ',      'music', 120000),
+  ('dj', 'House Party',     'music', 50000),
+  ('dj', 'Corporate Event', 'music', 100000),
+  ('dj', 'Mix/Edit Only',   'music', 20000);

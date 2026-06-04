@@ -23,29 +23,72 @@ function firstName(fullName) {
 }
 
 const OWNER_TITLES = {
-  nail_studio: 'Nail Technician',
-  lash_studio: 'Lash Artist',
-  spa:         'Spa Therapist',
-  barbershop:  'Barber & Grooming Specialist',
-  mua:         'Makeup Artist',
-  other:       'Beauty Professional',
+  nail_studio:   'Nail Technician',
+  lash_studio:   'Lash Artist',
+  spa:           'Spa Therapist',
+  barbershop:    'Barber & Grooming Specialist',
+  mua:           'Makeup Artist',
+  other:         'Beauty Professional',
+  tailor:             'Fashion Designer & Tailor',
+  photography:        'Professional Photographer',
+  home_services:      'Home Services Professional',
+  tutor:              'Private Tutor',
+  fitness:            'Fitness & Wellness Coach',
+  events:             'Event Services Professional',
+  private_chef:       'Private Chef',
+  content_creator:    'Content Creator',
+  dj:                 'Music DJ',
+};
+
+const SERVICE_SUBTITLES = {
+  nail_studio:        'Professional nail care, every detail perfected',
+  lash_studio:        'Lash services tailored just for you',
+  spa:                'Relaxation and wellness, your way',
+  barbershop:         'Sharp cuts and clean styles',
+  mua:                'Glam looks for every occasion',
+  tailor:             'Bespoke outfits crafted to fit you perfectly',
+  photography:        'Capturing your moments professionally',
+  home_services:      'Reliable home repairs and maintenance',
+  tutor:              'Personalised lessons to help you excel',
+  fitness:            'Training and wellness programs built for you',
+  events:             'Making your events unforgettable',
+  private_chef:       'Restaurant-quality dining, at your location',
+  content_creator:    'Creative content that tells your story',
+  dj:                 'Professional DJ sets for every occasion',
+  other_professional: 'Professional services, booked with ease',
+  other:              'Quality services, every time',
 };
 
 const MEET_SUBTITLES = {
-  nail_studio: 'The nail artist behind every set',
-  lash_studio: 'The lash artist perfecting every look',
-  spa:         'Your guide to rest and renewal',
-  barbershop:  'The barber shaping every look',
-  mua:         'The artist behind every transformation',
-  other:       'The professional behind every appointment',
+  nail_studio:        'The nail artist behind every booking',
+  lash_studio:        'The lash technician behind every booking',
+  spa:                'The therapist behind every booking',
+  barbershop:         'The barber behind every booking',
+  mua:                'The makeup artist behind every booking',
+  tailor:             'The fashion designer behind every booking',
+  photography:        'The photographer behind every booking',
+  home_services:      'The professional behind every job',
+  tutor:              'The tutor behind every lesson',
+  fitness:            'The coach behind every session',
+  events:             'The events professional behind every booking',
+  private_chef:       'The chef behind every experience',
+  content_creator:    'The creator behind every project',
+  dj:                 'The DJ behind every event',
+  other_professional: 'The professional behind every booking',
+  other:              'The professional behind every appointment',
 };
 
-function ownerTitle(type) {
+function ownerTitle(type, customType) {
+  if (type === 'other_professional') return customType?.trim() || 'Professional';
   return OWNER_TITLES[type] ?? 'Beauty Professional';
 }
 
+function servicesSubtitle(type) {
+  return SERVICE_SUBTITLES[type] ?? 'Professional services, every detail attended to';
+}
+
 function meetSubtitle(type) {
-  return MEET_SUBTITLES[type] ?? 'The artist behind every appointment';
+  return MEET_SUBTITLES[type] ?? 'The professional behind every appointment';
 }
 
 function ownerBio(type, ownerName, bizName) {
@@ -61,6 +104,26 @@ function ownerBio(type, ownerName, bizName) {
       return `${first} and the team at ${bizName} deliver sharp cuts, clean fades, and precise grooming for every client. Walk in looking good — walk out looking your absolute best.`;
     case 'mua':
       return `${first} is a professional makeup artist at ${bizName} who transforms every look with skill and artistry. From natural glam to full bridal, your vision comes to life at every appointment.`;
+    case 'tailor':
+      return `Welcome to ${bizName}. We craft bespoke outfits for every occasion — from everyday styles to traditional aso-ebi and special events.`;
+    case 'photography':
+      return `Welcome to ${bizName}. We capture your most important moments with professional photography for portraits, events, and products.`;
+    case 'home_services':
+      return `Welcome to ${bizName}. We provide reliable home maintenance and repair services including plumbing, electrical, AC, and more.`;
+    case 'tutor':
+      return `Welcome to ${bizName}. We offer personalised tutoring for primary, secondary, and exam-prep students to help them reach their full potential.`;
+    case 'fitness':
+      return `Welcome to ${bizName}. We help you reach your fitness goals with personal training, group classes, and nutrition consultations.`;
+    case 'events':
+      return `Welcome to ${bizName}. We make every event unforgettable with professional MC, DJ, decoration, and catering services.`;
+    case 'private_chef':
+      return `Welcome to ${bizName}. We bring restaurant-quality dining to your home — from intimate dinners to full event catering.`;
+    case 'content_creator':
+      return `Welcome to ${bizName}. We create engaging content that tells your brand story across social media and digital platforms.`;
+    case 'dj':
+      return `Welcome to ${bizName}. We provide professional DJ services for weddings, parties, clubs, and corporate events.`;
+    case 'other_professional':
+      return `Welcome to ${bizName}. Book an appointment and let's work together.`;
     default:
       return `${first} at ${bizName} is dedicated to delivering exceptional beauty services tailored to every client. Book an appointment and experience the difference that expert care makes.`;
   }
@@ -146,8 +209,8 @@ export default function PublicView({
     async function loadAll() {
       // Fetch the business — by id if provided, otherwise the first row
       const bizQuery = propBusinessId
-        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp').eq('id', propBusinessId).single()
-        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp').limit(1).single();
+        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type').eq('id', propBusinessId).single()
+        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type').limit(1).single();
 
       const { data: biz } = await bizQuery;
       if (!biz) {
@@ -342,7 +405,7 @@ export default function PublicView({
       <section className="pv-section pv-section--white">
         <div className="pv-inner">
           <h2 className="pv-section-title">Our Services</h2>
-          <p className="pv-section-sub">Handcrafted beauty, every detail attended to</p>
+          <p className="pv-section-sub">{servicesSubtitle(business?.business_type)}</p>
           <div className="pv-services-grid">
             {servicesLoading
               ? Array.from({ length: 6 }).map((_, i) => (
@@ -569,7 +632,7 @@ export default function PublicView({
               {business?.owner_name ?? ''}
             </h3>
             <p className="pv-profile-title">
-              {ownerTitle(business?.business_type)}
+              {ownerTitle(business?.business_type, business?.custom_business_type)}
             </p>
             <p className="pv-profile-bio">
               {ownerBio(business?.business_type, business?.owner_name, business?.name)}

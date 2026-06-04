@@ -2,12 +2,22 @@ import { supabase } from './supabase';
 
 // Maps business type → default service_categories array
 const TYPE_CATEGORIES = {
-  nail_studio: ['nails'],
-  lash_studio: ['lash'],
-  spa:         ['spa'],
-  barbershop:  ['barber'],
-  mua:         ['makeup'],
-  other:       ['other'],
+  nail_studio:        ['nails'],
+  lash_studio:        ['lash'],
+  spa:                ['spa'],
+  barbershop:         ['barber'],
+  mua:                ['makeup'],
+  other:              ['other'],
+  tailor:             ['fashion'],
+  photography:        ['photography'],
+  home_services:      ['home'],
+  tutor:              ['education'],
+  fitness:            ['fitness'],
+  events:             ['events'],
+  private_chef:       ['chef'],
+  content_creator:    ['content'],
+  dj:                 ['music'],
+  other_professional: ['other'],
 };
 
 /**
@@ -24,10 +34,11 @@ export async function signUp(email, password, businessData) {
 
   // Log the full businessData so we can confirm businessType is set correctly
   console.log('[signUp] businessData received:', {
-    name:         businessData?.name,
-    ownerName:    businessData?.ownerName,
-    businessType: businessData?.businessType,   // ← must be non-empty for seeding
-    whatsapp:     businessData?.whatsapp,
+    name:               businessData?.name,
+    ownerName:          businessData?.ownerName,
+    businessType:       businessData?.businessType,   // ← must be non-empty for seeding
+    whatsapp:           businessData?.whatsapp,
+    customBusinessType: businessData?.customBusinessType,
   });
 
   if (!businessData?.businessType) {
@@ -97,13 +108,14 @@ export async function signUp(email, password, businessData) {
   const { data: business, error: bizError } = await supabase
     .from('businesses')
     .insert({
-      user_id:            userId,
-      name:               businessData.name,
-      owner_name:         businessData.ownerName,
-      business_type:      businessData.businessType,
-      tagline:            businessData.tagline  ?? '',
-      whatsapp:           businessData.whatsapp ?? '',
-      service_categories: categories,
+      user_id:              userId,
+      name:                 businessData.name,
+      owner_name:           businessData.ownerName,
+      business_type:        businessData.businessType,
+      tagline:              businessData.tagline  ?? '',
+      whatsapp:             businessData.whatsapp ?? '',
+      service_categories:   categories,
+      custom_business_type: businessData.customBusinessType ?? null,
     })
     .select()
     .single();

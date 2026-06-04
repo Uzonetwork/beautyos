@@ -39,6 +39,46 @@ function fmtMoney(n) {
   return '₦' + (n || 0).toLocaleString();
 }
 
+// ── Business type display ─────────────────────────────────────────────────────
+
+const TYPE_LABELS = {
+  nail_studio:   'Nail Studio',
+  lash_studio:   'Lash Studio',
+  spa:           'Spa',
+  barbershop:    'Barbershop',
+  mua:           'MUA',
+  other:         'Other',
+  tailor:             'Tailor & Fashion',
+  photography:        'Photography',
+  home_services:      'Home Services',
+  tutor:              'Private Tutor',
+  fitness:            'Fitness & Wellness',
+  events:             'Event Services',
+  private_chef:       'Private Chef',
+  content_creator:    'Content Creator',
+  dj:                 'Music DJ',
+  other_professional: 'Other Professional',
+};
+
+const TYPE_COLORS = {
+  nail_studio:   { bg: 'rgba(192,82,111,0.09)',  color: '#c0526f' },
+  lash_studio:   { bg: 'rgba(192,82,111,0.09)',  color: '#c0526f' },
+  spa:           { bg: 'rgba(192,82,111,0.09)',  color: '#c0526f' },
+  barbershop:    { bg: 'rgba(192,82,111,0.09)',  color: '#c0526f' },
+  mua:           { bg: 'rgba(192,82,111,0.09)',  color: '#c0526f' },
+  other:         { bg: 'rgba(192,82,111,0.09)',  color: '#c0526f' },
+  tailor:             { bg: 'rgba(99,102,241,0.1)',   color: '#4338ca' },
+  photography:        { bg: 'rgba(217,119,6,0.1)',    color: '#b45309' },
+  home_services:      { bg: 'rgba(20,184,166,0.1)',   color: '#0f766e' },
+  tutor:              { bg: 'rgba(59,130,246,0.1)',   color: '#1d4ed8' },
+  fitness:            { bg: 'rgba(234,88,12,0.1)',    color: '#c2410c' },
+  events:             { bg: 'rgba(168,85,247,0.1)',   color: '#7c3aed' },
+  private_chef:       { bg: 'rgba(16,185,129,0.1)',   color: '#059669' },
+  content_creator:    { bg: 'rgba(239,68,68,0.1)',    color: '#dc2626' },
+  dj:                 { bg: 'rgba(14,165,233,0.1)',   color: '#0284c7' },
+  other_professional: { bg: 'rgba(45,27,27,0.08)',    color: 'rgba(45,27,27,0.5)' },
+};
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, accent }) {
@@ -316,7 +356,15 @@ export default function AdminDashboard() {
                         <td style={{ ...S.td, ...S.tdStrong }}>{b.name || '—'}</td>
                         <td style={S.td}>{b.email}</td>
                         <td style={S.td}>
-                          <span style={S.typeTag}>{b.business_type || '—'}</span>
+                          {b.business_type ? (
+                            <span style={{
+                              ...S.typeTag,
+                              background: (TYPE_COLORS[b.business_type] ?? TYPE_COLORS.other).bg,
+                              color:      (TYPE_COLORS[b.business_type] ?? TYPE_COLORS.other).color,
+                            }}>
+                              {TYPE_LABELS[b.business_type] ?? b.business_type}
+                            </span>
+                          ) : '—'}
                         </td>
                         <td style={S.td}>{b.whatsapp || '—'}</td>
                         <td style={{ ...S.td, ...S.tdNum }}>{b.booking_count}</td>
