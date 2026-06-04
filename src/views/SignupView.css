@@ -1,6 +1,6 @@
 .sv-root {
   min-height: 100vh;
-  background: var(--blush);
+  background: #0A2E1A;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -8,8 +8,8 @@
 }
 
 .sv-card {
-  background: #fff;
-  border: 1px solid rgba(212, 83, 126, 0.12);
+  background: #0F3D22;
+  border: 1px solid rgba(76, 175, 114, 0.18);
   border-radius: 10px;
   padding: 40px 36px;
   width: 100%;
@@ -17,17 +17,9 @@
 }
 
 .sv-brand {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--rose);
   margin-bottom: 28px;
-  display: block;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
+  display: flex;
+  align-items: center;
 }
 
 /* ── Progress indicator ─────────────────────────────────────── */
@@ -53,56 +45,56 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid rgba(58, 26, 40, 0.2);
-  background: #fff;
+  border: 1.5px solid rgba(76, 175, 114, 0.3);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 600;
-  color: rgba(58, 26, 40, 0.35);
+  color: rgba(122, 174, 144, 0.6);
   flex-shrink: 0;
   transition: all 0.2s;
 }
 
 .sv-step-circle--active {
-  border-color: var(--rose);
-  background: var(--rose);
-  color: #fff;
+  border-color: #F5C842;
+  background: #F5C842;
+  color: #0A2E1A;
 }
 
 .sv-step-circle--done {
-  border-color: var(--rose);
-  background: var(--blush);
-  color: var(--rose);
+  border-color: #4CAF72;
+  background: rgba(76, 175, 114, 0.15);
+  color: #4CAF72;
 }
 
 .sv-step-label {
   font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 500;
-  color: rgba(58, 26, 40, 0.35);
+  color: rgba(122, 174, 144, 0.6);
   white-space: nowrap;
   display: none;
 }
 
 .sv-step-label--active {
-  color: var(--rose);
+  color: #F5C842;
   display: block;
 }
 
 .sv-step-line {
   flex: 1;
   height: 1.5px;
-  background: rgba(58, 26, 40, 0.1);
+  background: rgba(76, 175, 114, 0.2);
   margin: 0 8px;
   transition: background 0.2s;
 }
 
 .sv-step-line--done {
-  background: var(--rose);
-  opacity: 0.4;
+  background: #4CAF72;
+  opacity: 0.5;
 }
 
 /* ── Panel ──────────────────────────────────────────────────── */
@@ -119,7 +111,7 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 500;
-  color: rgba(58, 26, 40, 0.4);
+  color: rgba(122, 174, 144, 0.7);
   background: none;
   border: none;
   cursor: pointer;
@@ -128,13 +120,13 @@
   transition: color 0.15s;
 }
 
-.sv-back:hover { color: var(--text-dark); }
+.sv-back:hover { color: #FFFFFF; }
 
 .sv-title {
   font-family: 'Cormorant Garamond', serif;
   font-size: 30px;
   font-weight: 500;
-  color: var(--text-dark);
+  color: #FFFFFF;
   margin-bottom: 6px;
   line-height: 1.15;
 }
@@ -142,8 +134,7 @@
 .sv-sub {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  color: var(--text-dark);
-  opacity: 0.5;
+  color: #7AAE90;
   margin-bottom: 28px;
   line-height: 1.5;
 }
@@ -167,24 +158,23 @@
   font-weight: 600;
   letter-spacing: 0.7px;
   text-transform: uppercase;
-  color: var(--text-dark);
-  opacity: 0.55;
+  color: #7AAE90;
 }
 
 .sv-label-opt {
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
-  color: var(--rose-gold);
+  color: #4CAF72;
   opacity: 1;
 }
 
 .sv-input {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  color: var(--text-dark);
-  background: var(--cream);
-  border: 1px solid rgba(58, 26, 40, 0.15);
+  color: #FFFFFF;
+  background: #0A2E1A;
+  border: 1px solid #1A5C30;
   border-radius: 2px;
   padding: 12px 14px;
   width: 100%;
@@ -194,7 +184,11 @@
   transition: border-color 0.2s;
 }
 
-.sv-input:focus { border-color: var(--rose); background: #fff; }
+.sv-input::placeholder {
+  color: rgba(122, 174, 144, 0.6);
+}
+
+.sv-input:focus { border-color: #4CAF72; background: #0A2E1A; }
 .sv-input--error { border-color: #c94444; }
 
 .sv-field-error {
@@ -212,11 +206,11 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  background: var(--rose);
-  color: #fff;
+  background: #F5C842;
+  color: #0A2E1A;
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   padding: 14px;
   border: none;
   border-radius: 2px;
@@ -225,7 +219,7 @@
   transition: background 0.2s;
 }
 
-.sv-btn-next:hover:not(:disabled) { background: #bf4570; }
+.sv-btn-next:hover:not(:disabled) { background: #d4ac35; }
 .sv-btn-next:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .sv-btn-submit { margin-top: 4px; }
@@ -249,8 +243,7 @@
 .sv-footer-text {
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
-  color: var(--text-dark);
-  opacity: 0.5;
+  color: #7AAE90;
   text-align: center;
   margin-top: 20px;
 }
@@ -261,14 +254,14 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: var(--rose);
+  color: #4CAF72;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.sv-link:hover { color: #bf4570; }
+.sv-link:hover { color: #3d9e5e; }
 
 /* ── Business type groups ───────────────────────────────────── */
 .sv-type-group {
@@ -281,8 +274,7 @@
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--text-dark);
-  opacity: 0.38;
+  color: #7AAE90;
   margin-bottom: 10px;
 }
 
@@ -301,8 +293,8 @@
   align-items: flex-start;
   gap: 6px;
   padding: 16px 14px;
-  background: var(--cream);
-  border: 1.5px solid rgba(58, 26, 40, 0.1);
+  background: #0A2E1A;
+  border: 1.5px solid rgba(76, 175, 114, 0.2);
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
@@ -310,24 +302,24 @@
 }
 
 .sv-type-card:hover {
-  border-color: rgba(212, 83, 126, 0.35);
-  background: #fff;
+  border-color: rgba(76, 175, 114, 0.5);
+  background: #061A0E;
 }
 
 .sv-type-card--selected {
-  border-color: var(--rose);
-  background: rgba(212, 83, 126, 0.04);
+  border-color: #F5C842;
+  background: rgba(245, 200, 66, 0.06);
 }
 
 .sv-type-icon {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: var(--blush);
+  background: rgba(76, 175, 114, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--rose);
+  color: #F5C842;
   flex-shrink: 0;
 }
 
@@ -335,14 +327,13 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: #FFFFFF;
 }
 
 .sv-type-desc {
   font-family: 'DM Sans', sans-serif;
   font-size: 11px;
-  color: var(--text-dark);
-  opacity: 0.45;
+  color: #7AAE90;
   line-height: 1.4;
 }
 
@@ -353,8 +344,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--rose);
-  color: #fff;
+  background: #F5C842;
+  color: #0A2E1A;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -367,8 +358,8 @@
 
 /* ── Services preview ───────────────────────────────────────── */
 .sv-services-preview {
-  background: var(--blush);
-  border: 1px solid rgba(212, 83, 126, 0.15);
+  background: rgba(76, 175, 114, 0.07);
+  border: 1px solid rgba(76, 175, 114, 0.2);
   border-radius: 6px;
   padding: 16px;
   margin-bottom: 20px;
@@ -380,8 +371,7 @@
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: var(--text-dark);
-  opacity: 0.5;
+  color: #7AAE90;
   margin-bottom: 12px;
 }
 
@@ -396,8 +386,8 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 500;
-  color: var(--rose);
-  background: rgba(212, 83, 126, 0.1);
+  color: #F5C842;
+  background: rgba(245, 200, 66, 0.12);
   border-radius: 2px;
   padding: 4px 10px;
 }
@@ -405,8 +395,7 @@
 .sv-preview-note {
   font-family: 'DM Sans', sans-serif;
   font-size: 11px;
-  color: var(--text-dark);
-  opacity: 0.45;
+  color: #7AAE90;
   line-height: 1.5;
 }
 
@@ -435,18 +424,17 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: rgba(212, 83, 126, 0.1);
+  background: rgba(245, 200, 66, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--rose);
+  color: #F5C842;
 }
 
 .sv-success-text {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  color: var(--text-dark);
-  opacity: 0.55;
+  color: #7AAE90;
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */

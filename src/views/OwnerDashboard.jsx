@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
+import { applyThemeStyle } from '../lib/getBusinessTheme';
+import SabiLogo from '../components/SabiLogo';
 import './OwnerDashboard.css';
 
 const TABS = [
@@ -452,10 +454,12 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div className="od-root">
+    <div className="od-root" style={applyThemeStyle(businessType)}>
       <header className="od-header">
         <div className="od-header-top">
-          <button className="od-brand" onClick={onViewPublicPage}>BeautyOS</button>
+          <button className="od-brand" onClick={onViewPublicPage}>
+            <SabiLogo size="md" dark={false} />
+          </button>
           <div className="od-header-actions">
             <button className="od-logout" onClick={onLogout}>
               <LogOut size={15} strokeWidth={1.75} />

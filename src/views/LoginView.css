@@ -1,6 +1,6 @@
 .lv-root {
   min-height: 100vh;
-  background: var(--blush);
+  background: #0A2E1A;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8,8 +8,8 @@
 }
 
 .lv-card {
-  background: #fff;
-  border: 1px solid rgba(212, 83, 126, 0.12);
+  background: #0F3D22;
+  border: 1px solid rgba(76, 175, 114, 0.18);
   border-radius: 8px;
   padding: 44px 36px 40px;
   width: 100%;
@@ -19,26 +19,23 @@
 }
 
 .lv-brand {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--rose);
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
 }
 
 .lv-title {
   font-family: 'Cormorant Garamond', serif;
   font-size: 32px;
   font-weight: 500;
-  color: var(--text-dark);
+  color: #FFFFFF;
   margin-bottom: 6px;
 }
 
 .lv-sub {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  color: var(--text-dark);
-  opacity: 0.5;
+  color: #7AAE90;
   margin-bottom: 32px;
 }
 
@@ -60,8 +57,7 @@
   font-weight: 600;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--text-dark);
-  opacity: 0.55;
+  color: #7AAE90;
 }
 
 .lv-input-wrap {
@@ -73,17 +69,17 @@
   left: 13px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--rose);
-  opacity: 0.5;
+  color: #4CAF72;
+  opacity: 0.7;
   pointer-events: none;
 }
 
 .lv-input {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  color: var(--text-dark);
-  background: var(--cream);
-  border: 1px solid rgba(58, 26, 40, 0.15);
+  color: #FFFFFF;
+  background: #0A2E1A;
+  border: 1px solid #1A5C30;
   border-radius: 2px;
   padding: 12px 14px 12px 38px;
   width: 100%;
@@ -93,9 +89,13 @@
   transition: border-color 0.2s;
 }
 
+.lv-input::placeholder {
+  color: rgba(122, 174, 144, 0.6);
+}
+
 .lv-input:focus {
-  border-color: var(--rose);
-  background: #fff;
+  border-color: #4CAF72;
+  background: #0A2E1A;
 }
 
 .lv-error {
@@ -117,11 +117,11 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  background: var(--rose);
-  color: #fff;
+  background: #F5C842;
+  color: #0A2E1A;
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   padding: 14px;
   border: none;
   border-radius: 2px;
@@ -130,7 +130,7 @@
   transition: background 0.2s;
 }
 
-.lv-btn:hover:not(:disabled) { background: #bf4570; }
+.lv-btn:hover:not(:disabled) { background: #d4ac35; }
 .lv-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 @keyframes lv-spin { to { transform: rotate(360deg); } }
@@ -139,8 +139,7 @@
 .lv-footer-text {
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
-  color: var(--text-dark);
-  opacity: 0.55;
+  color: #7AAE90;
   text-align: center;
   margin-top: 24px;
 }
@@ -151,11 +150,11 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: var(--rose);
+  color: #4CAF72;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.lv-link:hover { color: #bf4570; }
+.lv-link:hover { color: #3d9e5e; }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { signIn, getCurrentBusiness } from '../lib/auth';
+import SabiLogo from '../components/SabiLogo';
 import './LoginView.css';
 
 export default function LoginView({ onSuccess, onSignup }) {
@@ -29,7 +30,7 @@ export default function LoginView({ onSuccess, onSignup }) {
   return (
     <div className="lv-root">
       <div className="lv-card">
-        <p className="lv-brand">BeautyOS</p>
+        <div className="lv-brand"><SabiLogo size="lg" dark={false} /></div>
         <h1 className="lv-title">Welcome back</h1>
         <p className="lv-sub">Sign in to your dashboard</p>
 

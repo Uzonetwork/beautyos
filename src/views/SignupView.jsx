@@ -6,6 +6,7 @@ import {
   ChefHat, Video, Music2, Briefcase,
 } from 'lucide-react';
 import { signUp } from '../lib/auth';
+import SabiLogo from '../components/SabiLogo';
 import './SignupView.css';
 
 // ── Business type config ───────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ const BEAUTY_TYPES = [
     id: 'other',
     label: 'Other',
     Icon: MoreHorizontal,
-    desc: 'Any other beauty service',
+    desc: 'Any other beauty or service type',
     services: [],
   },
 ];
@@ -225,7 +226,9 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
       <div className="sv-card">
 
         {/* Brand — click to return to landing */}
-        <button className="sv-brand" onClick={onBack}>BeautyOS</button>
+        <button className="sv-brand" onClick={onBack} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+          <SabiLogo size="md" dark={false} />
+        </button>
 
         {/* Progress indicator */}
         <div className="sv-progress">

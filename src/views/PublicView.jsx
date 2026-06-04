@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
+import { applyThemeStyle } from '../lib/getBusinessTheme';
 import './PublicView.css';
 
 // ── Business-type display helpers ─────────────────────────────────────────────
@@ -125,7 +126,7 @@ function ownerBio(type, ownerName, bizName) {
     case 'other_professional':
       return `Welcome to ${bizName}. Book an appointment and let's work together.`;
     default:
-      return `${first} at ${bizName} is dedicated to delivering exceptional beauty services tailored to every client. Book an appointment and experience the difference that expert care makes.`;
+      return `${first} at ${bizName} is dedicated to delivering exceptional services tailored to every client. Book an appointment and experience the difference that expert care makes.`;
   }
 }
 
@@ -157,7 +158,7 @@ function buildWhatsAppUrl(whatsapp, submittedForm) {
   ];
   if (notes?.trim()) lines.push(`Notes: ${notes.trim()}`);
   lines.push('');
-  lines.push('Open your BeautyOS dashboard to confirm or cancel this booking.');
+  lines.push('Open your Sabi dashboard to confirm or cancel this booking.');
 
   return `https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
@@ -219,7 +220,7 @@ export default function PublicView({
         return;
       }
       setBusiness(biz);
-      document.title = `${biz.name.toUpperCase()} | BeautyOS`;
+      document.title = `${biz.name.toUpperCase()} | Sabi`;
 
       // Now fetch services and gallery scoped to this business
       const [svcRes, galRes] = await Promise.all([
@@ -243,7 +244,7 @@ export default function PublicView({
       setGalleryLoading(false);
     }
     loadAll();
-    return () => { document.title = 'BeautyOS'; };
+    return () => { document.title = 'Sabi'; };
   }, [propBusinessId]);
 
   function handleChange(field) {
@@ -354,8 +355,11 @@ export default function PublicView({
 
   const isActualOwner = !!sessionUserId && !!business && business.user_id === sessionUserId;
 
+  const themeStyle = applyThemeStyle(business?.business_type ?? 'other');
+  /* themeStyle now applies --t-* CSS variables used by PublicView.css */
+
   return (
-    <div className="pv-root">
+    <div className="pv-root" style={themeStyle}>
 
       {/* ── Owner sticky bar — visible only to the authenticated owner ── */}
       {isActualOwner && (

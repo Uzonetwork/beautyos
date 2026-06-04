@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import SabiLogo from '../components/SabiLogo';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -84,15 +85,15 @@ const TYPE_COLORS = {
 function StatCard({ label, value, accent }) {
   return (
     <div style={{
-      background:    accent ? 'rgba(192, 82, 111, 0.07)' : '#fff',
-      border:        `1px solid ${accent ? 'rgba(192,82,111,0.18)' : 'rgba(45,27,27,0.09)'}`,
+      background:    accent ? 'rgba(245, 200, 66, 0.08)' : '#0F3D22',
+      border:        `1px solid ${accent ? 'rgba(245,200,66,0.2)' : 'rgba(76,175,114,0.15)'}`,
       borderRadius:  6,
       padding:       '22px 20px 18px',
     }}>
-      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(45,27,27,0.45)', marginBottom: 10 }}>
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(122,174,144,0.8)', marginBottom: 10 }}>
         {label}
       </p>
-      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 600, color: '#c0526f', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 600, color: '#F5C842', lineHeight: 1 }}>
         {value}
       </p>
     </div>
@@ -262,7 +263,7 @@ export default function AdminDashboard() {
     return (
       <div style={S.gate}>
         <form style={S.gateCard} onSubmit={handleLogin}>
-          <p style={S.gateBrand}>BeautyOS</p>
+          <div style={S.gateBrand}><SabiLogo size="md" dark={true} /></div>
           <h1 style={S.gateTitle}>Admin Access</h1>
           <p style={S.gateSub}>This area is restricted to authorised users.</p>
           <input
@@ -288,7 +289,7 @@ export default function AdminDashboard() {
       <header style={S.header}>
         <div style={S.headerInner}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-            <span style={S.headerBrand}>BeautyOS</span>
+            <SabiLogo size="md" dark={true} />
             <span style={S.headerLabel}>Admin</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -442,7 +443,7 @@ export default function AdminDashboard() {
                         <td style={{ ...S.td, ...S.tdStrong }}>{s.name}</td>
                         <td style={S.td}>{s.businesses?.name ?? '—'}</td>
                         <td style={{ ...S.td, ...S.tdNum }}>{fmtMoney(s.price)}</td>
-                        <td style={{ ...S.td, ...S.tdNum, fontWeight: 700, color: '#c0526f' }}>{s.booking_count}</td>
+                        <td style={{ ...S.td, ...S.tdNum, fontWeight: 700, color: '#F5C842' }}>{s.booking_count}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -462,10 +463,10 @@ function Th({ children, right }) {
     <th style={{
       fontFamily: "'DM Sans', sans-serif",
       fontSize: 11, fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase',
-      color: 'rgba(45,27,27,0.4)', padding: '11px 16px',
+      color: 'rgba(122,174,144,0.8)', padding: '11px 16px',
       textAlign: right ? 'right' : 'left',
-      borderBottom: '1px solid rgba(45,27,27,0.09)',
-      whiteSpace: 'nowrap', background: '#fdf0f2',
+      borderBottom: '1px solid rgba(76,175,114,0.15)',
+      whiteSpace: 'nowrap', background: '#1A5C30',
     }}>
       {children}
     </th>
@@ -476,55 +477,55 @@ function Th({ children, right }) {
 const S = {
   // Password gate
   gate: {
-    minHeight: '100vh', background: '#fdf7f7',
+    minHeight: '100vh', background: '#0A2E1A',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontFamily: "'DM Sans', sans-serif",
   },
   gateCard: {
-    background: '#fff', border: '1px solid rgba(45,27,27,0.1)',
+    background: '#0F3D22', border: '1px solid rgba(76,175,114,0.2)',
     borderRadius: 8, padding: '40px 36px',
     display: 'flex', flexDirection: 'column', gap: 14,
     width: '100%', maxWidth: 380,
   },
   gateBrand: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: 26, fontWeight: 500, color: '#2d1b1b',
+    fontSize: 26, fontWeight: 500, color: '#F5C842',
     letterSpacing: '-0.3px', margin: 0,
   },
   gateTitle: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: 28, fontWeight: 500, color: '#2d1b1b', margin: 0,
+    fontSize: 28, fontWeight: 500, color: '#FFFFFF', margin: 0,
   },
   gateSub: {
-    fontSize: 13, color: 'rgba(45,27,27,0.5)', margin: 0,
+    fontSize: 13, color: '#7AAE90', margin: 0,
   },
   gateInput: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 14, color: '#2d1b1b',
-    background: '#fafafa', border: '1px solid rgba(45,27,27,0.18)',
+    fontSize: 14, color: '#FFFFFF',
+    background: '#0A2E1A', border: '1px solid #1A5C30',
     borderRadius: 4, padding: '10px 12px', outline: 'none',
   },
   gateInputErr: {
-    borderColor: '#c94444', background: '#fff8f8',
+    borderColor: '#c94444', background: '#0A2E1A',
   },
   gateError: {
     fontSize: 13, color: '#c94444', margin: 0,
   },
   gateBtn: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 14, fontWeight: 500, color: '#fff',
-    background: '#c0526f', border: 'none', borderRadius: 4,
+    fontSize: 14, fontWeight: 700, color: '#0A2E1A',
+    background: '#F5C842', border: 'none', borderRadius: 4,
     padding: '11px 0', cursor: 'pointer',
   },
 
   // Dashboard shell
   root: {
-    minHeight: '100vh', background: '#fdf7f7',
-    fontFamily: "'DM Sans', sans-serif", color: '#2d1b1b',
+    minHeight: '100vh', background: '#0A2E1A',
+    fontFamily: "'DM Sans', sans-serif", color: '#FFFFFF',
   },
   header: {
     position: 'sticky', top: 0, zIndex: 100,
-    background: '#fff', boxShadow: '0 1px 0 rgba(45,27,27,0.08)',
+    background: '#0F3D22', boxShadow: '0 1px 0 rgba(76,175,114,0.15)',
   },
   headerInner: {
     maxWidth: 1100, margin: '0 auto', padding: '0 24px',
@@ -532,22 +533,22 @@ const S = {
   },
   headerBrand: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: 22, fontWeight: 500, color: '#2d1b1b', letterSpacing: '-0.3px',
+    fontSize: 22, fontWeight: 500, color: '#F5C842', letterSpacing: '-0.3px',
   },
   headerLabel: {
     fontSize: 11, fontWeight: 700, letterSpacing: '1.5px',
-    textTransform: 'uppercase', color: '#c0526f',
-    background: 'rgba(192,82,111,0.09)', padding: '3px 8px', borderRadius: 3,
+    textTransform: 'uppercase', color: '#0A2E1A',
+    background: '#F5C842', padding: '3px 8px', borderRadius: 3,
   },
   refreshBtn: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 13, fontWeight: 500, color: 'rgba(45,27,27,0.5)',
-    background: 'none', border: '1px solid rgba(45,27,27,0.15)',
+    fontSize: 13, fontWeight: 500, color: '#7AAE90',
+    background: 'none', border: '1px solid rgba(76,175,114,0.25)',
     borderRadius: 3, padding: '5px 12px', cursor: 'pointer',
   },
   logoutBtn: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 13, fontWeight: 500, color: 'rgba(45,27,27,0.45)',
+    fontSize: 13, fontWeight: 500, color: 'rgba(122,174,144,0.7)',
     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
   },
   main: {
@@ -555,7 +556,7 @@ const S = {
   },
   loadingMsg: {
     textAlign: 'center', padding: '80px 0',
-    fontSize: 14, color: 'rgba(45,27,27,0.4)',
+    fontSize: 14, color: '#7AAE90',
   },
   errorBanner: {
     background: 'rgba(201,68,68,0.07)', border: '1px solid rgba(201,68,68,0.2)',
@@ -571,13 +572,13 @@ const S = {
   },
   sectionTitle: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: 26, fontWeight: 500, color: '#2d1b1b',
+    fontSize: 26, fontWeight: 500, color: '#FFFFFF',
     margin: 0, display: 'flex', alignItems: 'center', gap: 10,
   },
   count: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 11, fontWeight: 600, color: '#c0526f',
-    background: 'rgba(192,82,111,0.1)', padding: '2px 8px', borderRadius: 10,
+    fontSize: 11, fontWeight: 600, color: '#F5C842',
+    background: 'rgba(245,200,66,0.12)', padding: '2px 8px', borderRadius: 10,
   },
 
   // Stats
@@ -590,8 +591,8 @@ const S = {
   // Search
   search: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 13, color: '#2d1b1b',
-    background: '#fff', border: '1px solid rgba(45,27,27,0.15)',
+    fontSize: 13, color: '#FFFFFF',
+    background: '#0F3D22', border: '1px solid rgba(76,175,114,0.2)',
     borderRadius: 4, padding: '8px 12px', outline: 'none',
     minWidth: 220,
   },
@@ -599,30 +600,30 @@ const S = {
   // Tables
   tableWrap: {
     marginTop: 16,
-    background: '#fff', border: '1px solid rgba(45,27,27,0.09)',
+    background: '#0F3D22', border: '1px solid rgba(76,175,114,0.15)',
     borderRadius: 6, overflowX: 'auto',
   },
   table: {
     width: '100%', borderCollapse: 'collapse',
     fontFamily: "'DM Sans', sans-serif", fontSize: 13,
   },
-  tr: { borderBottom: '1px solid rgba(45,27,27,0.06)' },
+  tr: { borderBottom: '1px solid rgba(76,175,114,0.08)' },
   td: {
-    padding: '12px 16px', color: '#2d1b1b',
+    padding: '12px 16px', color: '#FFFFFF',
     verticalAlign: 'middle',
   },
   tdStrong: { fontWeight: 500 },
-  tdMuted:  { color: 'rgba(45,27,27,0.4)', fontSize: 12 },
+  tdMuted:  { color: '#7AAE90', fontSize: 12 },
   tdNum:    { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
   emptyCell: {
     padding: '40px 20px', textAlign: 'center',
-    color: 'rgba(45,27,27,0.35)', fontSize: 14,
+    color: '#7AAE90', fontSize: 14,
   },
   typeTag: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: 10, fontWeight: 600, letterSpacing: '0.6px',
     textTransform: 'uppercase',
-    background: 'rgba(192,82,111,0.08)', color: '#c0526f',
+    background: 'rgba(76,175,114,0.12)', color: '#4CAF72',
     padding: '2px 7px', borderRadius: 3,
   },
 };

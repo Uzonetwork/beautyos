@@ -45,8 +45,8 @@ export default async function handler(req, res) {
   console.log('[og] supabase data:', JSON.stringify(biz));
   console.log('[og] supabase error:', bizError ? JSON.stringify(bizError) : null);
 
-  const name = biz?.name ?? 'BeautyOS';
-  const tagline = biz?.tagline ?? 'Book your beauty appointment online';
+  const name = biz?.name ?? 'Sabi';
+  const tagline = biz?.tagline ?? 'Book your appointment online';
 
   const host = req.headers.host ?? 'beautyos.vercel.app';
   const protocol = host.startsWith('localhost') ? 'http' : 'https';
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     <meta property="og:description" content="${escapeHtml(tagline)}" />
     <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="BeautyOS" />
+    <meta property="og:site_name" content="Sabi" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="${escapeHtml(name)}" />
     <meta name="twitter:description" content="${escapeHtml(tagline)}" />
