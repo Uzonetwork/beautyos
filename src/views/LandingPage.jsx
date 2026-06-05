@@ -26,13 +26,12 @@ const BUSINESS_TYPES = [
 
 const PRICING_FEATURES = [
   'Public booking page with your branding',
-  'Real-time booking & status dashboard',
+  'Unlimited bookings',
+  'Client management & history',
   'Earnings tracker — daily and monthly',
-  'Full client history and visit tracking',
-  'Service menu with live price editing',
+  'WhatsApp notifications',
   'Gallery showcase for your work',
-  'WhatsApp notification integration',
-  'Mobile-friendly across all devices',
+  'All future updates included',
 ];
 
 // ── Rotating preview cards ────────────────────────────────────────────────────
@@ -319,7 +318,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
                 See a Demo
               </button>
             </div>
-            <p className="lp-hero-note">30 days free · No credit card required</p>
+            <p className="lp-hero-note">₦14,400/yr · Secure payment via Paystack</p>
           </div>
 
           <div className="lp-hero-visual" aria-hidden="true">
@@ -375,13 +374,14 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
           <h2 className="lp-section-title">Simple, honest pricing</h2>
           <p className="lp-section-sub">One plan. Everything included. Cancel any time.</p>
           <div className="lp-pricing-card">
-            <div className="lp-pricing-badge">Most popular</div>
-            <p className="lp-plan-label">Professional</p>
+            <div className="lp-pricing-badge">Launch Price</div>
+            <p className="lp-plan-label">Professional — Yearly</p>
             <div className="lp-price-row">
-              <span className="lp-price-amount">&#8358;4,000</span>
-              <span className="lp-price-period">/month</span>
+              <span className="lp-price-strikethrough">&#8358;24,000/yr</span>
+              <span className="lp-price-amount">&#8358;14,400</span>
+              <span className="lp-price-period">/yr</span>
             </div>
-            <p className="lp-price-note">First 30 days free &mdash; no card needed</p>
+            <p className="lp-price-note">Price increases to ₦24,000/yr soon</p>
             <ul className="lp-pricing-features">
               {PRICING_FEATURES.map(f => (
                 <li key={f} className="lp-pricing-feature">
@@ -391,7 +391,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
               ))}
             </ul>
             <button className="lp-btn-primary lp-btn-full" onClick={onGetStarted}>
-              Start Free 30-Day Trial
+              Get Started — &#8358;14,400/yr
               <ArrowRight size={16} strokeWidth={2} />
             </button>
           </div>

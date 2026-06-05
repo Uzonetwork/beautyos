@@ -21,10 +21,15 @@ const TABS = [
   { id: 'settings',  label: 'Settings',  Icon: Settings  },
 ];
 
+function normaliseNgPhone(raw) {
+  let d = (raw ?? '').replace(/\D/g, '');
+  if (d.startsWith('234')) d = d.slice(3);
+  if (d.startsWith('0'))   d = d.slice(1);
+  return d ? '234' + d : '';
+}
+
 function buildClientWhatsAppUrl(phone, status, booking) {
-  // Strip all non-digits, then replace a leading 0 with the Nigeria country code.
-  let number = (phone ?? '').replace(/\D/g, '');
-  if (number.startsWith('0')) number = '234' + number.slice(1);
+  const number = normaliseNgPhone(phone);
   if (!number) return null;
 
   const { client_name, service_name, date, time, ampm } = booking;

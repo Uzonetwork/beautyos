@@ -512,15 +512,24 @@
 .lp-price-row {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-bottom: 8px;
+}
+
+.lp-price-strikethrough {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  color: #7AAE90;
+  text-decoration: line-through;
+  text-decoration-color: rgba(122, 174, 144, 0.6);
 }
 
 .lp-price-amount {
   font-family: 'Cormorant Garamond', serif;
   font-size: 52px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #F5C842;
   line-height: 1;
 }
 

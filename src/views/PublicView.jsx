@@ -131,10 +131,20 @@ function ownerBio(type, ownerName, bizName) {
   }
 }
 
+/**
+ * Normalise any Nigerian phone number to the wa.me format (no +, with 234 prefix).
+ * Handles: 07012…, 7012…, 2347012…, +2347012…
+ */
+function formatNigerianWhatsApp(raw) {
+  let digits = (raw ?? '').replace(/\D/g, ''); // strip +, spaces, dashes
+  if (!digits) return '';
+  if (digits.startsWith('234'))  digits = digits.slice(3);  // remove existing country code
+  if (digits.startsWith('0'))    digits = digits.slice(1);  // remove local leading zero
+  return '234' + digits;
+}
+
 function buildWhatsAppUrl(whatsapp, submittedForm) {
-  // Strip everything that isn't a digit. wa.me requires the full international
-  // number with country code and no leading +.
-  const number = (whatsapp ?? '').replace(/\D/g, '');
+  const number = formatNigerianWhatsApp(whatsapp);
   if (!number) return null;
 
   const { client_name, client_phone, service_name, date, time, ampm, notes } = submittedForm;
@@ -379,7 +389,7 @@ export default function PublicView({
   // Show unavailable page for expired / inactive subscriptions on public-facing view.
   // Owners viewing their own page skip this gate so they can still see what clients see.
   if (business && !isOwner && !isSubscriptionActive(business)) {
-    const waNumber = (business.whatsapp ?? '').replace(/\D/g, '');
+    const waNumber = formatNigerianWhatsApp(business.whatsapp);
     return (
       <div style={{ minHeight: '100vh', background: '#0A2E1A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', fontFamily: "'DM Sans', sans-serif", textAlign: 'center' }}>
         <div style={{ width: 48, height: 48, background: '#F5C842', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 900, color: '#0A2E1A', marginBottom: 24 }}>S</div>
