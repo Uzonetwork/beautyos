@@ -114,6 +114,9 @@ export async function signUp(email, password, businessData) {
       business_type:        businessData.businessType,
       tagline:              businessData.tagline  ?? '',
       whatsapp:             businessData.whatsapp ?? '',
+      address:              businessData.address  ?? null,
+      city:                 businessData.city     ?? null,
+      state:                businessData.state    ?? null,
       service_categories:   categories,
       custom_business_type: businessData.customBusinessType ?? null,
     })

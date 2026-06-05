@@ -310,3 +310,51 @@
 .od-settings-save-btn { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--t-btn-text); background: var(--t-btn-bg); border: none; border-radius: 4px; padding: 10px 22px; cursor: pointer; transition: opacity 0.15s; }
 .od-settings-save-btn:hover:not(:disabled) { opacity: 0.88; }
 .od-settings-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .od-content { padding: 0 16px; }
+  .od-main    { padding: 24px 0 56px; }
+
+  /* Stats: single column */
+  .od-stats-row { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Booking cards: comfortable spacing */
+  .od-booking-card { padding: 14px 14px; }
+  .od-booking-name { font-size: 13px; }
+
+  /* Action buttons: larger tap targets */
+  .od-action-btn { min-height: 36px; padding: 6px 12px; }
+
+  /* Save button: full width on narrow screens */
+  .od-settings-save-btn { width: 100%; justify-content: center; min-height: 44px; }
+
+  /* Services add form: stack inputs */
+  .od-add-form { flex-direction: column; }
+  .od-add-form-row { flex-direction: column; align-items: stretch; }
+  .od-input--price { width: 100%; }
+
+  /* Panel title: smaller */
+  .od-panel-title { font-size: 22px; }
+}
+
+@media (max-width: 480px) {
+  /* Header: tighter */
+  .od-header-top { padding: 0 14px; }
+  .od-tabs-bar   { padding: 0 14px; }
+
+  /* Tab labels: hide text on very small screens, show only icons */
+  .od-tab { padding: 0 10px; font-size: 12px; gap: 4px; }
+
+  /* Booking card: prevent text overflow */
+  .od-booking-info { font-size: 12px; }
+  .od-booking-phone { font-size: 11px; }
+
+  /* Gallery: already 2 columns — keep */
+
+  /* Settings card: no horizontal padding waste */
+  .od-settings-card { padding: 20px 16px; }
+
+  /* Inputs: min 44px tap target */
+  .od-input, .od-select { min-height: 44px; }
+}

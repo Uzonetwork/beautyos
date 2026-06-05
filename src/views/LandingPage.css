@@ -587,11 +587,31 @@
   color: #4CAF72;
 }
 
+.lp-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-footer-legal-link {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #4CAF72;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.lp-footer-legal-link:hover { opacity: 0.7; }
+
+.lp-footer-legal-sep {
+  color: rgba(122, 174, 144, 0.4);
+  font-size: 13px;
+}
+
 .lp-footer-copy {
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   color: rgba(122, 174, 144, 0.5);
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
@@ -626,6 +646,40 @@
   .lp-pricing-card {
     padding: 36px 24px;
   }
+}
+
+@media (max-width: 480px) {
+  /* Nav */
+  .lp-nav-inner { padding: 0 14px; height: 52px; }
+  .lp-nav-login { font-size: 12px; padding: 6px 8px; }
+  .lp-nav-cta   { font-size: 12px; padding: 6px 12px; }
+
+  /* Hero */
+  .lp-hero-inner { padding: 40px 16px 32px; gap: 28px; }
+  .lp-hero-title { font-size: 32px; }
+  .lp-hero-sub   { font-size: 14px; }
+  .lp-hero-ctas  { flex-direction: column; }
+  .lp-btn-primary, .lp-btn-ghost { width: 100%; justify-content: center; }
+
+  /* Card stack — must not overflow viewport */
+  .lp-card-stack-inner { width: min(224px, 80vw); height: 280px; }
+  .lp-stack-card       { width: min(224px, 80vw); }
+
+  /* Features */
+  .lp-section-title { font-size: 26px; }
+  .lp-section-inner { padding: 0 16px; }
+
+  /* Types */
+  .lp-types-row  { gap: 6px; }
+  .lp-type-item  { min-width: 80px; padding: 14px 10px; }
+  .lp-type-label { font-size: 11px; }
+
+  /* Pricing */
+  .lp-pricing-card { padding: 32px 20px; }
+  .lp-price-amount { font-size: 40px; }
+
+  /* Footer */
+  .lp-footer-links { flex-direction: column; gap: 6px; }
 }
 
 @media (max-width: 400px) {

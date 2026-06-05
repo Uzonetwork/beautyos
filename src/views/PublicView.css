@@ -262,3 +262,39 @@
 .pv-footer-copy { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--t-footer-text); letter-spacing: 0.2px; }
 .pv-owner-link { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; color: var(--t-footer-text); opacity: 0.5; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; transition: opacity 0.2s ease; }
 .pv-owner-link:hover { opacity: 1; }
+
+/* ─── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pv-inner { padding: 0 16px; }
+  .pv-section { padding: 52px 0; }
+  .pv-hero { padding: 56px 0 44px; }
+  .pv-hero-title { font-size: clamp(28px, 8vw, 42px); }
+}
+
+@media (max-width: 480px) {
+  /* Services: single column on small phones */
+  .pv-services-grid { grid-template-columns: 1fr; }
+
+  /* Gallery: 2 columns (3 is too small) */
+  .pv-gallery-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Section sizing */
+  .pv-section-title { font-size: 28px; }
+  .pv-section { padding: 40px 0; }
+  .pv-hero { padding: 44px 0 36px; }
+
+  /* Form inputs: tall enough to tap */
+  .pv-input, .pv-select, .pv-textarea { min-height: 44px; }
+  .pv-btn-submit { min-height: 52px; font-size: 15px; }
+  .pv-btn-primary { min-height: 48px; padding: 12px 24px; }
+
+  /* Profile section: prevent long names overflowing */
+  .pv-profile-name { font-size: 24px; word-break: break-word; }
+
+  /* Stats: smaller text ok */
+  .pv-stat-value { font-size: 26px; }
+
+  /* Booking success card */
+  .pv-success-card { padding: 32px 20px 28px; }
+  .pv-success-title { font-size: 24px; }
+}

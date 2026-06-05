@@ -184,6 +184,15 @@
   transition: border-color 0.2s;
 }
 
+/* State dropdown — keeps native arrow, overrides just colours */
+.sv-select {
+  -webkit-appearance: auto;
+  appearance: auto;
+  cursor: pointer;
+  color: #FFFFFF;
+}
+.sv-select option { color: #FFFFFF; background: #0A2E1A; }
+
 .sv-input::placeholder {
   color: rgba(122, 174, 144, 0.6);
 }
@@ -262,6 +271,15 @@
 }
 
 .sv-link:hover { color: #3d9e5e; }
+
+.sv-terms-note {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(122, 174, 144, 0.65);
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.5;
+}
 
 /* ── Business type groups ───────────────────────────────────── */
 .sv-type-group {
@@ -439,8 +457,29 @@
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .sv-card { padding: 32px 20px; }
+  .sv-root { padding: 20px 12px 48px; }
+  .sv-card { padding: 28px 16px; }
   .sv-type-grid { grid-template-columns: 1fr 1fr; }
   .sv-step-label { display: none; }
   .sv-step-label--active { display: none; }
+
+  /* Ensure comfortable tap targets */
+  .sv-input { min-height: 44px; }
+  .sv-btn-next { min-height: 48px; font-size: 15px; }
+
+  /* Step circles: don't overflow */
+  .sv-step-circle { width: 24px; height: 24px; font-size: 11px; }
+  .sv-step-line   { margin: 0 4px; }
+
+  /* Type cards: comfortable on mobile */
+  .sv-type-card { padding: 12px 10px; gap: 4px; }
+  .sv-type-icon { width: 30px; height: 30px; }
+  .sv-type-label { font-size: 12px; }
+  .sv-type-desc  { font-size: 10px; }
+
+  /* Title sizes */
+  .sv-title { font-size: 24px; }
+
+  /* Keep progress bar from overflowing */
+  .sv-progress { gap: 0; overflow: hidden; }
 }

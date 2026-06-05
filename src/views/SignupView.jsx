@@ -144,6 +144,11 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
   const [whatsapp, setWhatsapp] = useState('');
   const [step1Errors, setStep1Errors] = useState({});
 
+  // Step 1 — extra fields
+  const [address, setAddress]   = useState('');
+  const [city, setCity]         = useState('');
+  const [state, setState]       = useState('');
+
   // Step 2
   const [businessType, setBusinessType] = useState(null);
   const [customBusinessType, setCustomBusinessType] = useState('');
@@ -204,6 +209,9 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
         ownerName:          ownerName.trim(),
         businessType,
         whatsapp:           whatsapp.trim(),
+        address:            address.trim() || null,
+        city:               city.trim()    || null,
+        state:              state          || null,
         customBusinessType: businessType === 'other_professional' ? customBusinessType.trim() : undefined,
       });
       setSuccess(true);
@@ -290,6 +298,50 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
                   value={whatsapp}
                   onChange={e => setWhatsapp(e.target.value)}
                 />
+              </div>
+
+              <div className="sv-field">
+                <label className="sv-label">
+                  Business Address <span className="sv-label-opt">(optional)</span>
+                </label>
+                <input
+                  className="sv-input"
+                  placeholder="e.g. 15 Admiralty Way, Lekki Phase 1"
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                />
+              </div>
+
+              <div className="sv-field">
+                <label className="sv-label">
+                  City <span className="sv-label-opt">(optional)</span>
+                </label>
+                <input
+                  className="sv-input"
+                  placeholder="e.g. Lagos, Abuja, Port Harcourt"
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                />
+              </div>
+
+              <div className="sv-field">
+                <label className="sv-label">
+                  State <span className="sv-label-opt">(optional)</span>
+                </label>
+                <select
+                  className="sv-input sv-select"
+                  value={state}
+                  onChange={e => setState(e.target.value)}
+                >
+                  <option value="">Select your state</option>
+                  {['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+                    'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
+                    'Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa',
+                    'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
+                    'Yobe','Zamfara'].map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
 
               <button className="sv-btn-next" onClick={nextFromStep1}>
@@ -474,6 +526,12 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
                   {loading && <Loader2 size={15} className="sv-spin" />}
                   {loading ? 'Creating your account...' : 'Create Account & Go to Dashboard'}
                 </button>
+                <p className="sv-terms-note">
+                  By signing up you agree to our{' '}
+                  <a href="/#/terms" className="sv-link" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+                  {' '}and{' '}
+                  <a href="/#/privacy" className="sv-link" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+                </p>
               </form>
             )}
           </div>

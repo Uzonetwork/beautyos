@@ -9,6 +9,7 @@ import PublicView      from './views/PublicView';
 import OwnerDashboard  from './views/OwnerDashboard';
 import AdminDashboard  from './views/AdminDashboard';
 import PaymentView     from './views/PaymentView';
+import LegalView       from './views/LegalView';
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -54,6 +55,8 @@ export default function App() {
     function onPopState() {
       const hash = window.location.hash.slice(1);
       if (hash === '/admin')    { setView('admin');                                   return; }
+      if (hash === '/terms')    { setView('terms');                                   return; }
+      if (hash === '/privacy')  { setView('privacy');                                 return; }
       if (hash === 'signup')    { setView('signup');                                  return; }
       if (hash === 'login')     { setView('login');                                   return; }
       if (hash === 'payment')   { setView(authBusiness ? 'payment'    : 'landing');  return; }
@@ -83,8 +86,10 @@ export default function App() {
 
       const hash = window.location.hash.slice(1);
 
-      // Admin route — has its own password gate, skip all auth checks
-      if (hash === '/admin') { setView('admin'); return; }
+      // Admin + legal routes — no auth needed
+      if (hash === '/admin')   { setView('admin');   return; }
+      if (hash === '/terms')   { setView('terms');   return; }
+      if (hash === '/privacy') { setView('privacy'); return; }
 
       // Public routes — no auth needed on refresh
       if (hash === 'signup') { setView('signup'); return; }
@@ -110,12 +115,11 @@ export default function App() {
     init();
   }, []);
 
-  // ── Admin: synchronous hash check — runs on the very first render, before
-  // the async init() resolves, so no loading flash on the deployed site.
-  // All hooks are already declared above, so this early return is safe.
-  if (window.location.hash === '#/admin') {
-    return <AdminDashboard />;
-  }
+  // ── Synchronous hash checks — run before async init() resolves.
+  // All hooks are declared above, so these early returns are safe.
+  if (window.location.hash === '#/admin')   return <AdminDashboard />;
+  if (window.location.hash === '#/terms')   return <LegalView page="terms" />;
+  if (window.location.hash === '#/privacy') return <LegalView page="privacy" />;
 
   // ── Loading splash ──────────────────────────────────────────────────────────
   if (view === 'loading') {
@@ -249,9 +253,9 @@ export default function App() {
   }
 
   // ── Admin dashboard (own password gate, no Supabase auth required) ─────────
-  if (view === 'admin') {
-    return <AdminDashboard />;
-  }
+  if (view === 'admin')   return <AdminDashboard />;
+  if (view === 'terms')   return <LegalView page="terms" />;
+  if (view === 'privacy') return <LegalView page="privacy" />;
 
   return null;
 }

@@ -407,6 +407,11 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
           <p className="lp-footer-tagline">
             The professional platform for skilled businesses in Nigeria
           </p>
+          <div className="lp-footer-links">
+            <a href="/#/terms" className="lp-footer-legal-link">Terms of Service</a>
+            <span className="lp-footer-legal-sep">·</span>
+            <a href="/#/privacy" className="lp-footer-legal-link">Privacy Policy</a>
+          </div>
           <p className="lp-footer-copy">© 2026 Sabi</p>
         </div>
       </footer>

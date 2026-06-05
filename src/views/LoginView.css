@@ -158,3 +158,12 @@
 }
 
 .lv-link:hover { color: #3d9e5e; }
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .lv-root { padding: 16px; align-items: flex-start; padding-top: 40px; }
+  .lv-card { padding: 32px 20px 28px; border-radius: 10px; }
+  .lv-input { min-height: 44px; }
+  .lv-btn   { min-height: 48px; font-size: 15px; }
+  .lv-title { font-size: 26px; }
+}
