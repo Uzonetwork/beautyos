@@ -80,6 +80,16 @@ const TYPE_COLORS = {
   other_professional: { bg: 'rgba(45,27,27,0.08)',    color: 'rgba(45,27,27,0.5)' },
 };
 
+// ── Business type display ─────────────────────────────────────────────────────
+
+function subBadgeStyle(status, expiresAt) {
+  const active = status === 'active' && expiresAt && new Date(expiresAt) > new Date();
+  const expired = status === 'active' && expiresAt && new Date(expiresAt) <= new Date();
+  if (active)  return { bg: 'rgba(22,163,74,0.12)',  color: '#4CAF72',  label: 'ACTIVE'   };
+  if (expired) return { bg: 'rgba(201,68,68,0.1)',   color: '#f87171',  label: 'EXPIRED'  };
+  return             { bg: 'rgba(122,174,144,0.08)', color: '#7AAE90',  label: 'INACTIVE' };
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, accent }) {
@@ -179,6 +189,7 @@ export default function AdminDashboard() {
         bookingCountRes,
         clientCountRes,
         monthBizRes,
+        activeSubsRes,
         bizDataRes,
         bizBookingIdsRes,
         recentBkgRes,
@@ -190,6 +201,7 @@ export default function AdminDashboard() {
         DB.from('bookings').select('*',   { count: 'exact', head: true }),
         DB.from('clients').select('*',    { count: 'exact', head: true }),
         DB.from('businesses').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+        DB.from('businesses').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active').gt('plan_expires_at', now.toISOString()),
         DB.from('businesses').select('*').order('created_at', { ascending: false }),
         DB.from('bookings').select('business_id'),
         DB.from('bookings')
@@ -230,6 +242,7 @@ export default function AdminDashboard() {
         totalBookings: bookingCountRes.count  ?? 0,
         totalClients:  clientCountRes.count   ?? 0,
         monthBiz:      monthBizRes.count      ?? 0,
+        activeSubs:    activeSubsRes.count    ?? 0,
       });
 
       setBusinesses((bizDataRes.data ?? []).map(b => ({
@@ -317,6 +330,7 @@ export default function AdminDashboard() {
               <div style={S.statsGrid}>
                 <StatCard label="Total Businesses"        value={stats?.totalBiz      ?? '—'} />
                 <StatCard label="New This Month"          value={stats?.monthBiz      ?? '—'} accent />
+                <StatCard label="Active Paid Subscribers" value={stats?.activeSubs    ?? '—'} accent />
                 <StatCard label="Total Bookings (All)"    value={stats?.totalBookings ?? '—'} />
                 <StatCard label="Total Clients (All)"     value={stats?.totalClients  ?? '—'} />
               </div>
@@ -344,6 +358,7 @@ export default function AdminDashboard() {
                       <Th>Business Name</Th>
                       <Th>Owner Email</Th>
                       <Th>Type</Th>
+                      <Th>Status</Th>
                       <Th>WhatsApp</Th>
                       <Th right>Bookings</Th>
                       <Th right>Registered</Th>
@@ -351,8 +366,10 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {filtered.length === 0 ? (
-                      <tr><td colSpan={6} style={S.emptyCell}>No results</td></tr>
-                    ) : filtered.map(b => (
+                      <tr><td colSpan={7} style={S.emptyCell}>No results</td></tr>
+                    ) : filtered.map(b => {
+                      const sub = subBadgeStyle(b.subscription_status, b.plan_expires_at);
+                      return (
                       <tr key={b.id} style={S.tr}>
                         <td style={{ ...S.td, ...S.tdStrong }}>{b.name || '—'}</td>
                         <td style={S.td}>{b.email}</td>
@@ -367,11 +384,17 @@ export default function AdminDashboard() {
                             </span>
                           ) : '—'}
                         </td>
+                        <td style={S.td}>
+                          <span style={{ ...S.typeTag, background: sub.bg, color: sub.color }}>
+                            {sub.label}
+                          </span>
+                        </td>
                         <td style={S.td}>{b.whatsapp || '—'}</td>
                         <td style={{ ...S.td, ...S.tdNum }}>{b.booking_count}</td>
                         <td style={{ ...S.td, ...S.tdNum }}>{fmtTimestamp(b.created_at)}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

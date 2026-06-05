@@ -15,6 +15,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
 import { applyThemeStyle } from '../lib/getBusinessTheme';
+import { isSubscriptionActive } from '../lib/payments';
 import './PublicView.css';
 
 // ── Business-type display helpers ─────────────────────────────────────────────
@@ -177,6 +178,7 @@ export default function PublicView({
 
   const [sessionUserId, setSessionUserId] = useState(null);
   const [business, setBusiness] = useState(null);
+  const [loadingBiz, setLoadingBiz] = useState(true);
   const [services, setServices] = useState([]);
   const [gallery, setGallery] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(true);
@@ -208,12 +210,23 @@ export default function PublicView({
 
   useEffect(() => {
     async function loadAll() {
+      // Reset all data immediately so stale content from a previous business
+      // is never visible while the new fetch is in flight.
+      setBusiness(null);
+      setServices([]);
+      setGallery([]);
+      setServicesLoading(true);
+      setGalleryLoading(true);
+      setLoadingBiz(true);
+
       // Fetch the business — by id if provided, otherwise the first row
       const bizQuery = propBusinessId
-        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type').eq('id', propBusinessId).single()
-        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type').limit(1).single();
+        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type, subscription_status, plan_expires_at').eq('id', propBusinessId).single()
+        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type, subscription_status, plan_expires_at').limit(1).single();
 
       const { data: biz } = await bizQuery;
+      setLoadingBiz(false); // fetch complete — blank screen ends here
+
       if (!biz) {
         setServicesLoading(false);
         setGalleryLoading(false);
@@ -355,8 +368,44 @@ export default function PublicView({
 
   const isActualOwner = !!sessionUserId && !!business && business.user_id === sessionUserId;
 
+  // Suppress all rendering until the business fetch resolves.
+  // Returning null here prevents the hardcoded fallback text (old demo data)
+  // from flashing before the real business data arrives.
+  if (loadingBiz) return null;
+
   const themeStyle = applyThemeStyle(business?.business_type ?? 'other');
   /* themeStyle now applies --t-* CSS variables used by PublicView.css */
+
+  // Show unavailable page for expired / inactive subscriptions on public-facing view.
+  // Owners viewing their own page skip this gate so they can still see what clients see.
+  if (business && !isOwner && !isSubscriptionActive(business)) {
+    const waNumber = (business.whatsapp ?? '').replace(/\D/g, '');
+    return (
+      <div style={{ minHeight: '100vh', background: '#0A2E1A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', fontFamily: "'DM Sans', sans-serif", textAlign: 'center' }}>
+        <div style={{ width: 48, height: 48, background: '#F5C842', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 900, color: '#0A2E1A', marginBottom: 24 }}>S</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 500, color: '#fff', marginBottom: 12 }}>
+          {business.name}
+        </h1>
+        <p style={{ fontSize: 16, color: '#7AAE90', marginBottom: 8, fontWeight: 500 }}>
+          This business is temporarily unavailable
+        </p>
+        <p style={{ fontSize: 14, color: 'rgba(122,174,144,0.7)', marginBottom: 32, maxWidth: 320, lineHeight: 1.6 }}>
+          Check back soon or contact them directly.
+        </p>
+        {waNumber && (
+          <a
+            href={`https://wa.me/${waNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#25D366', color: '#fff', fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, padding: '12px 24px', borderRadius: 6, textDecoration: 'none' }}
+          >
+            Contact on WhatsApp
+          </a>
+        )}
+        <p style={{ fontSize: 12, color: 'rgba(122,174,144,0.4)', marginTop: 48 }}>Powered by Sabi</p>
+      </div>
+    );
+  }
 
   return (
     <div className="pv-root" style={themeStyle}>
@@ -394,10 +443,10 @@ export default function PublicView({
         <div className="pv-inner">
           <p className="pv-eyebrow">Welcome to</p>
           <h1 className="pv-hero-title">
-            {business?.name ?? 'CFO Nails & Lash Studio'}
+            {business?.name}
           </h1>
           <p className="pv-hero-tagline">
-            {business?.tagline ?? 'Nail Technician & Lash Artist · Lagos, Nigeria'}
+            {business?.tagline}
           </p>
           <button className="pv-btn-primary" onClick={scrollToBooking}>
             Book an Appointment

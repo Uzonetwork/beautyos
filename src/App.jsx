@@ -8,6 +8,7 @@ import LoginView       from './views/LoginView';
 import PublicView      from './views/PublicView';
 import OwnerDashboard  from './views/OwnerDashboard';
 import AdminDashboard  from './views/AdminDashboard';
+import PaymentView     from './views/PaymentView';
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -16,6 +17,7 @@ const VIEW_TO_HASH = {
   landing:      '',
   signup:       'signup',
   login:        'login',
+  payment:      'payment',
   dashboard:    'dashboard',
   'public-own': 'page',
 };
@@ -54,6 +56,7 @@ export default function App() {
       if (hash === '/admin')    { setView('admin');                                   return; }
       if (hash === 'signup')    { setView('signup');                                  return; }
       if (hash === 'login')     { setView('login');                                   return; }
+      if (hash === 'payment')   { setView(authBusiness ? 'payment'    : 'landing');  return; }
       if (hash === 'dashboard') { setView(authBusiness ? 'dashboard'  : 'landing');  return; }
       if (hash === 'page')      { setView(authBusiness ? 'public-own' : 'landing');  return; }
       setView(authBusiness ? 'public-own' : 'landing');
@@ -134,7 +137,7 @@ export default function App() {
     );
   }
 
-  // ── Sign up — on success go to owner's public page with welcome banner ──────
+  // ── Sign up — on success go to payment wall ────────────────────────────────
   if (view === 'signup') {
     return (
       <SignupView
@@ -151,10 +154,22 @@ export default function App() {
             business_type: biz?.business_type,
           });
           setAuthBusiness(biz);
+          navigateTo('payment');
+        }}
+        onLogin={() => navigateTo('login')}
+      />
+    );
+  }
+
+  // ── Payment wall — after signup, before first dashboard access ──────────────
+  if (view === 'payment' && authBusiness) {
+    return (
+      <PaymentView
+        business={authBusiness}
+        onSuccess={() => {
           setShowWelcomeBanner(true);
           navigateTo('public-own');
         }}
-        onLogin={() => navigateTo('login')}
       />
     );
   }

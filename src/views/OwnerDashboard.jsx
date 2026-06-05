@@ -8,6 +8,9 @@ import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
 import { applyThemeStyle } from '../lib/getBusinessTheme';
 import SabiLogo from '../components/SabiLogo';
+import { openPaystackPopup } from '../components/PaystackPayment';
+import { activateSubscription, isSubscriptionActive, daysUntilExpiry } from '../lib/payments';
+import { PRICING } from '../config/pricing';
 import './OwnerDashboard.css';
 
 const TABS = [
@@ -108,6 +111,13 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   // ── Business type (drives category options) ──────────────
   const [businessType, setBusinessType] = useState('other');
 
+  // ── Subscription ─────────────────────────────────────────
+  const [subStatus, setSubStatus]       = useState('inactive');
+  const [subExpiresAt, setSubExpiresAt] = useState(null);
+  const [bizLoaded, setBizLoaded]       = useState(false); // true once business row is fetched
+  const [ownerEmail, setOwnerEmail]     = useState('');
+  const [renewalLoading, setRenewalLoading] = useState(false);
+
   // ── UI state ─────────────────────────────────────────────
   const [showEarningsHistory, setShowEarningsHistory] = useState(false);
 
@@ -161,6 +171,52 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     .filter(b => b.date === today)
     .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
+  // ── Owner email (needed for Paystack) ───────────────────
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) setOwnerEmail(session.user.email);
+    });
+  }, []);
+
+  // ── Subscription helpers ─────────────────────────────────
+  // Guard with bizLoaded so the overlay/banner never appears before the
+  // business row has been fetched — otherwise subStatus starts 'inactive'
+  // and the "plan expired" modal flashes on every dashboard load.
+  const subBizSnap = { subscription_status: subStatus, plan_expires_at: subExpiresAt };
+  const subActive  = isSubscriptionActive(subBizSnap);
+  const daysLeft   = daysUntilExpiry(subBizSnap);
+  const showRenewalBanner  = bizLoaded && subActive && daysLeft <= 7;
+  const showExpiredOverlay = bizLoaded && !subActive;
+
+  async function handleRenew() {
+    if (!businessId || !ownerEmail) return;
+    setRenewalLoading(true);
+    openPaystackPopup({
+      email:      ownerEmail,
+      businessId,
+      onSuccess: async (response) => {
+        try {
+          await activateSubscription(businessId, response.reference);
+          // Refresh subscription state
+          const { data: biz } = await supabase
+            .from('businesses')
+            .select('subscription_status, plan_expires_at')
+            .eq('id', businessId)
+            .single();
+          if (biz) {
+            setSubStatus(biz.subscription_status ?? 'inactive');
+            setSubExpiresAt(biz.plan_expires_at ?? null);
+          }
+        } catch (err) {
+          console.error('[OwnerDashboard] renewal activation failed:', err);
+        } finally {
+          setRenewalLoading(false);
+        }
+      },
+      onClose: () => setRenewalLoading(false),
+    });
+  }
+
   // ── Load & subscribe ─────────────────────────────────────
   useEffect(() => {
     if (!businessId) return;
@@ -171,7 +227,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         supabase.from('services').select('*').eq('business_id', businessId).order('category').order('name'),
         supabase.from('clients').select('*').eq('business_id', businessId).order('visit_count', { ascending: false }),
         supabase.from('gallery').select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
-        supabase.from('businesses').select('avatar_url, business_type, name, owner_name, tagline, whatsapp, pin').eq('id', businessId).single(),
+        supabase.from('businesses').select('avatar_url, business_type, name, owner_name, tagline, whatsapp, pin, subscription_status, plan_expires_at').eq('id', businessId).single(),
       ]);
       setBookings(bRes.data || []);
       setBookingsLoading(false);
@@ -196,6 +252,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
           whatsapp:   biz.whatsapp   ?? '',
           pin:        biz.pin        ?? '',
         });
+        setSubStatus(biz.subscription_status ?? 'inactive');
+        setSubExpiresAt(biz.plan_expires_at ?? null);
+        setBizLoaded(true); // subscription state is now accurate; safe to show overlay/banner
       }
     }
 
@@ -455,6 +514,66 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   // ── Render ────────────────────────────────────────────────
   return (
     <div className="od-root" style={applyThemeStyle(businessType)}>
+
+      {/* ── Expired subscription overlay ─────────────────────── */}
+      {showExpiredOverlay && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 300,
+          background: 'rgba(10,46,26,0.97)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '24px 16px', fontFamily: "'DM Sans', sans-serif",
+        }}>
+          <div style={{
+            width: '100%', maxWidth: 400,
+            background: '#0F3D22', border: '1px solid rgba(76,175,114,0.2)',
+            borderRadius: 12, padding: '36px 32px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0,
+          }}>
+            <SabiLogo size="md" dark={true} />
+            <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 500, color: '#fff', textAlign: 'center', marginTop: 20, marginBottom: 10 }}>
+              Your Sabi plan has expired
+            </h2>
+            <p style={{ fontSize: 14, color: '#7AAE90', textAlign: 'center', marginBottom: 24, lineHeight: 1.6 }}>
+              Renew now to reactivate your booking page and continue accepting bookings.
+            </p>
+            <div style={{ width: '100%', background: '#0A2E1A', border: '1px solid rgba(76,175,114,0.15)', borderRadius: 8, padding: '20px', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 13, color: '#7AAE90', textDecoration: 'line-through' }}>₦{PRICING.fullPrice.toLocaleString()}/yr</span>
+                <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, fontWeight: 600, color: '#F5C842' }}>₦{PRICING.promoPrice.toLocaleString()}<span style={{ fontSize: 14, color: '#7AAE90', fontFamily: "'DM Sans',sans-serif", fontWeight: 400 }}>/yr</span></span>
+              </div>
+              <p style={{ fontSize: 11, color: '#7AAE90', margin: 0 }}>{PRICING.promoNote}</p>
+            </div>
+            <button
+              style={{ width: '100%', background: '#F5C842', color: '#0A2E1A', fontFamily: "'DM Sans',sans-serif", fontSize: 15, fontWeight: 700, padding: '14px', border: 'none', borderRadius: 6, cursor: renewalLoading ? 'not-allowed' : 'pointer', opacity: renewalLoading ? 0.7 : 1 }}
+              onClick={handleRenew}
+              disabled={renewalLoading}
+            >
+              {renewalLoading ? 'Opening payment…' : `Renew for ₦${PRICING.promoPrice.toLocaleString()}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Expiring-soon renewal banner ─────────────────────── */}
+      {showRenewalBanner && (
+        <div style={{
+          background: '#F5C842', padding: '11px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+          fontFamily: "'DM Sans', sans-serif", flexWrap: 'wrap',
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: '#0A2E1A', margin: 0 }}>
+            ⚠️ Your Sabi plan expires in <strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong> — Renew now to keep your booking page live.
+          </p>
+          <button
+            style={{ background: '#0A2E1A', color: '#F5C842', fontFamily: "'DM Sans',sans-serif", fontSize: 12, fontWeight: 700, padding: '6px 16px', border: 'none', borderRadius: 4, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            onClick={handleRenew}
+            disabled={renewalLoading}
+          >
+            {renewalLoading ? 'Opening…' : 'Renew Now'}
+          </button>
+        </div>
+      )}
+
       <header className="od-header">
         <div className="od-header-top">
           <button className="od-brand" onClick={onViewPublicPage}>

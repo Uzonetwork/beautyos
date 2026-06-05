@@ -207,7 +207,7 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
         customBusinessType: businessType === 'other_professional' ? customBusinessType.trim() : undefined,
       });
       setSuccess(true);
-      setTimeout(() => onSuccess(business), 1200);
+      setTimeout(() => onSuccess(business, email.trim()), 1200);
     } catch (err) {
       setSubmitError(err.message || 'Sign up failed. Please try again.');
     } finally {
