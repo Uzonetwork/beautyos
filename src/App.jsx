@@ -10,6 +10,7 @@ import OwnerDashboard  from './views/OwnerDashboard';
 import AdminDashboard  from './views/AdminDashboard';
 import PaymentView     from './views/PaymentView';
 import LegalView       from './views/LegalView';
+import MarketplaceView from './views/MarketplaceView';
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -20,7 +21,8 @@ const VIEW_TO_HASH = {
   login:        'login',
   payment:      'payment',
   dashboard:    'dashboard',
-  'public-own': 'page',
+  'public-own':  'page',
+  marketplace:   '/marketplace',
 };
 
 export default function App() {
@@ -54,9 +56,10 @@ export default function App() {
   useEffect(() => {
     function onPopState() {
       const hash = window.location.hash.slice(1);
-      if (hash === '/admin')    { setView('admin');                                   return; }
-      if (hash === '/terms')    { setView('terms');                                   return; }
-      if (hash === '/privacy')  { setView('privacy');                                 return; }
+      if (hash === '/admin')       { setView('admin');       return; }
+      if (hash === '/terms')       { setView('terms');       return; }
+      if (hash === '/privacy')     { setView('privacy');     return; }
+      if (hash === '/marketplace') { setView('marketplace'); return; }
       if (hash === 'signup')    { setView('signup');                                  return; }
       if (hash === 'login')     { setView('login');                                   return; }
       if (hash === 'payment')   { setView(authBusiness ? 'payment'    : 'landing');  return; }
@@ -86,10 +89,11 @@ export default function App() {
 
       const hash = window.location.hash.slice(1);
 
-      // Admin + legal routes — no auth needed
-      if (hash === '/admin')   { setView('admin');   return; }
-      if (hash === '/terms')   { setView('terms');   return; }
-      if (hash === '/privacy') { setView('privacy'); return; }
+      // Admin + legal + marketplace routes — no auth needed
+      if (hash === '/admin')       { setView('admin');       return; }
+      if (hash === '/terms')       { setView('terms');       return; }
+      if (hash === '/privacy')     { setView('privacy');     return; }
+      if (hash === '/marketplace') { setView('marketplace'); return; }
 
       // Public routes — no auth needed on refresh
       if (hash === 'signup') { setView('signup'); return; }
@@ -134,9 +138,10 @@ export default function App() {
   if (view === 'landing') {
     return (
       <LandingPage
-        onGetStarted={() => { track('signup_started'); navigateTo('signup'); }}
-        onSeeDemo={()    => navigateTo('demo')}
-        onLogin={()      => navigateTo('login')}
+        onGetStarted={()   => { track('signup_started'); navigateTo('signup'); }}
+        onSeeDemo={()      => navigateTo('demo')}
+        onLogin={()        => navigateTo('login')}
+        onMarketplace={()  => navigateTo('marketplace')}
       />
     );
   }
@@ -248,6 +253,15 @@ export default function App() {
           setShowWelcomeBanner(false);
           navigateTo('landing');
         }}
+      />
+    );
+  }
+
+  // ── Marketplace (public, no auth required) ─────────────────────────────────
+  if (view === 'marketplace') {
+    return (
+      <MarketplaceView
+        onBack={() => navigateTo('landing')}
       />
     );
   }

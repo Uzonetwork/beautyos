@@ -21,6 +21,29 @@ export function getBusinessTheme(businessType) {
   return PROFESSION_THEMES[businessType] ?? PROFESSION_THEMES['other_professional'];
 }
 
+const OWNER_BIOS = {
+  nail_studio:        'Manicures, pedicures, gel nails, and nail art.',
+  lash_studio:        'Lash extensions, lifts, and tinting.',
+  spa:                'Massages, facials, and full wellness treatments.',
+  barbershop:         'Precision cuts, beard trims, and styling.',
+  mua:                'Makeup for weddings, photoshoots, and events.',
+  tailor:             'Custom outfits, alterations, and bespoke fashion.',
+  photography:        'Portraits, events, branding, and editorial shoots.',
+  home_services:      'Plumbing, electrical, cleaning, and repairs.',
+  tutor:              'One-on-one lessons and academic coaching.',
+  fitness:            'Personal training, classes, and wellness coaching.',
+  events:             'Event planning, decoration, and MC services.',
+  private_chef:       'Restaurant-quality meals prepared at your location.',
+  content_creator:    'Photos, videos, and creative content for brands.',
+  dj:                 'DJ sets for clubs, weddings, and corporate events.',
+  other_professional: 'Professional services, booked with ease.',
+  other:              'Quality services, every time.',
+};
+
+export function getOwnerBio(businessType) {
+  return OWNER_BIOS[businessType] ?? OWNER_BIOS['other_professional'];
+}
+
 export function applyThemeStyle(businessType) {
   const t = getBusinessTheme(businessType);
   const isDark = t.textDark === '#ffffff';

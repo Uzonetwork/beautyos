@@ -280,7 +280,7 @@ function CardStack() {
 
 // ── Page component ────────────────────────────────────────────────────────────
 
-export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
+export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarketplace }) {
   return (
     <div className="lp-root">
 
@@ -291,6 +291,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
             <SabiLogo size="md" dark={true} />
           </button>
           <div className="lp-nav-actions">
+            <button className="lp-nav-marketplace" onClick={onMarketplace}>Marketplace</button>
             <button className="lp-nav-login" onClick={onLogin}>Log in</button>
             <button className="lp-nav-cta" onClick={onGetStarted}>Get Started</button>
           </div>
@@ -328,7 +329,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
       </section>
 
       {/* ── Features ─────────────────────────────────────────── */}
-      <section className="lp-features">
+      <section className="lp-features" id="lp-features">
         <div className="lp-section-inner">
           <p className="lp-section-eyebrow">What&apos;s included</p>
           <h2 className="lp-section-title">Everything you need to grow</h2>
@@ -367,8 +368,29 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
         </div>
       </section>
 
+      {/* ── Marketplace promo ────────────────────────────────── */}
+      <section className="lp-marketplace">
+        <div className="lp-section-inner">
+          <p className="lp-section-eyebrow">Discover Professionals</p>
+          <h2 className="lp-section-title">Book any skill, any time</h2>
+          <p className="lp-section-sub">
+            From nail artists to private chefs — browse every professional on Sabi
+            and book directly from their page. No middleman, no calls.
+          </p>
+          <div className="lp-mkt-types">
+            {['Nail Studio', 'Photography', 'Tailoring', 'Fitness', 'Events', 'Private Chef', 'DJ', 'MUA'].map(t => (
+              <span key={t} className="lp-mkt-chip">{t}</span>
+            ))}
+          </div>
+          <button className="lp-btn-primary lp-btn-full lp-mkt-cta" onClick={onMarketplace}>
+            Browse Marketplace
+            <ArrowRight size={16} strokeWidth={2} />
+          </button>
+        </div>
+      </section>
+
       {/* ── Pricing ──────────────────────────────────────────── */}
-      <section className="lp-pricing">
+      <section className="lp-pricing" id="lp-pricing">
         <div className="lp-section-inner">
           <p className="lp-section-eyebrow">Pricing</p>
           <h2 className="lp-section-title">Simple, honest pricing</h2>
@@ -401,18 +423,50 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin }) {
       {/* ── Footer ───────────────────────────────────────────── */}
       <footer className="lp-footer">
         <div className="lp-footer-inner">
-          <div className="lp-footer-logo">
+
+          {/* Brand column */}
+          <div className="lp-footer-col lp-footer-col--brand">
             <SabiLogo size="md" dark={true} />
+            <p className="lp-footer-tagline">
+              The booking platform for Nigerian professionals
+            </p>
+            <p className="lp-footer-desc">
+              Get your free booking page, manage clients, and track
+              earnings — all in one place.
+            </p>
+            <div className="lp-footer-socials">
+              <a href="https://instagram.com/sabipro.ng" className="lp-footer-social" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a>
+              <a href="https://tiktok.com/@sabipro.ng"   className="lp-footer-social" target="_blank" rel="noopener noreferrer" aria-label="TikTok">TK</a>
+              <a href="https://x.com/sabipro.ng"         className="lp-footer-social" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter">𝕏</a>
+            </div>
           </div>
-          <p className="lp-footer-tagline">
-            The professional platform for skilled businesses in Nigeria
-          </p>
-          <div className="lp-footer-links">
-            <a href="/#/terms" className="lp-footer-legal-link">Terms of Service</a>
-            <span className="lp-footer-legal-sep">·</span>
-            <a href="/#/privacy" className="lp-footer-legal-link">Privacy Policy</a>
+
+          {/* Product column */}
+          <div className="lp-footer-col">
+            <p className="lp-footer-col-label">Product</p>
+            <ul className="lp-footer-nav">
+              <li><button className="lp-footer-link" onClick={() => document.getElementById('lp-features')?.scrollIntoView({ behavior: 'smooth' })}>How It Works</button></li>
+              <li><button className="lp-footer-link" onClick={() => document.getElementById('lp-pricing')?.scrollIntoView({ behavior: 'smooth' })}>Pricing</button></li>
+              <li><a href="/#/signup" className="lp-footer-link">For Beauty Professionals</a></li>
+              <li><a href="/#/signup" className="lp-footer-link">For All Professionals</a></li>
+            </ul>
           </div>
-          <p className="lp-footer-copy">© 2026 Sabi</p>
+
+          {/* Company column */}
+          <div className="lp-footer-col">
+            <p className="lp-footer-col-label">Company</p>
+            <ul className="lp-footer-nav">
+              <li><a href="/#/terms"   className="lp-footer-link">Terms of Service</a></li>
+              <li><a href="/#/privacy" className="lp-footer-link">Privacy Policy</a></li>
+              <li><a href="mailto:hello@sabi.ng" className="lp-footer-link">Contact Us</a></li>
+            </ul>
+          </div>
+
+        </div>
+
+        {/* Bottom bar */}
+        <div className="lp-footer-bottom">
+          <p className="lp-footer-copy">© 2026 Sabi. All rights reserved.</p>
         </div>
       </footer>
 

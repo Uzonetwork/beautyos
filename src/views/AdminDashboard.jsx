@@ -140,6 +140,7 @@ export default function AdminDashboard() {
   const [loadError, setLoadError]           = useState('');
   const [stats, setStats]                   = useState(null);
   const [businesses, setBusinesses]         = useState([]);
+  const [ratings, setRatings]               = useState({});   // { business_id: { avg, count } }
   const [recentBookings, setRecentBookings] = useState([]);
   const [topServices, setTopServices]       = useState([]);
   const [search, setSearch]                 = useState('');
@@ -253,6 +254,24 @@ export default function AdminDashboard() {
 
       setRecentBookings(recentBkgRes.data ?? []);
       setTopServices(top10);
+
+      // Ratings — graceful fallback if reviews table doesn't exist yet
+      try {
+        const { data: reviewRows } = await DB.from('reviews').select('business_id, rating');
+        if (reviewRows?.length) {
+          const acc = {};
+          reviewRows.forEach(r => {
+            if (!acc[r.business_id]) acc[r.business_id] = { sum: 0, count: 0 };
+            acc[r.business_id].sum   += r.rating;
+            acc[r.business_id].count += 1;
+          });
+          const avgMap = {};
+          Object.entries(acc).forEach(([id, v]) => {
+            avgMap[id] = { avg: +(v.sum / v.count).toFixed(1), count: v.count };
+          });
+          setRatings(avgMap);
+        }
+      } catch { /* reviews table not yet created */ }
     } catch (err) {
       console.error('[Admin] load failed:', err);
       setLoadError('Failed to load data. Check console for details.');
@@ -360,13 +379,14 @@ export default function AdminDashboard() {
                       <Th>Type</Th>
                       <Th>Status</Th>
                       <Th>WhatsApp</Th>
+                      <Th right>Rating</Th>
                       <Th right>Bookings</Th>
                       <Th right>Registered</Th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.length === 0 ? (
-                      <tr><td colSpan={7} style={S.emptyCell}>No results</td></tr>
+                      <tr><td colSpan={8} style={S.emptyCell}>No results</td></tr>
                     ) : filtered.map(b => {
                       const sub = subBadgeStyle(b.subscription_status, b.plan_expires_at);
                       return (
@@ -390,6 +410,16 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td style={S.td}>{b.whatsapp || '—'}</td>
+                        <td style={{ ...S.td, ...S.tdNum }}>
+                          {ratings[b.id] ? (
+                            <span style={{ color: '#F5C842' }}>
+                              {'★ '}{ratings[b.id].avg}
+                              <span style={{ color: '#7AAE90', fontWeight: 400, fontSize: 11 }}>
+                                {' '}({ratings[b.id].count})
+                              </span>
+                            </span>
+                          ) : '—'}
+                        </td>
                         <td style={{ ...S.td, ...S.tdNum }}>{b.booking_count}</td>
                         <td style={{ ...S.td, ...S.tdNum }}>{fmtTimestamp(b.created_at)}</td>
                       </tr>
