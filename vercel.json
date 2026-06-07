@@ -11,6 +11,7 @@
         }
       ],
       "destination": "/api/og"
-    }
+    },
+    { "source": "/:slug", "destination": "/index.html" }
   ]
 }

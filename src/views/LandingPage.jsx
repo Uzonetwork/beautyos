@@ -1,27 +1,17 @@
 import { useState, useEffect } from 'react';
 import {
   Globe, TrendingUp, Users, LayoutList,
-  Scissors, Eye, Leaf, Sparkles, User,
   Check, ArrowRight,
 } from 'lucide-react';
 import SabiLogo from '../components/SabiLogo';
-import './LandingPage.css';
 
 // ── Static data ───────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { Icon: Globe,      title: 'Online Booking Page', desc: 'Your personal link — clients book directly, any time, from any device. No DMs, no calls.' },
-  { Icon: TrendingUp, title: 'Earnings Tracker',    desc: "See today's and this month's confirmed earnings at a glance. Know your money." },
-  { Icon: Users,      title: 'Client Management',   desc: 'Full client history — visit count, last service, and contact details, all in one place.' },
-  { Icon: LayoutList, title: 'Service Menu',        desc: 'Add, edit, and price your services. Toggle availability instantly. Update live in seconds.' },
-];
-
-const BUSINESS_TYPES = [
-  { Icon: Scissors, label: 'Nail Studio' },
-  { Icon: Eye,      label: 'Lash Studio' },
-  { Icon: Leaf,     label: 'Spa'         },
-  { Icon: User,     label: 'Barbershop'  },
-  { Icon: Sparkles, label: 'MUA'         },
+  { icon: '🌐', title: 'Online Booking Page', desc: 'Your personal link — clients book directly, any time, from any device. No DMs, no calls.' },
+  { icon: '📈', title: 'Earnings Tracker',    desc: "See today's and this month's confirmed earnings at a glance. Know your money." },
+  { icon: '👥', title: 'Client Management',   desc: 'Full client history — visit count, last service, and contact details, all in one place.' },
+  { icon: '📋', title: 'Service Menu',        desc: 'Add, edit, and price your services. Toggle availability instantly. Update live in seconds.' },
 ];
 
 const PRICING_FEATURES = [
@@ -33,8 +23,6 @@ const PRICING_FEATURES = [
   'Gallery showcase for your work',
   'All future updates included',
 ];
-
-// ── Rotating preview cards ────────────────────────────────────────────────────
 
 const PROFESSION_CARDS = [
   {
@@ -153,7 +141,7 @@ const PROFESSION_CARDS = [
     sectionColor: 'rgba(128,128,48,0.6)',
     rowBg: '#1e1e08',
     appts: [
-      { name: 'The Adeyemis',  service: 'Home Dinner',    time: '7:00 PM' },
+      { name: 'The Adeyemis',   service: 'Home Dinner',    time: '7:00 PM' },
       { name: 'Lagos Food Fest', service: 'Event Catering', time: 'Sat'     },
     ],
   },
@@ -179,7 +167,7 @@ const PROFESSION_CARDS = [
   },
 ];
 
-// ── Card stack component ──────────────────────────────────────────────────────
+// ── Card stack ────────────────────────────────────────────────────────────────
 
 function CardStack() {
   const [current, setCurrent] = useState(0);
@@ -190,67 +178,65 @@ function CardStack() {
     return () => clearInterval(id);
   }, [total]);
 
-  function advance() {
-    setCurrent(c => (c + 1) % total);
-  }
+  function advance() { setCurrent(c => (c + 1) % total); }
 
   return (
-    <div className="lp-card-stack">
-      <div className="lp-card-stack-inner">
+    <div className="relative w-full max-w-xs mx-auto" style={{ height: 260 }}>
+      <div className="relative w-full h-full">
         {PROFESSION_CARDS.map((card, i) => {
-          const pos = (i - current + total) % total;
-          const isFront = pos === 0;
+          const pos      = (i - current + total) % total;
+          const isFront  = pos === 0;
           const isSecond = pos === 1;
-          const isThird = pos === 2;
-          const hidden = !isFront && !isSecond && !isThird;
-
+          const isThird  = pos === 2;
+          const hidden   = !isFront && !isSecond && !isThird;
           return (
             <div
               key={i}
-              className="lp-stack-card"
+              onClick={isFront ? advance : undefined}
+              className="absolute inset-0 rounded-2xl overflow-hidden transition-all duration-500"
               style={{
-                background: card.bg,
-                zIndex:      isFront ? 10 : isSecond ? 9 : isThird ? 8 : 7,
-                transform:   isFront  ? 'translateY(0px) scale(1) rotate(0deg)'
-                           : isSecond ? 'translateY(9px) scale(0.94) rotate(-3deg)'
-                           : isThird  ? 'translateY(18px) scale(0.88) rotate(3deg)'
-                           :            'translateY(26px) scale(0.82) rotate(0deg)',
-                opacity:     isFront ? 1 : isSecond ? 0.85 : isThird ? 0.7 : 0,
-                cursor:      isFront ? 'pointer' : 'default',
+                background:    card.bg,
+                zIndex:        isFront ? 10 : isSecond ? 9 : isThird ? 8 : 7,
+                transform:     isFront  ? 'translateY(0px) scale(1) rotate(0deg)'
+                             : isSecond ? 'translateY(9px) scale(0.94) rotate(-3deg)'
+                             : isThird  ? 'translateY(18px) scale(0.88) rotate(3deg)'
+                             :            'translateY(26px) scale(0.82) rotate(0deg)',
+                opacity:       isFront ? 1 : isSecond ? 0.85 : isThird ? 0.7 : 0,
+                cursor:        isFront ? 'pointer' : 'default',
                 pointerEvents: isFront ? 'auto' : 'none',
-                boxShadow:   isFront
+                boxShadow:     isFront
                   ? '0 16px 48px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.2)'
                   : '0 4px 16px rgba(0,0,0,0.25)',
-                visibility:  hidden ? 'hidden' : 'visible',
+                visibility:    hidden ? 'hidden' : 'visible',
+                padding:       '16px',
               }}
-              onClick={isFront ? advance : undefined}
             >
               {/* Top row */}
-              <div className="lp-pc-top">
-                <div className="lp-pc-avatar" style={{ background: card.avatarBg, border: `1.5px solid ${card.dotColor}44` }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p className="lp-pc-biz" style={{ color: card.textColor }}>{card.biz}</p>
-                  <p className="lp-pc-date" style={{ color: card.mutedColor }}>Thursday, 29 May</p>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: card.avatarBg, border: `1.5px solid ${card.dotColor}44` }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold leading-tight truncate" style={{ color: card.textColor }}>{card.biz}</p>
+                  <p className="text-xs" style={{ color: card.mutedColor }}>Thursday, 29 May</p>
                 </div>
-                <span className="lp-pc-live" style={{ color: card.liveColor, background: card.liveBg }}>Live</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ color: card.liveColor, background: card.liveBg }}>Live</span>
               </div>
 
               {/* Earnings stat */}
-              <div className="lp-pc-stat" style={{ background: card.statBg }}>
-                <p className="lp-pc-stat-label" style={{ color: card.mutedColor }}>Today&apos;s Earnings</p>
-                <p className="lp-pc-stat-value" style={{ color: card.earningsColor }}>{card.earnings}</p>
+              <div className="rounded-lg px-3 py-2 mb-3" style={{ background: card.statBg }}>
+                <p className="text-xs mb-0.5" style={{ color: card.mutedColor }}>Today&apos;s Earnings</p>
+                <p className="text-lg font-black" style={{ color: card.earningsColor }}>{card.earnings}</p>
               </div>
 
               {/* Upcoming label */}
-              <p className="lp-pc-section" style={{ color: card.sectionColor }}>Upcoming</p>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: card.sectionColor }}>Upcoming</p>
 
               {/* Appointment rows */}
               {card.appts.map((a, j) => (
-                <div key={j} className="lp-pc-row" style={{ background: card.rowBg }}>
-                  <span className="lp-pc-dot" style={{ background: card.dotColor }} />
+                <div key={j} className="flex items-center gap-2 rounded-lg px-3 py-2 mb-1.5" style={{ background: card.rowBg }}>
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: card.dotColor }} />
                   <div>
-                    <p className="lp-pc-client" style={{ color: card.textColor }}>{a.name}</p>
-                    <p className="lp-pc-meta" style={{ color: card.mutedColor }}>{a.service} · {a.time}</p>
+                    <p className="text-xs font-semibold leading-tight" style={{ color: card.textColor }}>{a.name}</p>
+                    <p className="text-xs" style={{ color: card.mutedColor }}>{a.service} · {a.time}</p>
                   </div>
                 </div>
               ))}
@@ -260,17 +246,17 @@ function CardStack() {
       </div>
 
       {/* Dot indicators */}
-      <div className="lp-stack-dots">
+      <div className="absolute -bottom-8 left-0 right-0 flex justify-center items-center gap-1.5">
         {PROFESSION_CARDS.map((card, i) => (
           <button
             key={i}
-            className={`lp-stack-dot${i === current ? ' lp-stack-dot--active' : ''}`}
             onClick={() => setCurrent(i)}
+            aria-label={`Show ${card.biz}`}
+            className="h-1.5 rounded-full transition-all duration-300 border-0"
             style={{
               background: i === current ? PROFESSION_CARDS[current].dotColor : 'rgba(255,255,255,0.25)',
-              width: i === current ? 20 : 7,
+              width:      i === current ? 20 : 7,
             }}
-            aria-label={`Show ${card.biz}`}
           />
         ))}
       </div>
@@ -278,195 +264,228 @@ function CardStack() {
   );
 }
 
-// ── Page component ────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarketplace }) {
   return (
-    <div className="lp-root">
+    <div className="min-h-screen bg-sabi-dark text-white font-sans">
 
-      {/* ── Nav ──────────────────────────────────────────────── */}
-      <nav className="lp-nav">
-        <div className="lp-nav-inner">
-          <button className="lp-nav-brand-btn" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <SabiLogo size="md" dark={true} />
+      {/* ── Nav ─────────────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 bg-sabi-dark/95 backdrop-blur border-b border-sabi-border">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-transparent border-0 cursor-pointer p-0">
+            <SabiLogo size="md" dark={false} />
           </button>
-          <div className="lp-nav-actions">
-            <button className="lp-nav-marketplace" onClick={onMarketplace}>Marketplace</button>
-            <button className="lp-nav-login" onClick={onLogin}>Log in</button>
-            <button className="lp-nav-cta" onClick={onGetStarted}>Get Started</button>
+          <div className="flex items-center gap-4 md:gap-6">
+            <button onClick={onMarketplace} className="text-sabi-green font-semibold text-sm hover:text-sabi-gold transition-colors bg-transparent border-0 cursor-pointer hidden sm:block">
+              Marketplace
+            </button>
+            <button onClick={onLogin} className="text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer">
+              Log in
+            </button>
+            <button onClick={onGetStarted} className="btn-gold text-sm px-4 py-2">
+              Get Started
+            </button>
           </div>
         </div>
       </nav>
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="lp-hero">
-        <div className="lp-hero-inner">
-          <div className="lp-hero-text">
-            <p className="lp-eyebrow">For Nigerian Professionals</p>
-            <h1 className="lp-hero-title">
-              Run your business<br className="lp-hero-br" /> like a CEO
+      {/* ── Hero ────────────────────────────────────────────────── */}
+      <section className="bg-sabi-dark py-16 md:py-24 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+
+          {/* Left text */}
+          <div className="flex-1 animate-slide-up">
+            <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-4">For Nigerian Professionals</p>
+            <h1 className="font-serif text-5xl md:text-6xl font-medium leading-tight text-white mb-5">
+              Run your business<br />like a CEO
             </h1>
-            <p className="lp-hero-sub">
+            <p className="text-sabi-muted text-base leading-relaxed mb-8 max-w-md">
               Sabi gives you a booking page, earnings dashboard, and client management —
               everything a skilled professional needs to look and run professionally.
             </p>
-            <div className="lp-hero-ctas">
-              <button className="lp-btn-primary" onClick={onGetStarted}>
-                Get Started Free
-                <ArrowRight size={16} strokeWidth={2} />
+            <div className="flex flex-wrap gap-3 mb-6">
+              <button className="btn-gold" onClick={onGetStarted}>
+                Get Started Free <ArrowRight size={16} />
               </button>
-              <button className="lp-btn-ghost" onClick={onSeeDemo}>
+              <button className="btn-outline" onClick={onSeeDemo}>
                 See a Demo
               </button>
             </div>
-            <p className="lp-hero-note">₦14,400/yr · Secure payment via Paystack</p>
+            <p className="text-xs text-sabi-muted">₦14,400/yr · Secure payment via Paystack</p>
+
+            {/* Stats row */}
+            <div className="flex gap-8 mt-8 pt-8 border-t border-sabi-border">
+              <div>
+                <p className="text-2xl font-black text-sabi-gold">500+</p>
+                <p className="text-xs text-sabi-muted">Professionals</p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-sabi-gold">₦0</p>
+                <p className="text-xs text-sabi-muted">Setup cost</p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-sabi-gold">2 min</p>
+                <p className="text-xs text-sabi-muted">To go live</p>
+              </div>
+            </div>
           </div>
 
-          <div className="lp-hero-visual" aria-hidden="true">
-            <CardStack />
+          {/* Right card stack */}
+          <div className="flex-1 flex justify-center items-center" aria-hidden="true">
+            <div className="w-full max-w-xs pb-12">
+              <CardStack />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────── */}
-      <section className="lp-features" id="lp-features">
-        <div className="lp-section-inner">
-          <p className="lp-section-eyebrow">What&apos;s included</p>
-          <h2 className="lp-section-title">Everything you need to grow</h2>
-          <p className="lp-section-sub">
-            Built for the Nigerian professional market — simple, fast, and professional.
-          </p>
-          <div className="lp-features-grid">
-            {FEATURES.map(({ Icon, title, desc }) => (
-              <div key={title} className="lp-feature-card">
-                <div className="lp-feature-icon">
-                  <Icon size={20} strokeWidth={1.5} />
-                </div>
-                <h3 className="lp-feature-title">{title}</h3>
-                <p className="lp-feature-desc">{desc}</p>
+      {/* ── Features ────────────────────────────────────────────── */}
+      <section id="lp-features" className="bg-sabi-dark py-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">What&apos;s included</p>
+          <h2 className="font-serif text-4xl font-medium text-white mb-3">Everything you need to grow</h2>
+          <p className="text-sabi-muted mb-12">Built for the Nigerian professional market — simple, fast, and professional.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {FEATURES.map(({ icon, title, desc }) => (
+              <div key={title} className="card p-6 text-left hover:border-sabi-green hover:-translate-y-1 transition-all duration-200">
+                <div className="text-2xl mb-3">{icon}</div>
+                <h3 className="font-bold text-white text-base mb-2">{title}</h3>
+                <p className="text-sabi-muted text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Business types ────────────────────────────────────── */}
-      <section className="lp-types">
-        <div className="lp-section-inner">
-          <p className="lp-section-eyebrow">Who it&apos;s for</p>
-          <h2 className="lp-section-title">Built for every Nigerian professional</h2>
-          <div className="lp-types-row">
-            {BUSINESS_TYPES.map(({ Icon, label }) => (
-              <div key={label} className="lp-type-item">
-                <div className="lp-type-icon">
-                  <Icon size={22} strokeWidth={1.5} />
-                </div>
-                <p className="lp-type-label">{label}</p>
-              </div>
+      {/* ── Professions ─────────────────────────────────────────── */}
+      <section className="bg-sabi-card py-16 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">Who it&apos;s for</p>
+          <h2 className="font-serif text-4xl font-medium text-white mb-8">Built for every Nigerian professional</h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              { emoji: '💅', label: 'Nail Studio'     },
+              { emoji: '👁️', label: 'Lash Studio'     },
+              { emoji: '🧖', label: 'Spa'             },
+              { emoji: '✂️', label: 'Barbershop'      },
+              { emoji: '💄', label: 'MUA'             },
+              { emoji: '👗', label: 'Tailor'          },
+              { emoji: '📸', label: 'Photography'     },
+              { emoji: '🏠', label: 'Home Services'   },
+              { emoji: '🎓', label: 'Tutor'           },
+              { emoji: '💪', label: 'Fitness'         },
+              { emoji: '🎉', label: 'Events'          },
+              { emoji: '🍽️', label: 'Private Chef'   },
+              { emoji: '🎵', label: 'DJ'              },
+              { emoji: '📱', label: 'Content Creator' },
+            ].map(({ emoji, label }) => (
+              <span key={label} className="flex items-center gap-2 bg-sabi-card border border-sabi-border rounded-full px-4 py-2 text-sm text-sabi-muted">
+                {emoji} {label}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Marketplace promo ────────────────────────────────── */}
-      <section className="lp-marketplace">
-        <div className="lp-section-inner">
-          <p className="lp-section-eyebrow">Discover Professionals</p>
-          <h2 className="lp-section-title">Book any skill, any time</h2>
-          <p className="lp-section-sub">
-            From nail artists to private chefs — browse every professional on Sabi
-            and book directly from their page. No middleman, no calls.
+      {/* ── Marketplace teaser ──────────────────────────────────── */}
+      <section className="bg-sabi-dark py-20 px-6 text-center">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">Discover Professionals</p>
+          <h2 className="font-serif text-4xl font-medium text-white mb-4">Book any skill, any time</h2>
+          <p className="text-sabi-muted mb-8 leading-relaxed">
+            From nail artists to private chefs — browse every professional on Sabi and book
+            directly from their page. No middleman, no calls.
           </p>
-          <div className="lp-mkt-types">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {['Nail Studio', 'Photography', 'Tailoring', 'Fitness', 'Events', 'Private Chef', 'DJ', 'MUA'].map(t => (
-              <span key={t} className="lp-mkt-chip">{t}</span>
+              <span key={t} className="bg-sabi-card border border-sabi-border text-sabi-muted text-xs rounded-full px-3 py-1">{t}</span>
             ))}
           </div>
-          <button className="lp-btn-primary lp-btn-full lp-mkt-cta" onClick={onMarketplace}>
-            Browse Marketplace
-            <ArrowRight size={16} strokeWidth={2} />
+          <button className="btn-gold" onClick={onMarketplace}>
+            Browse Marketplace <ArrowRight size={16} />
           </button>
         </div>
       </section>
 
-      {/* ── Pricing ──────────────────────────────────────────── */}
-      <section className="lp-pricing" id="lp-pricing">
-        <div className="lp-section-inner">
-          <p className="lp-section-eyebrow">Pricing</p>
-          <h2 className="lp-section-title">Simple, honest pricing</h2>
-          <p className="lp-section-sub">One plan. Everything included. Cancel any time.</p>
-          <div className="lp-pricing-card">
-            <div className="lp-pricing-badge">Launch Price</div>
-            <p className="lp-plan-label">Professional — Yearly</p>
-            <div className="lp-price-row">
-              <span className="lp-price-strikethrough">&#8358;24,000/yr</span>
-              <span className="lp-price-amount">&#8358;14,400</span>
-              <span className="lp-price-period">/yr</span>
+      {/* ── Pricing ─────────────────────────────────────────────── */}
+      <section id="lp-pricing" className="bg-sabi-card py-20 px-6 text-center">
+        <div className="max-w-md mx-auto">
+          <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">Pricing</p>
+          <h2 className="font-serif text-4xl font-medium text-white mb-2">Simple, honest pricing</h2>
+          <p className="text-sabi-muted mb-10">One plan. Everything included. Cancel any time.</p>
+
+          <div className="card p-8 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sabi-gold text-sabi-dark text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full whitespace-nowrap">
+              Launch Price
             </div>
-            <p className="lp-price-note">Price increases to ₦24,000/yr soon</p>
-            <ul className="lp-pricing-features">
+            <p className="text-xs text-sabi-muted uppercase tracking-widest mb-4">Professional — Yearly</p>
+            <div className="flex items-baseline justify-center gap-3 mb-1">
+              <span className="text-sabi-muted line-through text-sm">₦24,000/yr</span>
+              <span className="font-serif text-5xl font-semibold text-sabi-gold">₦14,400</span>
+              <span className="text-sabi-muted text-sm">/yr</span>
+            </div>
+            <p className="text-xs text-sabi-muted mb-8">Price increases to ₦24,000/yr soon</p>
+
+            <ul className="text-left space-y-3 mb-8">
               {PRICING_FEATURES.map(f => (
-                <li key={f} className="lp-pricing-feature">
-                  <Check size={14} strokeWidth={2.5} className="lp-pricing-check" />
+                <li key={f} className="flex items-center gap-3 text-sm text-white/85">
+                  <Check size={14} strokeWidth={2.5} className="text-sabi-green flex-shrink-0" />
                   {f}
                 </li>
               ))}
             </ul>
-            <button className="lp-btn-primary lp-btn-full" onClick={onGetStarted}>
-              Get Started — &#8358;14,400/yr
-              <ArrowRight size={16} strokeWidth={2} />
+
+            <button className="btn-gold w-full justify-center text-base py-4" onClick={onGetStarted}>
+              Get Started — ₦14,400/yr <ArrowRight size={16} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="lp-footer">
-        <div className="lp-footer-inner">
+      {/* ── Footer ──────────────────────────────────────────────── */}
+      <footer className="bg-sabi-dark border-t border-sabi-border px-6 py-16">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
 
-          {/* Brand column */}
-          <div className="lp-footer-col lp-footer-col--brand">
-            <SabiLogo size="md" dark={true} />
-            <p className="lp-footer-tagline">
-              The booking platform for Nigerian professionals
+          {/* Brand */}
+          <div>
+            <SabiLogo size="md" dark={false} />
+            <p className="text-sabi-muted text-sm mt-4 mb-2">The booking platform for Nigerian professionals</p>
+            <p className="text-sabi-muted text-xs leading-relaxed">
+              Get your free booking page, manage clients, and track earnings — all in one place.
             </p>
-            <p className="lp-footer-desc">
-              Get your free booking page, manage clients, and track
-              earnings — all in one place.
-            </p>
-            <div className="lp-footer-socials">
-              <a href="https://instagram.com/sabipro.ng" className="lp-footer-social" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a>
-              <a href="https://tiktok.com/@sabipro.ng"   className="lp-footer-social" target="_blank" rel="noopener noreferrer" aria-label="TikTok">TK</a>
-              <a href="https://x.com/sabipro.ng"         className="lp-footer-social" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter">𝕏</a>
+            <div className="flex gap-2 mt-4">
+              <a href="https://instagram.com/sabipro.ng" className="w-8 h-8 rounded-lg bg-sabi-card border border-sabi-border flex items-center justify-center text-xs text-sabi-muted hover:text-white hover:border-sabi-green transition-colors" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a>
+              <a href="https://tiktok.com/@sabipro.ng"   className="w-8 h-8 rounded-lg bg-sabi-card border border-sabi-border flex items-center justify-center text-xs text-sabi-muted hover:text-white hover:border-sabi-green transition-colors" target="_blank" rel="noopener noreferrer" aria-label="TikTok">TK</a>
+              <a href="https://x.com/sabipro.ng"         className="w-8 h-8 rounded-lg bg-sabi-card border border-sabi-border flex items-center justify-center text-xs text-sabi-muted hover:text-white hover:border-sabi-green transition-colors" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter">𝕏</a>
             </div>
           </div>
 
-          {/* Product column */}
-          <div className="lp-footer-col">
-            <p className="lp-footer-col-label">Product</p>
-            <ul className="lp-footer-nav">
-              <li><button className="lp-footer-link" onClick={() => document.getElementById('lp-features')?.scrollIntoView({ behavior: 'smooth' })}>How It Works</button></li>
-              <li><button className="lp-footer-link" onClick={() => document.getElementById('lp-pricing')?.scrollIntoView({ behavior: 'smooth' })}>Pricing</button></li>
-              <li><a href="/#/signup" className="lp-footer-link">For Beauty Professionals</a></li>
-              <li><a href="/#/signup" className="lp-footer-link">For All Professionals</a></li>
+          {/* Product */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-4">Product</p>
+            <ul className="space-y-2">
+              <li><button className="text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={() => document.getElementById('lp-features')?.scrollIntoView({ behavior: 'smooth' })}>How It Works</button></li>
+              <li><button className="text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={() => document.getElementById('lp-pricing')?.scrollIntoView({ behavior: 'smooth' })}>Pricing</button></li>
+              <li><a href="/#/signup" className="text-sabi-muted text-sm hover:text-white transition-colors">For Beauty Professionals</a></li>
+              <li><a href="/#/signup" className="text-sabi-muted text-sm hover:text-white transition-colors">For All Professionals</a></li>
             </ul>
           </div>
 
-          {/* Company column */}
-          <div className="lp-footer-col">
-            <p className="lp-footer-col-label">Company</p>
-            <ul className="lp-footer-nav">
-              <li><a href="/#/terms"   className="lp-footer-link">Terms of Service</a></li>
-              <li><a href="/#/privacy" className="lp-footer-link">Privacy Policy</a></li>
-              <li><a href="mailto:hello@sabi.ng" className="lp-footer-link">Contact Us</a></li>
+          {/* Company */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-4">Company</p>
+            <ul className="space-y-2">
+              <li><a href="/#/terms"   className="text-sabi-muted text-sm hover:text-white transition-colors">Terms of Service</a></li>
+              <li><a href="/#/privacy" className="text-sabi-muted text-sm hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="mailto:hello@sabi.ng" className="text-sabi-muted text-sm hover:text-white transition-colors">Contact Us</a></li>
             </ul>
           </div>
-
         </div>
 
-        {/* Bottom bar */}
-        <div className="lp-footer-bottom">
-          <p className="lp-footer-copy">© 2026 Sabi. All rights reserved.</p>
+        <div className="max-w-5xl mx-auto border-t border-sabi-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-sabi-muted">© 2026 Sabi. All rights reserved.</p>
+          <p className="text-xs text-sabi-muted">Made with ❤️ in Nigeria 🇳🇬</p>
         </div>
       </footer>
 

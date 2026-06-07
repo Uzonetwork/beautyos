@@ -1,46 +1,70 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
-:root {
-  --blush: #f7e6ec;
-  --rose: #d4537e;
-  --rose-gold: #c9906a;
-  --cream: #fdf6f0;
-  --text-dark: #3a1a28;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans antialiased;
+  }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer components {
+  .btn-gold {
+    @apply bg-sabi-gold text-sabi-dark font-bold px-6 py-3 rounded-xl
+           hover:opacity-90 active:scale-95 transition-all duration-150
+           cursor-pointer border-none inline-flex items-center gap-2;
+  }
+  .btn-outline {
+    @apply bg-transparent text-sabi-muted border border-sabi-border
+           font-semibold px-5 py-3 rounded-xl hover:border-sabi-green
+           hover:text-sabi-green transition-all duration-150 cursor-pointer;
+  }
+  .card {
+    @apply bg-sabi-card border border-sabi-border rounded-2xl;
+  }
+  .beauty-card {
+    @apply bg-beauty-card border border-beauty-border rounded-2xl;
+  }
+  .input-dark {
+    @apply bg-sabi-dark border border-sabi-border rounded-xl px-4 py-3
+           text-white placeholder:text-sabi-muted focus:border-sabi-green
+           outline-none w-full transition-colors;
+  }
 }
 
-body {
-  font-family: 'DM Sans', sans-serif;
-  background-color: var(--cream);
-  color: var(--text-dark);
-  -webkit-font-smoothing: antialiased;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Cormorant Garamond', serif;
-}
-
-/* ── App-level loading state ─────────────────────────────────── */
-.app-loading {
-  min-height: 100vh;
-  background: var(--cream);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@keyframes app-spin {
+@keyframes pv-spin {
   to { transform: rotate(360deg); }
 }
+.pv-spin, .od-spin, .lv-spin, .sv-spin {
+  animation: pv-spin 0.75s linear infinite;
+}
 
-.app-loading-icon {
-  color: var(--rose);
-  animation: app-spin 0.75s linear infinite;
+.od-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 2rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background-color: #1A5C30;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  border: none;
+}
+.od-toggle--on {
+  background-color: #4CAF72;
+}
+.od-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: white;
+  transition: transform 0.2s;
+}
+.od-toggle--on .od-toggle-knob {
+  transform: translateX(16px);
 }

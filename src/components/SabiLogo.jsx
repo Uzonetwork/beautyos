@@ -1,32 +1,24 @@
 export default function SabiLogo({ dark = false, size = 'md' }) {
   const sizes = {
-    sm: { badge: 24, font: 14, word: 16 },
-    md: { badge: 32, font: 18, word: 20 },
-    lg: { badge: 42, font: 24, word: 28 },
+    sm: { badge: 'w-6 h-6 text-sm rounded-md', word: 'text-base' },
+    md: { badge: 'w-8 h-8 text-lg rounded-lg', word: 'text-xl' },
+    lg: { badge: 'w-10 h-10 text-2xl rounded-xl', word: 'text-2xl' },
   };
   const s = sizes[size] || sizes.md;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{
-        width: s.badge, height: s.badge,
-        background: dark ? '#ffffff' : '#F5C842',
-        borderRadius: 7,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'Georgia, serif',
-        fontSize: s.font,
-        fontWeight: 900,
-        color: '#0A2E1A',
-        flexShrink: 0,
-        lineHeight: 1,
-      }}>S</div>
-      <span style={{
-        fontFamily: 'Georgia, serif',
-        fontSize: s.word,
-        fontWeight: 700,
-        color: dark ? '#ffffff' : '#0A2E1A',
-        letterSpacing: 0.5,
-        lineHeight: 1,
-      }}>Sabi</span>
+    <div className="flex items-center gap-2">
+      <div
+        className={`${s.badge} flex items-center justify-center font-black text-sabi-dark flex-shrink-0 ${dark ? 'bg-white' : 'bg-sabi-gold'}`}
+        style={{ fontFamily: 'Georgia,serif' }}
+      >
+        S
+      </div>
+      <span
+        className={`${s.word} font-bold ${dark ? 'text-white' : 'text-sabi-dark'}`}
+        style={{ fontFamily: 'Georgia,serif', letterSpacing: '0.5px' }}
+      >
+        Sabi
+      </span>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getSession, getCurrentBusiness } from './lib/auth';
+import { supabase } from './lib/supabase';
 import { posthog, track } from './lib/posthog';
 import LandingPage     from './views/LandingPage';
 import SignupView      from './views/SignupView';
@@ -13,6 +14,21 @@ import LegalView       from './views/LegalView';
 import MarketplaceView from './views/MarketplaceView';
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+
+// Known pathname prefixes that are NOT business slugs
+const KNOWN_PATHS = new Set(['', '/', '/marketplace', '/terms', '/privacy', '/signup', '/login']);
+
+/**
+ * If the current URL pathname looks like a business slug (not a known app route),
+ * return that slug string; otherwise return null.
+ */
+function getSlugFromPathname() {
+  const { pathname } = window.location;
+  if (KNOWN_PATHS.has(pathname)) return null;
+  // Must be /something with no further slashes
+  const match = pathname.match(/^\/([a-z0-9-]+)$/);
+  return match ? match[1] : null;
+}
 
 // Maps view names → URL hash fragments
 const VIEW_TO_HASH = {
@@ -87,6 +103,19 @@ export default function App() {
         return;
       }
 
+      // Slug routing: /chi-nail-studio → look up by businesses.slug
+      const slug = getSlugFromPathname();
+      if (slug) {
+        const { data: bizBySlug } = await supabase
+          .from('businesses').select('id').eq('slug', slug).maybeSingle();
+        if (bizBySlug?.id) {
+          setPublicBusinessId(bizBySlug.id);
+          setView('public');
+          return;
+        }
+        // Slug not found — fall through to normal routing
+      }
+
       const hash = window.location.hash.slice(1);
 
       // Admin + legal + marketplace routes — no auth needed
@@ -128,8 +157,8 @@ export default function App() {
   // ── Loading splash ──────────────────────────────────────────────────────────
   if (view === 'loading') {
     return (
-      <div className="app-loading">
-        <Loader2 size={24} className="app-loading-icon" />
+      <div className="min-h-screen bg-sabi-dark flex items-center justify-center">
+        <Loader2 size={24} className="text-sabi-green animate-spin" />
       </div>
     );
   }

@@ -2,35 +2,32 @@ import { useState, useEffect, useRef } from 'react';
 import {
   User,
   Image as ImageIcon,
-  Scissors,
-  Eye,
   CheckCircle,
   AlertCircle,
   Loader2,
-  ChevronDown,
   X,
   Globe,
   LayoutDashboard,
+  MapPin,
+  ChevronDown,
+  Shield,
+  Clock,
+  Star,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
-import { applyThemeStyle } from '../lib/getBusinessTheme';
+import { getBusinessTheme } from '../lib/getBusinessTheme';
 import { isSubscriptionActive } from '../lib/payments';
-import './PublicView.css';
 
-// ── Business-type display helpers ─────────────────────────────────────────────
-
-function firstName(fullName) {
-  return fullName?.trim().split(/\s+/)[0] ?? 'Your artist';
-}
+// ── Static content maps ───────────────────────────────────────────────────────
 
 const OWNER_TITLES = {
-  nail_studio:   'Nail Technician',
-  lash_studio:   'Lash Artist',
-  spa:           'Spa Therapist',
-  barbershop:    'Barber & Grooming Specialist',
-  mua:           'Makeup Artist',
-  other:         'Beauty Professional',
+  nail_studio:        'Nail Technician',
+  lash_studio:        'Lash Artist',
+  spa:                'Spa Therapist',
+  barbershop:         'Barber & Grooming Specialist',
+  mua:                'Makeup Artist',
+  other:              'Beauty Professional',
   tailor:             'Fashion Designer & Tailor',
   photography:        'Professional Photographer',
   home_services:      'Home Services Professional',
@@ -41,6 +38,123 @@ const OWNER_TITLES = {
   content_creator:    'Content Creator',
   dj:                 'Music DJ',
 };
+
+const HERO_HEADLINES = {
+  nail_studio:        'Flawless Nail Care,\nCrafted to Perfect\nYour Style',
+  lash_studio:        'Beautiful Lashes,\nTailored to Elevate\nYour Look',
+  spa:                'Relax, Rejuvenate &\nRestore Your\nWellbeing',
+  barbershop:         'Sharp Cuts.\nClean Fades.\nPrecision Grooming.',
+  mua:                'Transformative Makeup\nArtistry for Every\nOccasion',
+  tailor:             'Bespoke Fashion,\nCrafted to Fit\nYour Vision',
+  photography:        'Capturing Your Story\nThrough a\nProfessional Lens',
+  home_services:      'Reliable Home\nServices — Done Right,\nEvery Time',
+  tutor:              'Personalised Learning\nThat Unlocks Your\nFull Potential',
+  fitness:            'Train Smarter.\nLive Better.\nReach Your Goals.',
+  events:             'Making Every Event\nTruly\nUnforgettable',
+  private_chef:       'Restaurant-Quality\nDining, At Your\nLocation',
+  content_creator:    'Compelling Content\nThat Tells Your\nBrand\'s Story',
+  dj:                 'Premium DJ Sets\nfor Every\nOccasion',
+  other_professional: 'Professional Services,\nDelivered with\nExcellence',
+  other:              'Quality Services,\nEvery Time',
+};
+
+const HERO_SUBS = {
+  nail_studio:        'From everyday manicures to intricate nail art — every detail is perfected with precision and care for hands that always look their best.',
+  lash_studio:        'Whether you want a subtle lift or dramatic volume, every set is crafted with care to complement your unique features and personal style.',
+  spa:                'Step into a sanctuary of calm. Every treatment is designed to restore, renew, and leave you feeling completely refreshed.',
+  barbershop:         'Walk in looking good — walk out looking your absolute best. Expert cuts, clean fades, and precise grooming, every single visit.',
+  mua:                'From natural glam to full bridal, your vision comes to life with professional artistry and premium products at every appointment.',
+  tailor:             'Every stitch tells a story. Beautifully crafted bespoke outfits for weddings, events, and everyday elegance.',
+  photography:        'Professional photography that preserves your most important moments with clarity, artistry, and a timeless eye for detail.',
+  home_services:      'Trusted, skilled professionals for all your home maintenance and repair needs — delivered on time, every time.',
+  tutor:              'Personalised one-on-one lessons designed to build confidence, improve grades, and help students reach their full academic potential.',
+  fitness:            'Customised training programs and expert coaching to help you build the body and the life you deserve.',
+  events:             'Full-service event planning and execution — every detail handled so you can focus entirely on enjoying the moment.',
+  private_chef:       'Bringing the restaurant experience to your home. Exquisite meals crafted from premium, fresh ingredients.',
+  content_creator:    'Engaging, high-quality content that connects your brand with your audience and drives real results across every platform.',
+  dj:                 'From intimate gatherings to massive events — professional DJ services that keep the energy high and the crowd moving all night.',
+  other_professional: 'Exceptional professional services delivered with expertise, care, and a genuine commitment to your satisfaction.',
+  other:              'Dedicated to delivering quality results and an exceptional experience with every single appointment.',
+};
+
+const WHY_CARDS = {
+  nail_studio: [
+    { icon: '💅', title: 'Premium Products', desc: 'Professional-grade gels and polishes for long-lasting, beautiful results every time.' },
+    { icon: '🎨', title: 'Custom Nail Art', desc: 'From minimalist designs to intricate nail art — every set is unique to your style.' },
+    { icon: '📅', title: 'Easy Online Booking', desc: 'Book your appointment in under 2 minutes, any time, from any device.' },
+  ],
+  lash_studio: [
+    { icon: '✨', title: 'Certified Technique', desc: 'Trained in the latest lash extension and lift methods for safe, stunning results.' },
+    { icon: '👁️', title: 'Custom Lash Mapping', desc: 'Every set mapped to complement your unique eye shape and personal aesthetic.' },
+    { icon: '🕐', title: 'Flexible Slots', desc: 'Morning, afternoon, and weekend slots available to fit your schedule.' },
+  ],
+  spa: [
+    { icon: '🌿', title: 'Luxury Treatments', desc: 'Premium products and expert therapists committed to your total relaxation.' },
+    { icon: '🧘', title: 'Holistic Wellness', desc: 'Treatments designed to nurture mind, body, and spirit in a calm environment.' },
+    { icon: '🔒', title: 'Private & Discreet', desc: 'A peaceful sanctuary where your comfort and privacy always come first.' },
+  ],
+  barbershop: [
+    { icon: '✂️', title: 'Precision Cuts', desc: 'Expert barbers trained in the latest techniques for clean fades and sharp lines.' },
+    { icon: '💈', title: 'Full Grooming', desc: 'From haircuts to beard trims and hot towel shaves — complete grooming in one place.' },
+    { icon: '⚡', title: 'On-Time, Every Time', desc: 'We respect your time with punctual, efficient appointments and no long waits.' },
+  ],
+  mua: [
+    { icon: '💄', title: 'Pro-Grade Products', desc: 'Premium, long-lasting makeup brands trusted by professional artists worldwide.' },
+    { icon: '🌸', title: 'Every Occasion', desc: 'Bridal, editorial, glam, natural — every look crafted to your exact vision.' },
+    { icon: '📸', title: 'Camera-Ready', desc: 'Flawless application that looks stunning in person and in every photograph.' },
+  ],
+  tailor: [
+    { icon: '👗', title: 'Bespoke Craftsmanship', desc: 'Cut and sewn to your exact measurements for a flawless, custom-fit every time.' },
+    { icon: '🧵', title: 'Premium Fabrics', desc: 'Quality Ankara, lace, velvet and imported fabrics for every style and budget.' },
+    { icon: '⏱️', title: 'On-Time Delivery', desc: 'We respect your deadlines — your outfit will be ready when promised.' },
+  ],
+  photography: [
+    { icon: '📸', title: 'Pro Equipment', desc: 'Full-frame cameras, premium lenses, and professional lighting for stunning shots.' },
+    { icon: '🖼️', title: 'Expert Editing', desc: 'Every image professionally edited to look its absolute best inside and out.' },
+    { icon: '💾', title: 'Fast Turnaround', desc: 'Receive your full gallery in high resolution within the agreed timeline.' },
+  ],
+  home_services: [
+    { icon: '🔧', title: 'Skilled Tradespeople', desc: 'Experienced professionals for plumbing, electrical, AC, and all home repairs.' },
+    { icon: '✅', title: 'Quality Guaranteed', desc: 'All work is performed to a professional standard with post-service checks.' },
+    { icon: '📞', title: 'Responsive Support', desc: 'Quick response times and clear communication from booking to completion.' },
+  ],
+  tutor: [
+    { icon: '📚', title: 'Personalised Lessons', desc: 'Curriculum tailored to each student\'s learning style, pace, and objectives.' },
+    { icon: '🎯', title: 'Proven Results', desc: 'A track record of helping students improve grades and pass key examinations.' },
+    { icon: '💻', title: 'Flexible Delivery', desc: 'In-person and online sessions to fit your schedule and location.' },
+  ],
+  fitness: [
+    { icon: '💪', title: 'Expert Coaching', desc: 'Certified fitness professionals creating programs that deliver real results.' },
+    { icon: '🥗', title: 'Holistic Approach', desc: 'Training, nutrition, and lifestyle guidance for sustainable transformation.' },
+    { icon: '📈', title: 'Progress Tracking', desc: 'Regular assessments to keep you on track toward your personal fitness goals.' },
+  ],
+  events: [
+    { icon: '🎉', title: 'Full-Service Planning', desc: 'Decoration, MC, catering, music — every element handled with perfection.' },
+    { icon: '⭐', title: 'Flawless Execution', desc: 'Meticulous attention to detail ensures every event runs smoothly on schedule.' },
+    { icon: '💬', title: 'Clear Communication', desc: 'Regular updates and open dialogue from first booking to your event day.' },
+  ],
+  private_chef: [
+    { icon: '👨‍🍳', title: 'Restaurant-Quality', desc: 'Michelin-inspired menus crafted from fresh, premium ingredients at your home.' },
+    { icon: '🍽️', title: 'Custom Menus', desc: 'Every menu designed around your preferences, dietary needs, and occasion.' },
+    { icon: '🫙', title: 'Full Cleanup Included', desc: 'We handle everything from setup to cleanup — you just enjoy the experience.' },
+  ],
+  content_creator: [
+    { icon: '🎬', title: 'High Production Quality', desc: 'Professional-grade video and photography that makes your content stand out.' },
+    { icon: '📱', title: 'Platform Expertise', desc: 'Content optimised for Instagram, TikTok, YouTube, and all major platforms.' },
+    { icon: '🚀', title: 'Quick Turnaround', desc: 'Timely delivery without compromising on quality — content when you need it.' },
+  ],
+  dj: [
+    { icon: '🎧', title: 'Pro Equipment', desc: 'Pioneer CDJs and a premium sound system that delivers the perfect audio.' },
+    { icon: '🎵', title: 'Any Genre, Any Vibe', desc: 'Afrobeats, Amapiano, R&B, Hip-Hop, House — the perfect soundtrack for your event.' },
+    { icon: '⚡', title: 'High Energy Sets', desc: 'Reading the crowd and keeping energy levels at their peak all night long.' },
+  ],
+};
+
+const DEFAULT_WHY_CARDS = [
+  { icon: '⭐', title: 'Premium Quality', desc: 'Committed to delivering exceptional results with every single appointment.' },
+  { icon: '🤝', title: 'Personalised Service', desc: 'Every client receives individual attention and a tailored experience.' },
+  { icon: '📅', title: 'Easy Scheduling', desc: 'Simple online booking available 24/7 from any device, in under 2 minutes.' },
+];
 
 const SERVICE_SUBTITLES = {
   nail_studio:        'Professional nail care, every detail perfected',
@@ -80,76 +194,79 @@ const MEET_SUBTITLES = {
   other:              'The professional behind every appointment',
 };
 
+// ── Category → emoji ──────────────────────────────────────────────────────────
+const CATEGORY_EMOJIS = {
+  nails:'💅', lash:'👁️', spa:'🌿', body:'💆', facial:'🧴', massage:'💆',
+  waxing:'✨', barber:'✂️', hair:'💇', beard:'🪒', makeup:'💄', bridal:'💍',
+  fashion:'👗', alterations:'🧵', portrait:'📸', events:'🎉', plumbing:'🔧',
+  electrical:'⚡', cleaning:'🧹', primary:'📚', secondary:'📖', jamb:'✏️',
+  waec:'📝', training:'💪', nutrition:'🥗', wellness:'🧘', mc:'🎤', dj:'🎧',
+  decoration:'🌸', catering:'🍽️', chef:'👨‍🍳', content:'🎬', music:'🎵',
+  other:'✨', general:'✅', photography:'📷',
+};
+
+function getSvcEmoji(category, name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('gel') || n.includes('nail')) return '💅';
+  if (n.includes('lash')) return '👁️';
+  if (n.includes('massage')) return '💆';
+  if (n.includes('facial')) return '🧴';
+  if (n.includes('wax')) return '✨';
+  if (n.includes('cut') || n.includes('hair')) return '✂️';
+  if (n.includes('makeup') || n.includes('glam')) return '💄';
+  if (n.includes('bridal') || n.includes('wedding')) return '💍';
+  if (n.includes('photo') || n.includes('portrait')) return '📸';
+  if (n.includes('dinner') || n.includes('catering') || n.includes('food')) return '🍽️';
+  if (n.includes('train') || n.includes('workout')) return '💪';
+  if (n.includes('lesson') || n.includes('jamb') || n.includes('waec')) return '📚';
+  return CATEGORY_EMOJIS[category] || '✨';
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function firstName(fullName) {
+  return fullName?.trim().split(/\s+/)[0] ?? 'Your artist';
+}
+
 function ownerTitle(type, customType) {
   if (type === 'other_professional') return customType?.trim() || 'Professional';
   return OWNER_TITLES[type] ?? 'Beauty Professional';
 }
 
-function servicesSubtitle(type) {
-  return SERVICE_SUBTITLES[type] ?? 'Professional services, every detail attended to';
-}
-
-function meetSubtitle(type) {
-  return MEET_SUBTITLES[type] ?? 'The professional behind every appointment';
-}
-
 function ownerBio(type, ownerName, bizName) {
   const first = firstName(ownerName);
   switch (type) {
-    case 'nail_studio':
-      return `Based in Nigeria, ${first} has built a reputation for flawless nail work at ${bizName}. From everyday gel sets to intricate nail art, every client leaves looking and feeling their best.`;
-    case 'lash_studio':
-      return `${first} is a certified lash artist at ${bizName} with a passion for enhancing natural beauty. Whether you want a subtle lift or dramatic volume, every set is crafted with precision and care.`;
-    case 'spa':
-      return `At ${bizName}, ${first} creates a sanctuary where every treatment is a moment of pure relaxation and renewal. With expert hands and a calming presence, your wellness is always the priority.`;
-    case 'barbershop':
-      return `${first} and the team at ${bizName} deliver sharp cuts, clean fades, and precise grooming for every client. Walk in looking good — walk out looking your absolute best.`;
-    case 'mua':
-      return `${first} is a professional makeup artist at ${bizName} who transforms every look with skill and artistry. From natural glam to full bridal, your vision comes to life at every appointment.`;
-    case 'tailor':
-      return `Welcome to ${bizName}. We craft bespoke outfits for every occasion — from everyday styles to traditional aso-ebi and special events.`;
-    case 'photography':
-      return `Welcome to ${bizName}. We capture your most important moments with professional photography for portraits, events, and products.`;
-    case 'home_services':
-      return `Welcome to ${bizName}. We provide reliable home maintenance and repair services including plumbing, electrical, AC, and more.`;
-    case 'tutor':
-      return `Welcome to ${bizName}. We offer personalised tutoring for primary, secondary, and exam-prep students to help them reach their full potential.`;
-    case 'fitness':
-      return `Welcome to ${bizName}. We help you reach your fitness goals with personal training, group classes, and nutrition consultations.`;
-    case 'events':
-      return `Welcome to ${bizName}. We make every event unforgettable with professional MC, DJ, decoration, and catering services.`;
-    case 'private_chef':
-      return `Welcome to ${bizName}. We bring restaurant-quality dining to your home — from intimate dinners to full event catering.`;
-    case 'content_creator':
-      return `Welcome to ${bizName}. We create engaging content that tells your brand story across social media and digital platforms.`;
-    case 'dj':
-      return `Welcome to ${bizName}. We provide professional DJ services for weddings, parties, clubs, and corporate events.`;
-    case 'other_professional':
-      return `Welcome to ${bizName}. Book an appointment and let's work together.`;
-    default:
-      return `${first} at ${bizName} is dedicated to delivering exceptional services tailored to every client. Book an appointment and experience the difference that expert care makes.`;
+    case 'nail_studio':      return `Based in Nigeria, ${first} has built a reputation for flawless nail work at ${bizName}. From everyday gel sets to intricate nail art, every client leaves looking and feeling their best.`;
+    case 'lash_studio':      return `${first} is a certified lash artist at ${bizName} with a passion for enhancing natural beauty. Whether you want a subtle lift or dramatic volume, every set is crafted with precision and care.`;
+    case 'spa':              return `At ${bizName}, ${first} creates a sanctuary where every treatment is a moment of pure relaxation and renewal. With expert hands and a calming presence, your wellness is always the priority.`;
+    case 'barbershop':       return `${first} and the team at ${bizName} deliver sharp cuts, clean fades, and precise grooming for every client. Walk in looking good — walk out looking your absolute best.`;
+    case 'mua':              return `${first} is a professional makeup artist at ${bizName} who transforms every look with skill and artistry. From natural glam to full bridal, your vision comes to life at every appointment.`;
+    case 'tailor':           return `Welcome to ${bizName}. ${first} crafts bespoke outfits for every occasion — from everyday styles to traditional aso-ebi and special events, all made to measure.`;
+    case 'photography':      return `Welcome to ${bizName}. ${first} captures your most important moments with professional photography for portraits, events, products, and everything in between.`;
+    case 'home_services':    return `Welcome to ${bizName}. ${first} provides reliable home maintenance and repair services including plumbing, electrical, AC, and more — done right the first time.`;
+    case 'tutor':            return `Welcome to ${bizName}. ${first} offers personalised tutoring for primary, secondary, and exam-prep students to help them reach their full potential with confidence.`;
+    case 'fitness':          return `Welcome to ${bizName}. ${first} helps clients reach their fitness goals with personal training, group classes, and nutrition consultations tailored to individual needs.`;
+    case 'events':           return `Welcome to ${bizName}. ${first} makes every event unforgettable with professional MC, DJ, decoration, and catering services — handling every detail so you can enjoy the moment.`;
+    case 'private_chef':     return `Welcome to ${bizName}. ${first} brings restaurant-quality dining to your home — from intimate dinner experiences to full-scale event catering, every meal is an occasion.`;
+    case 'content_creator':  return `Welcome to ${bizName}. ${first} creates engaging content that tells your brand story across social media and digital platforms — professional, impactful, and always on-brand.`;
+    case 'dj':               return `Welcome to ${bizName}. ${first} provides professional DJ services for weddings, parties, clubs, and corporate events — delivering unforgettable audio experiences every time.`;
+    case 'other_professional': return `Welcome to ${bizName}. ${first} is dedicated to delivering exceptional professional services tailored to every client. Book an appointment and let's work together.`;
+    default: return `${first} at ${bizName} is dedicated to delivering exceptional services tailored to every client. Book an appointment and experience the difference that expert care makes.`;
   }
 }
 
-/**
- * Normalise any Nigerian phone number to the wa.me format (no +, with 234 prefix).
- * Handles: 07012…, 7012…, 2347012…, +2347012…
- */
 function formatNigerianWhatsApp(raw) {
-  let digits = (raw ?? '').replace(/\D/g, ''); // strip +, spaces, dashes
+  let digits = (raw ?? '').replace(/\D/g, '');
   if (!digits) return '';
-  if (digits.startsWith('234'))  digits = digits.slice(3);  // remove existing country code
-  if (digits.startsWith('0'))    digits = digits.slice(1);  // remove local leading zero
+  if (digits.startsWith('234')) digits = digits.slice(3);
+  if (digits.startsWith('0'))   digits = digits.slice(1);
   return '234' + digits;
 }
 
 function buildWhatsAppUrl(whatsapp, submittedForm) {
   const number = formatNigerianWhatsApp(whatsapp);
   if (!number) return null;
-
   const { client_name, client_phone, service_name, date, time, ampm, notes } = submittedForm;
-
-  // Format the date for readability (e.g. "Mon, 2 Jun 2026")
   let readableDate = date;
   if (date) {
     const [y, m, d] = date.split('-').map(Number);
@@ -157,22 +274,42 @@ function buildWhatsAppUrl(whatsapp, submittedForm) {
       weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
     });
   }
-
   const lines = [
-    '🔔 New Booking Request!',
-    '',
-    `Client: ${client_name}`,
-    `Phone: ${client_phone}`,
-    `Service: ${service_name}`,
-    `Date: ${readableDate}`,
-    `Time: ${time} ${ampm}`,
+    '🔔 New Booking Request!', '',
+    `Client: ${client_name}`, `Phone: ${client_phone}`,
+    `Service: ${service_name}`, `Date: ${readableDate}`, `Time: ${time} ${ampm}`,
   ];
   if (notes?.trim()) lines.push(`Notes: ${notes.trim()}`);
-  lines.push('');
-  lines.push('Open your Sabi dashboard to confirm or cancel this booking.');
-
+  lines.push('', 'Open your Sabi dashboard to confirm or cancel this booking.');
   return `https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
+
+const TIME_SLOTS = [
+  { label: '8:00 AM',  time: '8:00',  ampm: 'AM' },
+  { label: '9:00 AM',  time: '9:00',  ampm: 'AM' },
+  { label: '10:00 AM', time: '10:00', ampm: 'AM' },
+  { label: '11:00 AM', time: '11:00', ampm: 'AM' },
+  { label: '12:00 PM', time: '12:00', ampm: 'PM' },
+  { label: '1:00 PM',  time: '1:00',  ampm: 'PM' },
+  { label: '2:00 PM',  time: '2:00',  ampm: 'PM' },
+  { label: '3:00 PM',  time: '3:00',  ampm: 'PM' },
+  { label: '4:00 PM',  time: '4:00',  ampm: 'PM' },
+  { label: '5:00 PM',  time: '5:00',  ampm: 'PM' },
+  { label: '6:00 PM',  time: '6:00',  ampm: 'PM' },
+  { label: '7:00 PM',  time: '7:00',  ampm: 'PM' },
+];
+
+// ── Neutral palette constants ─────────────────────────────────────────────────
+const N = {
+  canvas:    '#FAFAFA',
+  white:     '#FFFFFF',
+  textDark:  '#0f172a',
+  textMuted: '#64748b',
+  border:    'rgba(148,163,184,0.35)',
+  skeleton:  '#E2E8F0',
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function PublicView({
   businessId: propBusinessId,
@@ -182,36 +319,27 @@ export default function PublicView({
   onGoToDashboard,
 }) {
   const bookingRef = useRef(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Welcome banner is locally dismissable; re-appears only if parent resets the prop
-  const [bannerVisible, setBannerVisible] = useState(showWelcomeBanner);
-
-  const [sessionUserId, setSessionUserId] = useState(null);
-  const [business, setBusiness] = useState(null);
-  const [loadingBiz, setLoadingBiz] = useState(true);
-  const [services, setServices] = useState([]);
-  const [gallery, setGallery] = useState([]);
+  const [bannerVisible,   setBannerVisible]   = useState(showWelcomeBanner);
+  const [sessionUserId,   setSessionUserId]   = useState(null);
+  const [business,        setBusiness]        = useState(null);
+  const [loadingBiz,      setLoadingBiz]      = useState(true);
+  const [services,        setServices]        = useState([]);
+  const [gallery,         setGallery]         = useState([]);
   const [servicesLoading, setServicesLoading] = useState(true);
-  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [galleryLoading,  setGalleryLoading]  = useState(true);
 
   const [form, setForm] = useState({
-    client_name: '',
-    client_phone: '',
-    service_name: '',
-    price: 0,
-    date: '',
-    time: '',
-    ampm: 'AM',
-    notes: '',
+    client_name: '', client_phone: '', service_name: '',
+    price: 0, date: '', time: '', ampm: 'AM', notes: '',
   });
   const [formLoading, setFormLoading] = useState(false);
   const [formSuccess, setFormSuccess] = useState(false);
-  const [formError, setFormError] = useState('');
+  const [formError,   setFormError]   = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [whatsappUrl, setWhatsappUrl] = useState(null);
 
-  // Check whether the current visitor is the owner of this page.
-  // Runs once on mount — doesn't block the business data load.
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessionUserId(session?.user?.id ?? null);
@@ -220,47 +348,27 @@ export default function PublicView({
 
   useEffect(() => {
     async function loadAll() {
-      // Reset all data immediately so stale content from a previous business
-      // is never visible while the new fetch is in flight.
-      setBusiness(null);
-      setServices([]);
-      setGallery([]);
-      setServicesLoading(true);
-      setGalleryLoading(true);
-      setLoadingBiz(true);
+      setBusiness(null); setServices([]); setGallery([]);
+      setServicesLoading(true); setGalleryLoading(true); setLoadingBiz(true);
 
-      // Fetch the business — by id if provided, otherwise the first row
+      const cols = 'id,name,owner_name,tagline,business_type,user_id,avatar_url,whatsapp,custom_business_type,subscription_status,plan_expires_at,city,state';
       const bizQuery = propBusinessId
-        ? supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type, subscription_status, plan_expires_at').eq('id', propBusinessId).single()
-        : supabase.from('businesses').select('id, name, owner_name, tagline, business_type, user_id, avatar_url, whatsapp, custom_business_type, subscription_status, plan_expires_at').limit(1).single();
+        ? supabase.from('businesses').select(cols).eq('id', propBusinessId).single()
+        : supabase.from('businesses').select(cols).limit(1).single();
 
       const { data: biz } = await bizQuery;
-      setLoadingBiz(false); // fetch complete — blank screen ends here
-
-      if (!biz) {
-        setServicesLoading(false);
-        setGalleryLoading(false);
-        return;
-      }
+      setLoadingBiz(false);
+      if (!biz) { setServicesLoading(false); setGalleryLoading(false); return; }
       setBusiness(biz);
       document.title = `${biz.name.toUpperCase()} | Sabi`;
 
-      // Now fetch services and gallery scoped to this business
       const [svcRes, galRes] = await Promise.all([
-        supabase
-          .from('services')
-          .select('id, name, price, category')
-          .eq('business_id', biz.id)
-          .eq('active', true)
-          .order('category')
-          .order('name'),
-        supabase
-          .from('gallery')
-          .select('id, image_url, caption')
-          .eq('business_id', biz.id)
-          .order('created_at', { ascending: false }),
+        supabase.from('services').select('id,name,price,category')
+          .eq('business_id', biz.id).eq('active', true)
+          .order('category').order('name'),
+        supabase.from('gallery').select('id,image_url,caption')
+          .eq('business_id', biz.id).order('created_at', { ascending: false }),
       ]);
-
       setServices(svcRes.data || []);
       setServicesLoading(false);
       setGallery(galRes.data || []);
@@ -272,497 +380,916 @@ export default function PublicView({
 
   function handleChange(field) {
     return (e) => {
-      setForm((f) => ({ ...f, [field]: e.target.value }));
-      setFieldErrors((fe) => ({ ...fe, [field]: '' }));
+      setForm(f => ({ ...f, [field]: e.target.value }));
+      setFieldErrors(fe => ({ ...fe, [field]: '' }));
     };
   }
 
-  function handleServiceChange(e) {
-    const selected = services.find((s) => s.name === e.target.value);
-    setForm((f) => ({
-      ...f,
-      service_name: e.target.value,
-      price: selected ? selected.price : 0,
-    }));
-    setFieldErrors((fe) => ({ ...fe, service_name: '' }));
+  function handleServiceCard(svc) {
+    setForm(f => ({ ...f, service_name: svc.name, price: svc.price }));
+    setFieldErrors(fe => ({ ...fe, service_name: '' }));
+  }
+
+  function handleTimeSlot(time, ampm) {
+    setForm(f => ({ ...f, time, ampm }));
+    setFieldErrors(fe => ({ ...fe, time: '' }));
   }
 
   function validate() {
     const errors = {};
-    if (!form.client_name.trim()) errors.client_name = 'Full name is required';
+    if (!form.client_name.trim())  errors.client_name  = 'Full name is required';
     if (!form.client_phone.trim()) errors.client_phone = 'Phone number is required';
-    if (!form.service_name) errors.service_name = 'Please select a service';
-    if (!form.date) errors.date = 'Please choose a date';
-    if (!form.time.trim()) errors.time = 'Please enter a preferred time';
+    if (!form.service_name)        errors.service_name = 'Please select a service';
+    if (!form.date)                errors.date         = 'Please choose a date';
+    if (!form.time.trim())         errors.time         = 'Please select a time';
     return errors;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     const errors = validate();
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-    if (!business?.id) {
-      setFormError('Unable to submit. Please refresh and try again.');
-      return;
-    }
-    setFormLoading(true);
-    setFormError('');
+    if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
+    if (!business?.id) { setFormError('Unable to submit. Please refresh and try again.'); return; }
+    setFormLoading(true); setFormError('');
 
     const { error } = await supabase.from('bookings').insert({
-      business_id: business.id,
-      client_name: form.client_name.trim(),
+      business_id:  business.id,
+      client_name:  form.client_name.trim(),
       client_phone: form.client_phone.trim(),
       service_name: form.service_name,
-      price: form.price,
-      date: form.date,
-      time: form.time.trim(),
-      ampm: form.ampm,
-      status: 'pending',
-      notes: form.notes.trim(),
+      price:        form.price,
+      date:         form.date,
+      time:         form.time.trim(),
+      ampm:         form.ampm,
+      status:       'pending',
+      notes:        form.notes.trim(),
     });
 
     setFormLoading(false);
     if (error) {
-      console.error('[BookingInsert]', error.code, error.message, error.details, error.hint);
       setFormError('Something went wrong. Please try again.');
     } else {
-      track('booking_submitted', {
-        service_name: form.service_name,
-        business_id:  business.id,
-      });
-
-      // Snapshot the form values before resetting — needed for the WA message
+      track('booking_submitted', { service_name: form.service_name, business_id: business.id });
       const snapshot = { ...form };
-
       setFormSuccess(true);
-      setForm({
-        client_name: '',
-        client_phone: '',
-        service_name: '',
-        price: 0,
-        date: '',
-        time: '',
-        ampm: 'AM',
-        notes: '',
-      });
-
-      // Build and fire the WhatsApp notification to the business owner
+      setForm({ client_name: '', client_phone: '', service_name: '', price: 0, date: '', time: '', ampm: 'AM', notes: '' });
       const waUrl = buildWhatsAppUrl(business.whatsapp, snapshot);
       if (waUrl) {
         setWhatsappUrl(waUrl);
-        // 1.5 s delay so the client sees the success card first
         setTimeout(() => window.open(waUrl, '_blank', 'noopener,noreferrer'), 1500);
       }
     }
   }
 
-  const scrollToBooking = () => {
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  function handleBannerDismiss() { setBannerVisible(false); onWelcomeDismiss?.(); }
 
-  const today = new Date().toISOString().split('T')[0];
-
-  function handleBannerDismiss() {
-    setBannerVisible(false);
-    onWelcomeDismiss?.();
-  }
-
-  // /api/og?business=ID gives WhatsApp the correct OG preview and redirects
-  // real browsers to the React app automatically.
   const bookingLink = typeof window !== 'undefined'
     ? `${window.location.origin}/api/og?business=${propBusinessId}`
     : '';
-
   const isActualOwner = !!sessionUserId && !!business && business.user_id === sessionUserId;
+  const today = new Date().toISOString().split('T')[0];
 
-  // Suppress all rendering until the business fetch resolves.
-  // Returning null here prevents the hardcoded fallback text (old demo data)
-  // from flashing before the real business data arrives.
+  // ── Waiting on fetch ─────────────────────────────────────────────────────────
   if (loadingBiz) return null;
 
-  const themeStyle = applyThemeStyle(business?.business_type ?? 'other');
-  /* themeStyle now applies --t-* CSS variables used by PublicView.css */
+  const theme    = getBusinessTheme(business?.business_type ?? 'other');
+  const location = [business?.city, business?.state].filter(Boolean).join(', ');
+  const bizInitial = (business?.name || '?')[0].toUpperCase();
+  const whyCards = WHY_CARDS[business?.business_type] ?? DEFAULT_WHY_CARDS;
 
-  // Show unavailable page for expired / inactive subscriptions on public-facing view.
-  // Owners viewing their own page skip this gate so they can still see what clients see.
+  // Drawer input base style — neutral light canvas
+  const IS = {
+    input: {
+      background: N.white,
+      border: `1px solid ${N.border}`,
+      color: N.textDark,
+      borderRadius: '12px',
+      padding: '12px 16px',
+      width: '100%',
+      outline: 'none',
+      fontFamily: 'DM Sans, sans-serif',
+      fontSize: '14px',
+    },
+    inputErr: { borderColor: '#f87171' },
+  };
+
+  // ── Subscription gate ────────────────────────────────────────────────────────
   if (business && !isOwner && !isSubscriptionActive(business)) {
     const waNumber = formatNigerianWhatsApp(business.whatsapp);
     return (
-      <div style={{ minHeight: '100vh', background: '#0A2E1A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', fontFamily: "'DM Sans', sans-serif", textAlign: 'center' }}>
-        <div style={{ width: 48, height: 48, background: '#F5C842', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 900, color: '#0A2E1A', marginBottom: 24 }}>S</div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 500, color: '#fff', marginBottom: 12 }}>
-          {business.name}
-        </h1>
-        <p style={{ fontSize: 16, color: '#7AAE90', marginBottom: 8, fontWeight: 500 }}>
-          This business is temporarily unavailable
-        </p>
-        <p style={{ fontSize: 14, color: 'rgba(122,174,144,0.7)', marginBottom: 32, maxWidth: 320, lineHeight: 1.6 }}>
-          Check back soon or contact them directly.
-        </p>
+      <div className="min-h-screen bg-sabi-dark flex flex-col items-center justify-center px-6 py-10 text-center font-sans">
+        <div className="w-12 h-12 bg-sabi-gold rounded-xl flex items-center justify-center font-black text-sabi-dark text-2xl mb-6"
+          style={{ fontFamily: 'Georgia,serif' }}>S</div>
+        <h1 className="font-serif text-3xl font-medium text-white mb-3">{business.name}</h1>
+        <p className="text-sabi-muted text-base font-medium mb-2">This business is temporarily unavailable</p>
+        <p className="text-sabi-muted/70 text-sm mb-8 max-w-xs leading-relaxed">Check back soon or contact them directly.</p>
         {waNumber && (
-          <a
-            href={`https://wa.me/${waNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#25D366', color: '#fff', fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, padding: '12px 24px', borderRadius: 6, textDecoration: 'none' }}
-          >
+          <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-[#25D366] text-white text-sm font-semibold px-6 py-3 rounded-xl no-underline">
             Contact on WhatsApp
           </a>
         )}
-        <p style={{ fontSize: 12, color: 'rgba(122,174,144,0.4)', marginTop: 48 }}>Powered by Sabi</p>
+        <p className="text-sabi-muted/40 text-xs mt-12">Powered by Sabi</p>
       </div>
     );
   }
 
-  return (
-    <div className="pv-root" style={themeStyle}>
+  // ── Booking drawer content ────────────────────────────────────────────────────
+  const drawerContent = (
+    <div className="h-full flex flex-col bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b border-slate-200">
+        <div>
+          <h2 className="font-serif text-xl font-semibold text-slate-900">
+            Book an Appointment
+          </h2>
+          {form.service_name && (
+            <p className="text-xs mt-0.5 text-slate-500">
+              {form.service_name} — ₦{form.price.toLocaleString()}
+            </p>
+          )}
+        </div>
+        <button onClick={() => setDrawerOpen(false)}
+          className="w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer border border-slate-200 bg-slate-50 text-slate-400 flex-shrink-0">
+          <X size={16} />
+        </button>
+      </div>
 
-      {/* ── Owner sticky bar — visible only to the authenticated owner ── */}
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-5 py-5">
+        {formSuccess ? (
+          <div className="flex flex-col items-center py-12 gap-4 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ background: `${theme.primary}18`, border: `2px solid ${theme.primary}` }}>
+              <CheckCircle size={32} style={{ color: theme.primary }} strokeWidth={1.5} />
+            </div>
+            <h3 className="font-serif text-2xl font-medium text-slate-900">
+              Booking Request Sent!
+            </h3>
+            <p className="text-sm leading-relaxed max-w-xs text-slate-500">
+              Your request has been received. The business will confirm your appointment
+              via WhatsApp shortly.
+            </p>
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                className="text-sm font-medium no-underline" style={{ color: theme.primary }}>
+                Tap here if WhatsApp didn&apos;t open automatically
+              </a>
+            )}
+            <button
+              onClick={() => { setFormSuccess(false); setWhatsappUrl(null); setDrawerOpen(false); }}
+              className="mt-2 px-6 py-3 rounded-xl font-bold text-sm border-0 cursor-pointer"
+              style={{ background: theme.btnBg, color: theme.btnText }}>
+              Done
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+
+            {/* Service */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                Service
+              </label>
+              {servicesLoading ? (
+                <div className="h-12 rounded-xl animate-pulse bg-slate-100" />
+              ) : (
+                <select style={{ ...IS.input, appearance: 'none' }} value={form.service_name}
+                  onChange={e => {
+                    const svc = services.find(s => s.name === e.target.value);
+                    setForm(f => ({ ...f, service_name: e.target.value, price: svc?.price ?? 0 }));
+                    setFieldErrors(fe => ({ ...fe, service_name: '' }));
+                  }}>
+                  <option value="">Select a service…</option>
+                  {services.map(svc => (
+                    <option key={svc.id} value={svc.name}>
+                      {svc.name} — ₦{svc.price.toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {fieldErrors.service_name && (
+                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                  <AlertCircle size={11} />{fieldErrors.service_name}
+                </span>
+              )}
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                Preferred Date
+              </label>
+              <input style={{ ...IS.input, ...(fieldErrors.date ? IS.inputErr : {}) }}
+                type="date" value={form.date} min={today} onChange={handleChange('date')} />
+              {fieldErrors.date && (
+                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                  <AlertCircle size={11} />{fieldErrors.date}
+                </span>
+              )}
+            </div>
+
+            {/* Time */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                Preferred Time
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {TIME_SLOTS.map(slot => {
+                  const active = form.time === slot.time && form.ampm === slot.ampm;
+                  return (
+                    <button key={slot.label} type="button"
+                      onClick={() => handleTimeSlot(slot.time, slot.ampm)}
+                      className="py-2 rounded-lg text-xs font-semibold border cursor-pointer transition-all"
+                      style={active
+                        ? { background: theme.btnBg, color: theme.btnText, borderColor: theme.primary }
+                        : { background: N.white, color: N.textMuted, borderColor: N.border }
+                      }>
+                      {slot.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {fieldErrors.time && (
+                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                  <AlertCircle size={11} />{fieldErrors.time}
+                </span>
+              )}
+            </div>
+
+            {/* Name */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                Your Full Name
+              </label>
+              <input style={{ ...IS.input, ...(fieldErrors.client_name ? IS.inputErr : {}) }}
+                type="text" placeholder="e.g. Adaeze Okonkwo"
+                value={form.client_name} onChange={handleChange('client_name')} />
+              {fieldErrors.client_name && (
+                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                  <AlertCircle size={11} />{fieldErrors.client_name}
+                </span>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                Phone Number
+              </label>
+              <input style={{ ...IS.input, ...(fieldErrors.client_phone ? IS.inputErr : {}) }}
+                type="text" placeholder="e.g. 08012345678"
+                value={form.client_phone} onChange={handleChange('client_phone')} />
+              {fieldErrors.client_phone && (
+                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                  <AlertCircle size={11} />{fieldErrors.client_phone}
+                </span>
+              )}
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                Notes{' '}
+                <span className="normal-case tracking-normal font-normal text-slate-300">(optional)</span>
+              </label>
+              <textarea style={IS.input} rows={3}
+                placeholder="Any special requests or additional information…"
+                value={form.notes} onChange={handleChange('notes')} />
+            </div>
+
+            {formError && (
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+                <AlertCircle size={14} className="flex-shrink-0" />{formError}
+              </div>
+            )}
+
+            <button type="submit" disabled={formLoading}
+              className="w-full py-4 rounded-xl font-bold text-base border-0 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
+              style={{ background: theme.btnBg, color: theme.btnText }}>
+              {formLoading
+                ? <><Loader2 size={16} className="pv-spin" /> Sending Request…</>
+                : 'Confirm Booking Request'
+              }
+            </button>
+
+            <p className="text-xs text-center text-slate-400">
+              🔒 Your details are secure. Confirmation via WhatsApp.
+            </p>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── Main render ───────────────────────────────────────────────────────────────
+
+  return (
+    <div className="font-sans bg-[#FAFAFA] min-h-screen">
+
+      {/* ── Owner bar ──────────────────────────────────────────── */}
       {isActualOwner && (
-        <div className="pv-owner-bar">
-          <span className="pv-owner-bar-text">Viewing your public page</span>
-          <button className="pv-owner-bar-btn" onClick={onGoToDashboard}>
-            <LayoutDashboard size={13} />
-            Go to Dashboard
+        <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-sabi-gold text-sabi-dark text-sm font-semibold">
+          <span>Viewing your public page</span>
+          <button
+            className="flex items-center gap-1.5 bg-sabi-dark text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer"
+            onClick={onGoToDashboard}>
+            <LayoutDashboard size={13} /> Go to Dashboard
           </button>
         </div>
       )}
 
-      {/* ── Welcome banner (new signups only, dismissable) ── */}
+      {/* ── Welcome banner ─────────────────────────────────────── */}
       {isOwner && bannerVisible && (
-        <div className="pv-welcome-banner">
-          <div className="pv-welcome-inner">
-            <Globe size={15} className="pv-welcome-icon" />
-            <p className="pv-welcome-text">
+        <div className="flex items-center justify-between px-4 py-3 bg-sabi-green/20 border-b border-sabi-green/30">
+          <div className="flex items-center gap-2 min-w-0">
+            <Globe size={15} className="text-sabi-green flex-shrink-0" />
+            <p className="text-sm text-white truncate">
               <strong>Your booking page is live.</strong>{' '}
-              Share this link with your clients:{' '}
-              <span className="pv-welcome-link">{bookingLink}</span>
+              Share: <span className="text-sabi-green">{bookingLink}</span>
             </p>
           </div>
-          <button className="pv-welcome-dismiss" onClick={handleBannerDismiss} aria-label="Dismiss">
+          <button className="ml-3 w-6 h-6 flex items-center justify-center text-sabi-muted hover:text-white bg-transparent border-0 cursor-pointer flex-shrink-0"
+            onClick={handleBannerDismiss} aria-label="Dismiss">
             <X size={14} />
           </button>
         </div>
       )}
 
-      {/* Hero */}
-      <section className="pv-hero">
-        <div className="pv-inner">
-          <p className="pv-eyebrow">Welcome to</p>
-          <h1 className="pv-hero-title">
-            {business?.name}
-          </h1>
-          <p className="pv-hero-tagline">
-            {business?.tagline}
+      {/* ══════════════════════════════════════════════════════════
+          1. STICKY NAVIGATION HEADER
+      ══════════════════════════════════════════════════════════ */}
+      <nav className="sticky top-0 z-40 bg-white/90 border-b border-slate-200 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-5 md:px-8 h-16">
+
+          {/* Business identity */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm flex-shrink-0"
+              style={{ background: theme.btnBg, color: theme.btnText, fontFamily: 'Georgia,serif' }}>
+              {bizInitial}
+            </div>
+            <span className="font-bold text-sm leading-tight hidden sm:block text-slate-900">
+              {business?.name}
+            </span>
+          </div>
+
+          {/* Nav anchors — desktop */}
+          <div className="hidden md:flex items-center gap-7">
+            {[['#services-section', 'Services'], ['#about-section', 'About'], ['#gallery-section', 'Gallery']].map(([href, label]) => (
+              <a key={href} href={href}
+                className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 no-underline">
+                {label}
+              </a>
+            ))}
+          </div>
+
+          {/* Book CTA */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm border-0 cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
+            style={{ background: theme.btnBg, color: theme.btnText }}>
+            Book Appointment
+          </button>
+        </div>
+      </nav>
+
+      {/* ══════════════════════════════════════════════════════════
+          2. HERO SECTION
+      ══════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden min-h-[92vh] flex items-center bg-[#FAFAFA]">
+
+        {/* Very subtle dot texture */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, #0f172a 1px, transparent 0)`,
+            backgroundSize: '32px 32px',
+          }} />
+
+        <div className="relative z-10 max-w-6xl mx-auto w-full px-5 md:px-8 py-16 md:py-24 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+
+          {/* ── Left: Headline + CTAs ── */}
+          <div className="animate-slide-up">
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-5"
+              style={{ background: `${theme.primary}12`, borderColor: `${theme.primary}28`, color: theme.primary }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse-dot" style={{ background: theme.primary }} />
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {ownerTitle(business?.business_type, business?.custom_business_type)}
+              </span>
+            </div>
+
+            {/* Headline */}
+            <h1 className="font-serif font-semibold leading-[1.05] mb-5 text-slate-900"
+              style={{ fontSize: 'clamp(2.4rem, 5vw, 3.6rem)', whiteSpace: 'pre-line' }}>
+              {HERO_HEADLINES[business?.business_type]
+                ? HERO_HEADLINES[business?.business_type].replace(/\n/g, '\n')
+                : `Welcome to\n${business?.name}`
+              }
+            </h1>
+
+            {/* Subheadline */}
+            <p className="text-base leading-relaxed mb-8 max-w-md text-slate-500">
+              {business?.tagline || HERO_SUBS[business?.business_type] || HERO_SUBS.other}
+            </p>
+
+            {/* Location */}
+            {location && (
+              <div className="flex items-center gap-1.5 mb-7">
+                <MapPin size={13} className="text-slate-400" />
+                <span className="text-sm font-medium text-slate-400">{location}</span>
+              </div>
+            )}
+
+            {/* CTA buttons */}
+            <div className="flex flex-wrap gap-3 mb-8">
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-base border-0 cursor-pointer transition-all active:scale-95 hover:opacity-90"
+                style={{ background: theme.btnBg, color: theme.btnText }}>
+                Book Appointment
+              </button>
+              <a href="#services-section"
+                className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm border border-slate-200 text-slate-500 no-underline transition-all hover:border-slate-300 hover:text-slate-700 bg-white">
+                Explore Services
+                <ChevronDown size={14} />
+              </a>
+            </div>
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap gap-3">
+              {[
+                { icon: '⭐', text: '4.9 Rating' },
+                { icon: '✅', text: 'Verified Pro' },
+                { icon: '🔒', text: 'Secure Booking' },
+              ].map(({ icon, text }) => (
+                <div key={text}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-500">
+                  {icon} {text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Right: Media frame ── */}
+          <div className="relative hidden md:block">
+            <div className="relative rounded-3xl overflow-hidden shadow-xl border border-slate-200/60"
+              style={{ height: 500, background: N.white }}>
+
+              {gallery.length > 0 ? (
+                <img src={gallery[0].image_url} alt={business?.name}
+                  className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 to-white">
+                  {business?.avatar_url ? (
+                    <img src={business.avatar_url} alt={business.owner_name}
+                      className="w-28 h-28 rounded-full object-cover"
+                      style={{ border: `3px solid ${theme.primary}` }} />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full flex items-center justify-center font-black text-5xl"
+                      style={{ background: `${theme.primary}18`, color: theme.primary, fontFamily: 'Georgia,serif' }}>
+                      {bizInitial}
+                    </div>
+                  )}
+                  <p className="font-serif text-2xl font-semibold text-center px-6 text-slate-900">
+                    {business?.name}
+                  </p>
+                  <p className="text-sm text-center px-6 text-slate-400">
+                    {ownerTitle(business?.business_type, business?.custom_business_type)}
+                  </p>
+                </div>
+              )}
+
+              {/* Gradient overlay at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 h-24"
+                style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.7), transparent)' }} />
+            </div>
+
+            {/* Floating: Accepting Bookings badge */}
+            <div className="absolute top-5 right-5 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold shadow-md bg-white border border-slate-200 text-slate-900">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              Accepting Bookings
+            </div>
+
+            {/* Floating: Services count card */}
+            <div className="absolute -bottom-4 -left-4 rounded-2xl px-5 py-3.5 shadow-xl bg-white border border-slate-200">
+              <p className="text-xs mb-0.5 text-slate-400">
+                {servicesLoading ? 'Services Available' : `${services.length} Service${services.length !== 1 ? 's' : ''} Available`}
+              </p>
+              <p className="font-serif text-2xl font-bold leading-none" style={{ color: theme.primary }}>
+                {servicesLoading ? '…' : `${services.length}+`}
+              </p>
+            </div>
+
+            {/* Floating: Clients stat card */}
+            <div className="absolute -bottom-4 right-8 rounded-2xl px-5 py-3.5 shadow-xl bg-white border border-slate-200">
+              <p className="text-xs mb-0.5 text-slate-400">Happy Clients</p>
+              <p className="font-serif text-2xl font-bold leading-none" style={{ color: theme.primary }}>
+                200+
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 opacity-30">
+          <span className="text-xs font-medium text-slate-500">Scroll to explore</span>
+          <ChevronDown size={16} className="text-slate-400" />
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          3. WHY CHOOSE US GRID
+      ══════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-5 md:px-8 bg-white">
+        <div className="max-w-5xl mx-auto">
+
+          {/* Section header */}
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest mb-3"
+              style={{ color: theme.primary }}>Why us</p>
+            <h2 className="font-serif font-medium leading-tight text-slate-900"
+              style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
+              Why Choose {business?.name}?
+            </h2>
+          </div>
+
+          {/* 3-column grid */}
+          <div className="grid sm:grid-cols-3 gap-5">
+            {whyCards.map((card, i) => (
+              <div key={i}
+                className="rounded-2xl p-6 bg-white border border-slate-200/60 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+                {/* Icon box */}
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"
+                  style={{ background: `${theme.primary}12` }}>
+                  {card.icon}
+                </div>
+                <h3 className="font-bold text-base mb-2 text-slate-900">
+                  {card.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-500">
+                  {card.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          4. SERVICES SECTION
+      ══════════════════════════════════════════════════════════ */}
+      <section id="services-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA]" ref={bookingRef}>
+        <div className="max-w-5xl mx-auto">
+
+          {/* Section header */}
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest mb-3"
+              style={{ color: theme.primary }}>What we offer</p>
+            <h2 className="font-serif font-medium mb-2 text-slate-900"
+              style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
+              Our Services
+            </h2>
+            <p className="text-sm text-slate-500">
+              {SERVICE_SUBTITLES[business?.business_type] ?? 'Professional services, every detail attended to'}
+            </p>
+          </div>
+
+          {/* Service cards */}
+          {servicesLoading ? (
+            <div className="flex flex-col gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 rounded-2xl animate-pulse bg-slate-200" />
+              ))}
+            </div>
+          ) : services.length === 0 ? (
+            <div className="text-center py-16 rounded-2xl bg-white border border-slate-200/60">
+              <p className="text-base mb-1 font-medium text-slate-900">No services listed yet</p>
+              <p className="text-sm text-slate-400">Check back soon.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {services.map(svc => {
+                const isSelected = form.service_name === svc.name;
+                const emoji = getSvcEmoji(svc.category, svc.name);
+                return (
+                  <div key={svc.id}
+                    className="rounded-2xl border transition-all duration-200 overflow-hidden bg-white"
+                    style={{
+                      borderColor: isSelected ? theme.primary : N.border,
+                      boxShadow:   isSelected
+                        ? `0 0 0 1px ${theme.primary}, 0 2px 8px rgba(0,0,0,0.06)`
+                        : '0 1px 3px rgba(0,0,0,0.05)',
+                    }}>
+                    <div className="flex items-center gap-4 p-5">
+
+                      {/* Icon block */}
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                        style={{ background: isSelected ? `${theme.primary}22` : `${theme.primary}10` }}>
+                        {emoji}
+                      </div>
+
+                      {/* Info block */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm leading-tight text-slate-900">
+                          {svc.name}
+                        </p>
+                        {svc.category && (
+                          <p className="text-xs mt-0.5 capitalize font-medium text-slate-400">
+                            {svc.category}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Price + Select */}
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <span className="font-bold text-base" style={{ color: theme.primary }}>
+                          ₦{svc.price.toLocaleString()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleServiceCard(svc);
+                            if (!isSelected) {
+                              setTimeout(() => {
+                                document.getElementById('booking-cta-section')
+                                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }, 100);
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border-0 cursor-pointer transition-all active:scale-95"
+                          style={{
+                            background: isSelected ? theme.btnBg : `${theme.primary}14`,
+                            color:      isSelected ? theme.btnText : theme.primary,
+                          }}>
+                          {isSelected ? (
+                            <><CheckCircle size={13} /> Selected</>
+                          ) : (
+                            'Select'
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expanded booking prompt when selected */}
+                    {isSelected && (
+                      <div className="border-t border-slate-200 px-5 py-3 flex items-center justify-between">
+                        <p className="text-xs font-medium text-slate-400">
+                          Ready to book? Choose your date and time.
+                        </p>
+                        <button
+                          onClick={() => setDrawerOpen(true)}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold border-0 cursor-pointer"
+                          style={{ background: theme.btnBg, color: theme.btnText }}>
+                          Continue Booking →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {fieldErrors.service_name && (
+            <span className="flex items-center gap-1 text-red-400 text-xs mt-3">
+              <AlertCircle size={12} />{fieldErrors.service_name}
+            </span>
+          )}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          5. GALLERY SECTION
+      ══════════════════════════════════════════════════════════ */}
+      {(galleryLoading || gallery.length > 0) && (
+        <section id="gallery-section" className="py-20 px-5 md:px-8 bg-white">
+          <div className="max-w-5xl mx-auto">
+
+            <div className="text-center mb-12">
+              <p className="text-xs font-bold uppercase tracking-widest mb-3"
+                style={{ color: theme.primary }}>Portfolio</p>
+              <h2 className="font-serif font-medium text-slate-900"
+                style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
+                Our Work
+              </h2>
+              <p className="text-sm mt-2 text-slate-500">A glimpse of the craft</p>
+            </div>
+
+            {galleryLoading ? (
+              <div className="columns-2 md:columns-3 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl mb-3 animate-pulse break-inside-avoid bg-slate-200"
+                    style={{ height: 140 + (i % 3) * 50 }} />
+                ))}
+              </div>
+            ) : (
+              <div className="columns-2 md:columns-3 gap-3">
+                {gallery.map(item => (
+                  <div key={item.id}
+                    className="rounded-2xl overflow-hidden mb-3 break-inside-avoid group transition-all hover:opacity-95 hover:shadow-xl border border-slate-200/60">
+                    <img src={item.image_url} alt={item.caption || 'Portfolio'} loading="lazy"
+                      className="w-full block" />
+                    {item.caption && (
+                      <p className="text-xs px-3 py-2 bg-white text-slate-400">
+                        {item.caption}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          6. ABOUT / MEET THE OWNER SECTION
+      ══════════════════════════════════════════════════════════ */}
+      <section id="about-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA]">
+        <div className="max-w-5xl mx-auto">
+
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest mb-3"
+              style={{ color: theme.primary }}>About</p>
+            <h2 className="font-serif font-medium text-slate-900"
+              style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
+              Meet {firstName(business?.owner_name)}
+            </h2>
+            <p className="text-sm mt-2 text-slate-500">
+              {MEET_SUBTITLES[business?.business_type] ?? 'The professional behind every booking'}
+            </p>
+          </div>
+
+          {/* Owner profile card */}
+          <div className="rounded-3xl overflow-hidden border border-slate-200/60 shadow-md grid md:grid-cols-2">
+
+            {/* Left: avatar + badge */}
+            <div className="flex flex-col items-center justify-center p-10 gap-5 bg-gradient-to-br from-slate-50 to-white">
+              <div className="relative">
+                <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-slate-200 bg-white">
+                  {business?.avatar_url ? (
+                    <img src={business.avatar_url} alt={business.owner_name}
+                      className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <User size={44} strokeWidth={1} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                {/* Verified badge */}
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
+                  style={{ background: theme.primary }}>
+                  <Shield size={14} style={{ color: theme.btnText }} />
+                </div>
+              </div>
+
+              <div className="text-center">
+                <p className="font-bold text-base text-slate-900">
+                  {business?.owner_name}
+                </p>
+                <p className="text-xs mt-0.5 font-medium text-slate-400">
+                  {ownerTitle(business?.business_type, business?.custom_business_type)}
+                </p>
+              </div>
+
+              {/* Stats row */}
+              <div className="flex gap-5">
+                {[
+                  ['200+', 'Clients'],
+                  [servicesLoading ? '—' : String(services.length), 'Services'],
+                  ['3+', 'Years'],
+                ].map(([val, lbl]) => (
+                  <div key={lbl} className="text-center">
+                    <p className="font-serif font-bold text-xl" style={{ color: theme.primary }}>{val}</p>
+                    <p className="text-xs text-slate-400">{lbl}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: bio + CTA */}
+            <div className="p-8 md:p-10 flex flex-col justify-center gap-5 bg-white">
+              <h3 className="font-serif text-2xl font-medium text-slate-900">
+                The Story Behind {business?.name}
+              </h3>
+              <p className="text-sm leading-relaxed text-slate-500">
+                {ownerBio(business?.business_type, business?.owner_name, business?.name)}
+              </p>
+
+              {/* Trust bullets */}
+              <div className="flex flex-col gap-2 mt-1">
+                {[
+                  { icon: <CheckCircle size={14} />, text: 'Verified & professional' },
+                  { icon: <Star size={14} />, text: '4.9 average client rating' },
+                  { icon: <Clock size={14} />, text: 'On-time, every appointment' },
+                ].map(({ icon, text }, i) => (
+                  <div key={i} className="flex items-center gap-2.5">
+                    <span style={{ color: theme.primary }}>{icon}</span>
+                    <span className="text-sm font-medium text-slate-500">{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* WhatsApp direct link */}
+              {business?.whatsapp && (
+                <a href={`https://wa.me/${formatNigerianWhatsApp(business.whatsapp)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-500 no-underline transition-all hover:border-slate-300 hover:text-slate-700 bg-white self-start">
+                  💬 Message on WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          7. FOOTER BOOKING CTA BAND
+      ══════════════════════════════════════════════════════════ */}
+      <section id="booking-cta-section" className="py-16 px-5 md:px-8 bg-slate-900">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="font-serif font-semibold mb-3 text-white"
+            style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)' }}>
+            Ready to Book Your Appointment?
+          </h2>
+          <p className="text-sm mb-7 text-white/60">
+            Secure your slot in under 2 minutes. Confirmation via WhatsApp.
           </p>
-          <button className="pv-btn-primary" onClick={scrollToBooking}>
-            Book an Appointment
+          <button onClick={() => setDrawerOpen(true)}
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-base border-0 cursor-pointer transition-all active:scale-95 hover:opacity-90"
+            style={{ background: theme.btnBg, color: theme.btnText }}>
+            Book Now — It&apos;s Free
           </button>
         </div>
       </section>
 
-      {/* Services */}
-      <section className="pv-section pv-section--white">
-        <div className="pv-inner">
-          <h2 className="pv-section-title">Our Services</h2>
-          <p className="pv-section-sub">{servicesSubtitle(business?.business_type)}</p>
-          <div className="pv-services-grid">
-            {servicesLoading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="pv-skeleton-card" />
-                ))
-              : services.map((svc) => (
-                  <div key={svc.id} className="pv-service-card">
-                    <span className={`pv-category-tag pv-category-tag--${svc.category}`}>
-                      {svc.category === 'nails'
-                        ? <Scissors size={10} />
-                        : <Eye size={10} />}
-                      {svc.category}
-                    </span>
-                    <p className="pv-service-name">{svc.name}</p>
-                    <p className="pv-service-price">
-                      &#8358;{svc.price.toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Booking Form */}
-      <section className="pv-section pv-section--blush" ref={bookingRef}>
-        <div className="pv-inner">
-          <h2 className="pv-section-title">Book an Appointment</h2>
-          <p className="pv-section-sub">Fill in your details and we will confirm via WhatsApp</p>
-
-          {formSuccess ? (
-            <div className="pv-success-card">
-              <CheckCircle size={36} className="pv-success-icon" strokeWidth={1.5} />
-              <h3 className="pv-success-title">Request Received</h3>
-              <p className="pv-success-body">
-                Thank you for reaching out. Your booking request has been sent and
-                we will confirm your appointment via WhatsApp shortly.
-              </p>
-              {whatsappUrl && (
-                <p className="pv-success-wa-note">
-                  Your booking has been sent! We&apos;ll also notify the business via
-                  WhatsApp to confirm your appointment.{' '}
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pv-success-wa-link"
-                  >
-                    Tap here if WhatsApp didn&apos;t open
-                  </a>
-                </p>
-              )}
-              <button
-                className="pv-btn-primary"
-                onClick={() => { setFormSuccess(false); setWhatsappUrl(null); }}
-              >
-                Book Another Appointment
-              </button>
+      {/* ══════════════════════════════════════════════════════════
+          8. FOOTER
+      ══════════════════════════════════════════════════════════ */}
+      <footer className="py-8 px-5 md:px-8 border-t border-slate-200 bg-white">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded flex items-center justify-center font-black text-xs"
+              style={{ background: theme.btnBg, color: theme.btnText, fontFamily: 'Georgia,serif' }}>
+              {bizInitial}
             </div>
-          ) : (
-            <form className="pv-form" onSubmit={handleSubmit} noValidate>
-              <div className="pv-field">
-                <label className="pv-label">Full Name</label>
-                <input
-                  className={`pv-input${fieldErrors.client_name ? ' pv-input--error' : ''}`}
-                  type="text"
-                  placeholder="Your full name"
-                  value={form.client_name}
-                  onChange={handleChange('client_name')}
-                />
-                {fieldErrors.client_name && (
-                  <span className="pv-field-error">
-                    <AlertCircle size={12} />
-                    {fieldErrors.client_name}
-                  </span>
-                )}
-              </div>
-
-              <div className="pv-field">
-                <label className="pv-label">Phone Number</label>
-                <input
-                  className={`pv-input${fieldErrors.client_phone ? ' pv-input--error' : ''}`}
-                  type="text"
-                  placeholder="e.g. 08012345678"
-                  value={form.client_phone}
-                  onChange={handleChange('client_phone')}
-                />
-                {fieldErrors.client_phone && (
-                  <span className="pv-field-error">
-                    <AlertCircle size={12} />
-                    {fieldErrors.client_phone}
-                  </span>
-                )}
-              </div>
-
-              <div className="pv-field">
-                <label className="pv-label">Service</label>
-                <div className="pv-select-wrap">
-                  <select
-                    className={`pv-select${fieldErrors.service_name ? ' pv-input--error' : ''}`}
-                    value={form.service_name}
-                    onChange={handleServiceChange}
-                  >
-                    <option value="">Select a service</option>
-                    {services.map((svc) => (
-                      <option key={svc.id} value={svc.name}>
-                        {svc.name} — &#8358;{svc.price.toLocaleString()}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={15} className="pv-select-icon" />
-                </div>
-                {fieldErrors.service_name && (
-                  <span className="pv-field-error">
-                    <AlertCircle size={12} />
-                    {fieldErrors.service_name}
-                  </span>
-                )}
-              </div>
-
-              <div className="pv-field">
-                <label className="pv-label">Preferred Date</label>
-                <input
-                  className={`pv-input${fieldErrors.date ? ' pv-input--error' : ''}`}
-                  type="date"
-                  value={form.date}
-                  min={today}
-                  onChange={handleChange('date')}
-                />
-                {fieldErrors.date && (
-                  <span className="pv-field-error">
-                    <AlertCircle size={12} />
-                    {fieldErrors.date}
-                  </span>
-                )}
-              </div>
-
-              <div className="pv-field">
-                <label className="pv-label">Preferred Time</label>
-                <div className="pv-time-row">
-                  <input
-                    className={`pv-input pv-input--flex${fieldErrors.time ? ' pv-input--error' : ''}`}
-                    type="text"
-                    placeholder="e.g. 2:30"
-                    value={form.time}
-                    onChange={handleChange('time')}
-                  />
-                  <div className="pv-select-wrap pv-ampm-wrap">
-                    <select
-                      className="pv-select"
-                      value={form.ampm}
-                      onChange={handleChange('ampm')}
-                    >
-                      <option>AM</option>
-                      <option>PM</option>
-                    </select>
-                    <ChevronDown size={13} className="pv-select-icon" />
-                  </div>
-                </div>
-                {fieldErrors.time && (
-                  <span className="pv-field-error">
-                    <AlertCircle size={12} />
-                    {fieldErrors.time}
-                  </span>
-                )}
-              </div>
-
-              <div className="pv-field">
-                <label className="pv-label">
-                  Notes{' '}
-                  <span className="pv-label-optional">(optional)</span>
-                </label>
-                <textarea
-                  className="pv-textarea"
-                  rows={3}
-                  placeholder="Any special requests or details..."
-                  value={form.notes}
-                  onChange={handleChange('notes')}
-                />
-              </div>
-
-              {formError && (
-                <div className="pv-form-error">
-                  <AlertCircle size={14} />
-                  {formError}
-                </div>
-              )}
-
-              <button
-                className="pv-btn-submit"
-                type="submit"
-                disabled={formLoading}
-              >
-                {formLoading ? (
-                  <>
-                    <Loader2 size={15} className="pv-spin" />
-                    Sending Request...
-                  </>
-                ) : (
-                  'Request Appointment'
-                )}
-              </button>
-            </form>
-          )}
-        </div>
-      </section>
-
-      {/* Meet Chi */}
-      <section className="pv-section pv-section--white">
-        <div className="pv-inner">
-          <h2 className="pv-section-title">
-            Meet {firstName(business?.owner_name)}
-          </h2>
-          <p className="pv-section-sub">
-            {meetSubtitle(business?.business_type)}
+            <span className="font-semibold text-sm text-slate-900">
+              {business?.name}
+            </span>
+          </div>
+          <p className="text-xs text-slate-400">
+            © 2026 {business?.name} · Powered by{' '}
+            <span className="font-semibold" style={{ color: theme.primary }}>Sabi</span>
           </p>
-          <div className="pv-profile">
-            <div className="pv-avatar">
-              {business?.avatar_url
-                ? <img src={business.avatar_url} alt={business.owner_name} className="pv-avatar-img" />
-                : <User size={44} strokeWidth={1.25} />
-              }
-            </div>
-            <h3 className="pv-profile-name">
-              {business?.owner_name ?? ''}
-            </h3>
-            <p className="pv-profile-title">
-              {ownerTitle(business?.business_type, business?.custom_business_type)}
-            </p>
-            <p className="pv-profile-bio">
-              {ownerBio(business?.business_type, business?.owner_name, business?.name)}
-            </p>
-            <div className="pv-stats">
-              <div className="pv-stat">
-                <span className="pv-stat-value">200+</span>
-                <span className="pv-stat-label">Clients</span>
-              </div>
-              <div className="pv-stat pv-stat--accent">
-                <span className="pv-stat-value">
-                  {servicesLoading ? '—' : services.length}
-                </span>
-                <span className="pv-stat-label">Services</span>
-              </div>
-              <div className="pv-stat">
-                <span className="pv-stat-value">3+</span>
-                <span className="pv-stat-label">Years Experience</span>
-              </div>
-            </div>
-          </div>
         </div>
-      </section>
-
-      {/* Gallery */}
-      <section className="pv-section pv-section--blush">
-        <div className="pv-inner">
-          <h2 className="pv-section-title">Gallery</h2>
-          <p className="pv-section-sub">A glimpse of the work</p>
-
-          {galleryLoading ? (
-            <div className="pv-gallery-grid">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="pv-skeleton-gallery" />
-              ))}
-            </div>
-          ) : gallery.length > 0 ? (
-            <div className="pv-gallery-grid">
-              {gallery.map((item) => (
-                <div key={item.id} className="pv-gallery-item">
-                  <img
-                    src={item.image_url}
-                    alt={item.caption || 'Gallery'}
-                    loading="lazy"
-                  />
-                  {item.caption && (
-                    <p className="pv-gallery-caption">{item.caption}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="pv-gallery-grid">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="pv-gallery-placeholder">
-                  <ImageIcon size={22} strokeWidth={1.5} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="pv-footer">
-        <p className="pv-footer-copy">© 2026 {business?.name ?? ''}</p>
       </footer>
+
+      {/* ══════════════════════════════════════════════════════════
+          STICKY BOOKING FOOTER (when service selected, drawer closed)
+      ══════════════════════════════════════════════════════════ */}
+      {form.service_name && !drawerOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 px-4 py-3 border-t border-slate-200 flex items-center gap-3 animate-slide-up shadow-2xl bg-white">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm truncate text-slate-900">
+              {form.service_name}
+            </p>
+            {form.price > 0 && (
+              <p className="text-xs font-bold" style={{ color: theme.primary }}>
+                ₦{form.price.toLocaleString()}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="px-5 py-2.5 rounded-xl font-bold text-sm border-0 cursor-pointer flex-shrink-0 active:scale-95"
+            style={{ background: theme.btnBg, color: theme.btnText }}>
+            Book Now →
+          </button>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          BOOKING DRAWER (full-height slide-up)
+      ══════════════════════════════════════════════════════════ */}
+      {drawerOpen && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(false)} />
+          {/* Drawer panel */}
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl shadow-2xl overflow-hidden bg-white"
+            style={{
+              maxWidth: 560,
+              margin: '0 auto',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+            {drawerContent}
+          </div>
+        </>
+      )}
+
     </div>
   );
 }

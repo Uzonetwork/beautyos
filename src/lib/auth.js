@@ -1,5 +1,31 @@
 import { supabase } from './supabase';
 
+/**
+ * Generate a URL-safe slug from a business name.
+ * Mirrors the SQL generate_slug() function logic.
+ */
+function toBaseSlug(name) {
+  return (name ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-') || 'business';
+}
+
+async function generateSlug(name) {
+  const base = toBaseSlug(name);
+  let slug = base;
+  let counter = 0;
+  while (true) {
+    const { data } = await supabase.from('businesses').select('id').eq('slug', slug).maybeSingle();
+    if (!data) break; // slug is free
+    counter++;
+    slug = `${base}-${counter}`;
+  }
+  return slug;
+}
+
 // Maps business type → default service_categories array
 const TYPE_CATEGORIES = {
   nail_studio:        ['nails'],
@@ -105,6 +131,9 @@ export async function signUp(email, password, businessData) {
   // which passes because the session above proves auth.uid() = userId.
   const categories = TYPE_CATEGORIES[businessData.businessType] ?? ['other'];
 
+  const slug = await generateSlug(businessData.name);
+  console.log('[signUp] generated slug:', slug);
+
   const { data: business, error: bizError } = await supabase
     .from('businesses')
     .insert({
@@ -119,6 +148,7 @@ export async function signUp(email, password, businessData) {
       state:                businessData.state    ?? null,
       service_categories:   categories,
       custom_business_type: businessData.customBusinessType ?? null,
+      slug,
     })
     .select()
     .single();
