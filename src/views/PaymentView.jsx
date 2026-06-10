@@ -46,7 +46,7 @@ export default function PaymentView({ business, onSuccess }) {
 
         {/* Logo */}
         <button className="mb-7 bg-transparent border-0 cursor-pointer p-0" onClick={() => { window.location.href = '/'; }}>
-          <SabiLogo size="lg" dark={false} />
+          <SabiLogo size="lg" />
         </button>
 
         <h1 className="font-serif text-3xl font-medium text-white text-center mb-2">Activate Your Sabi Account</h1>

@@ -139,7 +139,7 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
 
         {/* Logo */}
         <button className="mb-6 bg-transparent border-0 cursor-pointer p-0" onClick={() => { window.location.href = '/'; }}>
-          <SabiLogo size="md" dark={false} />
+          <SabiLogo size="md" />
         </button>
 
         {/* Step indicator */}

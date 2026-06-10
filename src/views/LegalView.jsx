@@ -9,7 +9,7 @@ function LegalLayout({ title, children, altPage, altLabel }) {
     <div style={S.root}>
       <nav style={S.nav}>
         <a href="/" style={S.navBrand} onClick={e => { e.preventDefault(); window.location.hash = ''; window.location.href = '/'; }}>
-          <SabiLogo size="md" dark={true} />
+          <SabiLogo size="md" />
         </a>
       </nav>
 

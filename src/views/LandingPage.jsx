@@ -410,7 +410,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
       <nav className="sticky top-0 z-50 bg-sabi-dark/95 backdrop-blur border-b border-sabi-border">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
           <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
-            <SabiLogo size="md" dark={false} />
+            <SabiLogo size="md" />
           </button>
           <div className="flex items-center gap-4 md:gap-6">
             <button onClick={onMarketplace} className="text-sabi-green font-semibold text-sm hover:text-sabi-gold transition-colors bg-transparent border-0 cursor-pointer hidden sm:block">
@@ -585,7 +585,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
 
           {/* Brand */}
           <div>
-            <SabiLogo size="md" dark={false} />
+            <SabiLogo size="md" />
             <p className="text-sabi-muted text-sm mt-4 mb-2">The booking platform for Nigerian professionals</p>
             <p className="text-sabi-muted text-xs leading-relaxed">
               Get your free booking page, manage clients, and track earnings — all in one place.

@@ -162,7 +162,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-sabi-dark flex items-center justify-center px-4">
         <form className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8 flex flex-col gap-4" onSubmit={handleLogin}>
           <button type="button" onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0 self-start">
-            <SabiLogo size="md" dark={false} />
+            <SabiLogo size="md" />
           </button>
           <h1 className="font-serif text-3xl font-medium text-white">Admin Access</h1>
           <p className="text-sabi-muted text-sm">This area is restricted to authorised users.</p>
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
         <div className="max-w-6xl mx-auto px-6 h-13 flex items-center justify-between py-3">
           <div className="flex items-center gap-3">
             <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
-              <SabiLogo size="md" dark={false} />
+              <SabiLogo size="md" />
             </button>
             <span className="text-xs font-black uppercase tracking-widest bg-sabi-gold text-sabi-dark px-2.5 py-1 rounded">Admin</span>
           </div>

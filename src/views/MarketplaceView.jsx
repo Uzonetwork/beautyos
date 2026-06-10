@@ -131,7 +131,7 @@ export default function MarketplaceView({ onBack }) {
             <ArrowLeft size={15} /> Back
           </button>
           <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
-            <SabiLogo size="md" dark={false} />
+            <SabiLogo size="md" />
           </button>
           <div className="w-16" />
         </div>
