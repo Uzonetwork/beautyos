@@ -138,7 +138,7 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
       <div className="w-full max-w-xl bg-sabi-card border border-sabi-border rounded-2xl p-6 md:p-8">
 
         {/* Logo */}
-        <button className="mb-6 bg-transparent border-0 cursor-pointer p-0" onClick={onBack}>
+        <button className="mb-6 bg-transparent border-0 cursor-pointer p-0" onClick={() => { window.location.href = '/'; }}>
           <SabiLogo size="md" dark={false} />
         </button>
 

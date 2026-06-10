@@ -30,7 +30,9 @@ export default function LoginView({ onSuccess, onSignup }) {
       <div className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8">
 
         <div className="flex justify-center mb-6">
-          <SabiLogo size="lg" dark={false} />
+          <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
+            <SabiLogo size="lg" dark={false} />
+          </button>
         </div>
 
         <h1 className="font-serif text-3xl font-medium text-white text-center mb-1">Welcome back</h1>

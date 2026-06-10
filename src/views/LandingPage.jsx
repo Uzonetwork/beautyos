@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
-  Globe, TrendingUp, Users, LayoutList,
   Check, ArrowRight,
+  Sparkles, Eye, Flower2, Scissors, Brush, Shirt, Camera, Home,
+  GraduationCap, Dumbbell, PartyPopper, ChefHat, Music2, Video, Briefcase,
 } from 'lucide-react';
 import SabiLogo from '../components/SabiLogo';
 
@@ -167,6 +168,26 @@ const PROFESSION_CARDS = [
   },
 ];
 
+// ── Professions data ─────────────────────────────────────────────────────────
+
+const PROFESSIONS = [
+  { label: 'Nail Studio',     Icon: Sparkles,      color: '#b85c5c' },
+  { label: 'Lash Studio',     Icon: Eye,           color: '#b85c5c' },
+  { label: 'Spa',             Icon: Flower2,       color: '#b85c5c' },
+  { label: 'Barbershop',      Icon: Scissors,      color: '#b85c5c' },
+  { label: 'MUA',             Icon: Brush,         color: '#b85c5c' },
+  { label: 'Tailor',          Icon: Shirt,         color: '#C084FC' },
+  { label: 'Photography',     Icon: Camera,        color: '#F5C842' },
+  { label: 'Home Services',   Icon: Home,          color: '#F0A060' },
+  { label: 'Tutor',           Icon: GraduationCap, color: '#60A0F0' },
+  { label: 'Fitness',         Icon: Dumbbell,      color: '#50C878' },
+  { label: 'Events',          Icon: PartyPopper,   color: '#F06090' },
+  { label: 'Private Chef',    Icon: ChefHat,       color: '#C8C840' },
+  { label: 'DJ',              Icon: Music2,        color: '#F06060' },
+  { label: 'Content Creator', Icon: Video,         color: '#40C8C8' },
+  { label: 'Other',           Icon: Briefcase,     color: '#7AAE90' },
+];
+
 // ── Card stack ────────────────────────────────────────────────────────────────
 
 function CardStack() {
@@ -273,7 +294,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
       {/* ── Nav ─────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-sabi-dark/95 backdrop-blur border-b border-sabi-border">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-transparent border-0 cursor-pointer p-0">
+          <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
             <SabiLogo size="md" dark={false} />
           </button>
           <div className="flex items-center gap-4 md:gap-6">
@@ -331,8 +352,8 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
             </div>
           </div>
 
-          {/* Right card stack */}
-          <div className="flex-1 flex justify-center items-center" aria-hidden="true">
+          {/* Right card stack — desktop only */}
+          <div className="hidden md:flex flex-1 justify-center items-center" aria-hidden="true">
             <div className="w-full max-w-xs pb-12">
               <CardStack />
             </div>
@@ -359,30 +380,27 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
       </section>
 
       {/* ── Professions ─────────────────────────────────────────── */}
-      <section className="bg-sabi-card py-16 px-6">
+      <section className="bg-sabi-dark py-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">Who it&apos;s for</p>
-          <h2 className="font-serif text-4xl font-medium text-white mb-8">Built for every Nigerian professional</h2>
-          <div className="flex flex-wrap justify-center gap-3">
-            {[
-              { emoji: '💅', label: 'Nail Studio'     },
-              { emoji: '👁️', label: 'Lash Studio'     },
-              { emoji: '🧖', label: 'Spa'             },
-              { emoji: '✂️', label: 'Barbershop'      },
-              { emoji: '💄', label: 'MUA'             },
-              { emoji: '👗', label: 'Tailor'          },
-              { emoji: '📸', label: 'Photography'     },
-              { emoji: '🏠', label: 'Home Services'   },
-              { emoji: '🎓', label: 'Tutor'           },
-              { emoji: '💪', label: 'Fitness'         },
-              { emoji: '🎉', label: 'Events'          },
-              { emoji: '🍽️', label: 'Private Chef'   },
-              { emoji: '🎵', label: 'DJ'              },
-              { emoji: '📱', label: 'Content Creator' },
-            ].map(({ emoji, label }) => (
-              <span key={label} className="flex items-center gap-2 bg-sabi-card border border-sabi-border rounded-full px-4 py-2 text-sm text-sabi-muted">
-                {emoji} {label}
-              </span>
+          <h2 className="font-serif text-4xl font-medium text-white mb-2">Built for every Nigerian professional</h2>
+          <p className="text-sabi-muted text-sm mb-10">15 professions and counting</p>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            {PROFESSIONS.map(({ label, Icon, color }) => (
+              <div
+                key={label}
+                className="bg-sabi-card border border-sabi-border rounded-xl p-4 text-center hover:border-sabi-green hover:-translate-y-1 transition-all duration-200 cursor-default"
+              >
+                <div className="flex justify-center mb-2">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ background: `${color}26` }}
+                  >
+                    <Icon size={20} style={{ color }} strokeWidth={1.75} />
+                  </div>
+                </div>
+                <p className="text-xs font-semibold text-sabi-muted leading-tight">{label}</p>
+              </div>
             ))}
           </div>
         </div>

@@ -130,7 +130,9 @@ export default function MarketplaceView({ onBack }) {
           <button className="flex items-center gap-1.5 text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={onBack}>
             <ArrowLeft size={15} /> Back
           </button>
-          <SabiLogo size="md" dark={false} />
+          <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
+            <SabiLogo size="md" dark={false} />
+          </button>
           <div className="w-16" />
         </div>
       </nav>
@@ -168,28 +170,34 @@ export default function MarketplaceView({ onBack }) {
         </div>
       </div>
 
-      {/* ── Grid ────────────────────────────────────────────── */}
-      <main className="max-w-5xl mx-auto px-6 pb-20">
-        {error && <div className="bg-red-500/7 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm mb-6">{error}</div>}
+      {/* ── Count label — dark zone ──────────────────────────── */}
+      {!loading && !error && filtered.length > 0 && (
+        <p className="text-xs text-sabi-muted/60 max-w-5xl mx-auto px-6 pb-3 pt-1">
+          {filtered.length} professional{filtered.length !== 1 ? 's' : ''}
+        </p>
+      )}
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-sabi-card border border-sabi-border rounded-2xl animate-pulse" style={{ height: 220 }} />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <h2 className="font-serif text-3xl font-medium text-white mb-2">
-              {search || category ? 'No results found' : 'No professionals listed yet'}
-            </h2>
-            <p className="text-sabi-muted text-sm">
-              {search || category ? 'Try a different search or category.' : 'Check back soon — more professionals are joining Sabi every week.'}
-            </p>
-          </div>
-        ) : (
-          <>
-            <p className="text-xs text-sabi-muted/60 mb-4">{filtered.length} professional{filtered.length !== 1 ? 's' : ''}</p>
+      {/* ── Results zone — light background ──────────────────── */}
+      <div className="bg-[#FAFAFA] rounded-t-3xl">
+        <main className="max-w-5xl mx-auto px-6 pb-20 pt-6">
+          {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-500 text-sm mb-6">{error}</div>}
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white border border-slate-200 rounded-2xl animate-pulse" style={{ height: 280 }} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20">
+              <h2 className="font-serif text-3xl font-medium text-slate-900 mb-2">
+                {search || category ? 'No results found' : 'No professionals listed yet'}
+              </h2>
+              <p className="text-slate-500 text-sm">
+                {search || category ? 'Try a different search or category.' : 'Check back soon — more professionals are joining Sabi every week.'}
+              </p>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map(b => {
                 const r   = ratings[b.id];
@@ -207,9 +215,9 @@ export default function MarketplaceView({ onBack }) {
                 );
               })}
             </div>
-          </>
-        )}
-      </main>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
@@ -218,65 +226,74 @@ export default function MarketplaceView({ onBack }) {
 
 function BusinessCard({ business, bio, svcList, avgRating, reviewCount, onBook }) {
   const theme    = getBusinessTheme(business.business_type);
-  const isDark   = theme.textDark === '#ffffff';
   const initial  = (business.name || '?')[0].toUpperCase();
   const location = [business.city, business.state].filter(Boolean).join(', ');
 
   return (
     <div
-      className="rounded-2xl p-5 border flex flex-col cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all duration-200 animate-fade-in"
-      style={{ background: theme.cardBg, borderColor: theme.border }}
+      className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1 flex flex-col animate-fade-in cursor-pointer"
+      onClick={onBook}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2" style={{ background: isDark ? theme.bg : '#f5eded', borderColor: `${theme.primary}55` }}>
-          <span className="font-bold text-lg leading-none" style={{ color: theme.primary }}>{initial}</span>
+      {/* Top content */}
+      <div className="p-5 flex-1 flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-3">
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg"
+            style={{ background: theme.primary, color: theme.btnText }}
+          >
+            {initial}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm leading-tight truncate text-slate-900">{business.name}</p>
+            {business.owner_name && <p className="text-xs mt-0.5 truncate text-slate-500">{business.owner_name}</p>}
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm leading-tight truncate" style={{ color: theme.textDark }}>{business.name}</p>
-          {business.owner_name && <p className="text-xs mt-0.5 truncate" style={{ color: theme.textMuted }}>{business.owner_name}</p>}
+
+        {/* Badge + location */}
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <span
+            className="text-xs font-semibold px-2 py-0.5 rounded-md"
+            style={{ background: `${theme.primary}1A`, color: theme.primary }}
+          >
+            {TYPE_LABELS[business.business_type] ?? 'Professional'}
+          </span>
+          {location && <span className="text-xs text-slate-400">📍 {location}</span>}
         </div>
-      </div>
 
-      {/* Badge + location */}
-      <div className="flex items-center gap-2 flex-wrap mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md" style={{ background: `${theme.primary}22`, color: theme.primary }}>
-          {TYPE_LABELS[business.business_type] ?? 'Professional'}
-        </span>
-        {location && <span className="text-xs" style={{ color: theme.textMuted }}>📍 {location}</span>}
-      </div>
-
-      {/* Rating */}
-      <div className="mb-3">
-        <StarRating stars={avgRating} count={reviewCount} />
-      </div>
-
-      {/* Bio */}
-      <p className="text-xs leading-relaxed mb-3 overflow-hidden" style={{ color: theme.textMuted, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-        {bio}
-      </p>
-
-      {/* Services */}
-      {svcList.length > 0 && (
-        <div className="flex flex-col gap-1.5 border-t pt-3 mb-3" style={{ borderColor: `${theme.primary}22` }}>
-          {svcList.map(s => (
-            <div key={s.id} className="flex items-baseline gap-1">
-              <span className="text-xs font-medium truncate max-w-[55%]" style={{ color: theme.textDark }}>{s.name}</span>
-              <span className="flex-1 border-b border-dotted border-sabi-muted/30 mb-0.5" />
-              <span className="text-xs font-semibold whitespace-nowrap" style={{ color: theme.priceColor ?? theme.primary }}>{fmtPrice(s.price)}</span>
-            </div>
-          ))}
+        {/* Rating */}
+        <div className="mb-3">
+          <StarRating stars={avgRating} count={reviewCount} />
         </div>
-      )}
+
+        {/* Bio */}
+        <p className="text-sm leading-relaxed mb-3 text-slate-500 line-clamp-2">{bio}</p>
+
+        {/* Services */}
+        {svcList.length > 0 && (
+          <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-3 mb-3 mt-auto">
+            {svcList.map(s => (
+              <div key={s.id} className="flex items-baseline gap-1">
+                <span className="text-xs font-medium truncate max-w-[55%] text-slate-700">{s.name}</span>
+                <span className="flex-1 border-b border-dotted border-slate-200 mb-0.5" />
+                <span className="text-xs font-semibold whitespace-nowrap" style={{ color: theme.primary }}>{fmtPrice(s.price)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* CTA */}
-      <button
-        className="w-full py-2.5 rounded-xl font-bold text-sm border-0 cursor-pointer mt-auto"
-        style={{ background: theme.btnBg, color: theme.btnText }}
-        onClick={onBook}
-      >
-        Book Now
-      </button>
+      <div className="px-5 pb-5">
+        <button
+          className="w-full py-2.5 rounded-xl font-semibold text-sm border-0 cursor-pointer"
+          style={{ background: theme.btnBg, color: theme.btnText }}
+          onClick={e => { e.stopPropagation(); onBook(); }}
+        >
+          Book Now
+        </button>
+      </div>
     </div>
   );
 }

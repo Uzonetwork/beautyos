@@ -307,7 +307,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       {showExpiredOverlay && (
         <div className="fixed inset-0 z-[300] bg-sabi-dark/97 flex items-center justify-center px-4">
           <div className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8 flex flex-col items-center gap-0">
-            <SabiLogo size="md" dark={false} />
+            <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
+              <SabiLogo size="md" dark={false} />
+            </button>
             <h2 className="font-serif text-2xl font-medium text-white text-center mt-5 mb-2.5">Your Sabi plan has expired</h2>
             <p className="text-sm text-sabi-muted text-center mb-6 leading-relaxed">
               Renew now to reactivate your booking page and continue accepting bookings.
@@ -344,7 +346,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       {/* ── Header ───────────────────────────────────────────── */}
       <header className="bg-sabi-card border-b border-sabi-border px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button className="bg-transparent border-0 cursor-pointer p-0" onClick={onViewPublicPage}>
+          <button className="bg-transparent border-0 cursor-pointer p-0" onClick={() => { window.location.href = '/'; }}>
             <SabiLogo size="md" dark={false} />
           </button>
           <button className="flex items-center gap-1.5 text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={onLogout}>
