@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Check, ArrowRight,
   Sparkles, Eye, Flower2, Scissors, Brush, Shirt, Camera, Home,
@@ -285,6 +285,121 @@ function CardStack() {
   );
 }
 
+// ── Mobile preview cards data ─────────────────────────────────────────────────
+
+const MOBILE_PREVIEW_CARDS = [
+  { biz: "Chi's Nail Studio",  type: 'Nail Studio',       initial: 'C', avatarBg: '#b85c5c', earnings: '₦24,000',
+    appts: [["Adaeze N.",      "Gel Manicure · 10:00 AM"],  ["Chidinma E.",   "Lash Extensions · 12:30 PM"]] },
+  { biz: 'Kemi Photography',   type: 'Photographer',       initial: 'K', avatarBg: '#0A2E1A', earnings: '₦80,000',
+    appts: [["Emeka O.",       "Portrait Session · 11:00 AM"], ["Funmi A.",   "Event Coverage · 2:00 PM"]] },
+  { biz: 'Zara Couture',       type: 'Tailor & Fashion',   initial: 'Z', avatarBg: '#1a0a2e', earnings: '₦45,000',
+    appts: [["Ngozi B.",       "Aso-Ebi Sewing · 10:00 AM"],  ["Amina K.",   "Dress Fitting · 1:00 PM"]] },
+  { biz: 'BurnFit Lagos',      type: 'Fitness & Wellness', initial: 'B', avatarBg: '#0a2a1a', earnings: '₦30,000',
+    appts: [["Tunde F.",       "Personal Training · 7:00 AM"], ["Sola M.",   "Group Class · 9:00 AM"]] },
+  { biz: 'DJ Frequencies',     type: 'Music DJ',           initial: 'D', avatarBg: '#1e0808', earnings: '₦120,000',
+    appts: [["Club Quilox",    "Club Night · 10:00 PM"],    ["Mr & Mrs Eze", "Wedding DJ · Sat"]] },
+  { biz: 'Chef Tunde',         type: 'Private Chef',       initial: 'T', avatarBg: '#1e1e08', earnings: '₦50,000',
+    appts: [["The Adeyemis",   "Home Dinner · 7:00 PM"],    ["Lagos Food Fest", "Event Catering · Sat"]] },
+  { biz: 'Vibe Events Co.',    type: 'Event Services',     initial: 'V', avatarBg: '#2a0a1a', earnings: '₦160,000',
+    appts: [["Bolu & Temi",    "Decoration · 9:00 AM"],     ["GTBank",       "Corporate MC · 2:00 PM"]] },
+];
+
+// ── Mobile card row ───────────────────────────────────────────────────────────
+
+function MobileCardRow() {
+  const [active, setActive] = useState(0);
+  const scrollRef = useRef(null);
+
+  function handleScroll() {
+    if (!scrollRef.current) return;
+    const cardWidth = 288 + 16; // w-72 (288px) + gap-4 (16px)
+    setActive(Math.round(scrollRef.current.scrollLeft / cardWidth));
+  }
+
+  function goTo(i) {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTo({ left: i * (288 + 16), behavior: 'smooth' });
+    setActive(i);
+  }
+
+  return (
+    <div className="flex md:hidden w-full flex-col gap-3" aria-hidden="true">
+
+      {/* Scrollable card row */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex overflow-x-auto gap-4 -mx-6 px-6 snap-x snap-mandatory"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {MOBILE_PREVIEW_CARDS.map((card, i) => (
+          <div
+            key={i}
+            className="snap-start flex-shrink-0 w-72 bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-200"
+          >
+            {/* Top color bar */}
+            <div style={{ background: card.avatarBg, height: 8 }} />
+
+            {/* Profile row */}
+            <div className="flex items-center gap-3 px-3 pt-3 pb-2">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 text-white"
+                style={{ background: card.avatarBg }}
+              >
+                {card.initial}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-slate-900 text-sm font-bold truncate">{card.biz}</p>
+                <p className="text-xs truncate font-medium" style={{ color: card.avatarBg }}>{card.type}</p>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="text-xs font-bold text-green-600">LIVE</span>
+              </div>
+            </div>
+
+            {/* Earnings box */}
+            <div className="mx-3 mb-3 bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Today&apos;s Earnings</p>
+              <p className="text-xl font-black" style={{ color: card.avatarBg }}>{card.earnings}</p>
+            </div>
+
+            {/* Appointments */}
+            <div className="px-3 pb-3">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Upcoming</p>
+              {card.appts.map(([name, detail], j) => (
+                <div key={j} className="flex items-start gap-2 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1" style={{ background: card.avatarBg }} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-slate-700 truncate">{name}</p>
+                    <p className="text-xs text-slate-400 truncate">{detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Dot indicators */}
+      <div className="flex justify-center items-center gap-1.5">
+        {MOBILE_PREVIEW_CARDS.map((card, i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            aria-label={`Show ${card.biz}`}
+            className="h-1.5 rounded-full transition-all duration-300 border-0 cursor-pointer"
+            style={{
+              background: i === active ? MOBILE_PREVIEW_CARDS[active].avatarBg : 'rgba(255,255,255,0.25)',
+              width: i === active ? 20 : 7,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarketplace }) {
@@ -352,25 +467,8 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
             </div>
           </div>
 
-          {/* Mobile mini-card row — replaces rotating stack on small screens */}
-          <div className="flex md:hidden w-full overflow-x-auto gap-3 pb-2 -mx-6 px-6" style={{ scrollbarWidth: 'none' }} aria-hidden="true">
-            {PROFESSION_CARDS.map((card, i) => (
-              <div key={i} className="flex-shrink-0 bg-sabi-card border border-sabi-border rounded-xl p-3 w-48">
-                <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className="w-8 h-8 rounded-full flex-shrink-0"
-                    style={{ background: card.avatarBg, border: `1.5px solid ${card.dotColor}55` }}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-white text-xs font-bold truncate">{card.biz}</p>
-                    <p className="text-sabi-muted text-xs">{card.profession}</p>
-                  </div>
-                </div>
-                <p className="text-sabi-muted mb-1 uppercase tracking-widest" style={{ fontSize: '9px' }}>Today&apos;s Earnings</p>
-                <p className="font-black text-lg" style={{ color: card.earningsColor }}>{card.earnings}</p>
-              </div>
-            ))}
-          </div>
+          {/* Mobile preview card row — replaces rotating stack on small screens */}
+          <MobileCardRow />
 
           {/* Right card stack — desktop only */}
           <div className="hidden md:flex flex-1 justify-center items-center" aria-hidden="true">
