@@ -352,6 +352,26 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
             </div>
           </div>
 
+          {/* Mobile mini-card row — replaces rotating stack on small screens */}
+          <div className="flex md:hidden w-full overflow-x-auto gap-3 pb-2 -mx-6 px-6" style={{ scrollbarWidth: 'none' }} aria-hidden="true">
+            {PROFESSION_CARDS.map((card, i) => (
+              <div key={i} className="flex-shrink-0 bg-sabi-card border border-sabi-border rounded-xl p-3 w-48">
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className="w-8 h-8 rounded-full flex-shrink-0"
+                    style={{ background: card.avatarBg, border: `1.5px solid ${card.dotColor}55` }}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-white text-xs font-bold truncate">{card.biz}</p>
+                    <p className="text-sabi-muted text-xs">{card.profession}</p>
+                  </div>
+                </div>
+                <p className="text-sabi-muted mb-1 uppercase tracking-widest" style={{ fontSize: '9px' }}>Today&apos;s Earnings</p>
+                <p className="font-black text-lg" style={{ color: card.earningsColor }}>{card.earnings}</p>
+              </div>
+            ))}
+          </div>
+
           {/* Right card stack — desktop only */}
           <div className="hidden md:flex flex-1 justify-center items-center" aria-hidden="true">
             <div className="w-full max-w-xs pb-12">

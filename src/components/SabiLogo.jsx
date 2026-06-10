@@ -6,7 +6,7 @@ export default function SabiLogo({ dark = false, size = 'md' }) {
   };
   const s = sizes[size] || sizes.md;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 whitespace-nowrap">
       <div
         className={`${s.badge} flex items-center justify-center font-black text-sabi-dark flex-shrink-0 ${dark ? 'bg-white' : 'bg-sabi-gold'}`}
         style={{ fontFamily: 'Georgia,serif' }}
@@ -14,7 +14,7 @@ export default function SabiLogo({ dark = false, size = 'md' }) {
         S
       </div>
       <span
-        className={`${s.word} font-bold ${dark ? 'text-white' : 'text-sabi-dark'}`}
+        className={`${s.word} font-bold flex-shrink-0 ${dark ? 'text-white' : 'text-sabi-dark'}`}
         style={{ fontFamily: 'Georgia,serif', letterSpacing: '0.5px' }}
       >
         Sabi
