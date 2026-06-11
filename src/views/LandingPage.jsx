@@ -413,14 +413,11 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
             <SabiLogo size="md" />
           </button>
           <div className="flex items-center gap-4 md:gap-6">
-            <button onClick={onMarketplace} className="text-sabi-green font-semibold text-sm hover:text-sabi-gold transition-colors bg-transparent border-0 cursor-pointer hidden sm:block">
-              Marketplace
-            </button>
             <button onClick={onLogin} className="text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer">
               Log in
             </button>
-            <button onClick={onGetStarted} className="btn-gold text-sm px-4 py-2">
-              Get Started
+            <button onClick={onMarketplace} className="btn-gold text-sm px-4 py-2">
+              Marketplace
             </button>
           </div>
         </div>
@@ -444,7 +441,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
               <button className="btn-gold" onClick={onGetStarted}>
                 Get Started Free <ArrowRight size={16} />
               </button>
-              <button className="btn-outline" onClick={onSeeDemo}>
+              <button className="btn-outline" onClick={onMarketplace}>
                 See a Demo
               </button>
             </div>
