@@ -48,7 +48,7 @@ export default async function handler(req, res) {
   const name = biz?.name ?? 'Sabi';
   const tagline = biz?.tagline ?? 'Book your appointment online';
 
-  const host = req.headers.host ?? 'beautyos.vercel.app';
+  const host = req.headers.host ?? 'sabipro.ng';
   const protocol = host.startsWith('localhost') ? 'http' : 'https';
   const pageUrl = `${protocol}://${host}/?business=${encodeURIComponent(businessId)}`;
 

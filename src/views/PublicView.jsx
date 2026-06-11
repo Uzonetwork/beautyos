@@ -351,7 +351,7 @@ export default function PublicView({
       setBusiness(null); setServices([]); setGallery([]);
       setServicesLoading(true); setGalleryLoading(true); setLoadingBiz(true);
 
-      const cols = 'id,name,owner_name,tagline,business_type,user_id,avatar_url,whatsapp,custom_business_type,subscription_status,plan_expires_at,city,state';
+      const cols = 'id,name,owner_name,tagline,business_type,user_id,avatar_url,whatsapp,custom_business_type,subscription_status,plan_expires_at,city,state,slug';
       const bizQuery = propBusinessId
         ? supabase.from('businesses').select(cols).eq('id', propBusinessId).single()
         : supabase.from('businesses').select(cols).limit(1).single();
@@ -444,7 +444,9 @@ export default function PublicView({
   function handleBannerDismiss() { setBannerVisible(false); onWelcomeDismiss?.(); }
 
   const bookingLink = typeof window !== 'undefined'
-    ? `${window.location.origin}/api/og?business=${propBusinessId}`
+    ? business?.slug
+      ? `${window.location.origin}/${business.slug}`
+      : `${window.location.origin}/?business=${propBusinessId}`
     : '';
   const isActualOwner = !!sessionUserId && !!business && business.user_id === sessionUserId;
   const today = new Date().toISOString().split('T')[0];
