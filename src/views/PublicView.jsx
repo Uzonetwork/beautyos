@@ -346,6 +346,16 @@ export default function PublicView({
     });
   }, []);
 
+  // Lock body scroll while drawer is open (prevents iOS background scroll)
+  useEffect(() => {
+    if (drawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [drawerOpen]);
+
   useEffect(() => {
     async function loadAll() {
       setBusiness(null); setServices([]); setGallery([]);
@@ -498,8 +508,8 @@ export default function PublicView({
 
   // ── Booking drawer content ────────────────────────────────────────────────────
   const drawerContent = (
-    <div className="h-full flex flex-col bg-white">
-      {/* Header */}
+    <div className="flex flex-col bg-white" style={{ flex: 1, minHeight: 0 }}>
+      {/* Header — fixed, never scrolls */}
       <div className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b border-slate-200">
         <div>
           <h2 className="font-serif text-xl font-semibold text-slate-900">
@@ -517,9 +527,10 @@ export default function PublicView({
         </button>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-5 py-5">
-        {formSuccess ? (
+      {formSuccess ? (
+        /* Success state — scrollable */
+        <div className="flex-1 overflow-y-auto px-5 py-5"
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
           <div className="flex flex-col items-center py-12 gap-4 text-center">
             <div className="w-16 h-16 rounded-full flex items-center justify-center"
               style={{ background: `${theme.primary}18`, border: `2px solid ${theme.primary}` }}>
@@ -545,127 +556,142 @@ export default function PublicView({
               Done
             </button>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+        </div>
+      ) : (
+        /* Form — flex column filling remaining space */
+        <form onSubmit={handleSubmit} noValidate
+          className="flex flex-col"
+          style={{ flex: 1, minHeight: 0 }}>
 
-            {/* Service */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
-                Service
-              </label>
-              {servicesLoading ? (
-                <div className="h-12 rounded-xl animate-pulse bg-slate-100" />
-              ) : (
-                <select style={{ ...IS.input, appearance: 'none' }} value={form.service_name}
-                  onChange={e => {
-                    const svc = services.find(s => s.name === e.target.value);
-                    setForm(f => ({ ...f, service_name: e.target.value, price: svc?.price ?? 0 }));
-                    setFieldErrors(fe => ({ ...fe, service_name: '' }));
-                  }}>
-                  <option value="">Select a service…</option>
-                  {services.map(svc => (
-                    <option key={svc.id} value={svc.name}>
-                      {svc.name} — ₦{svc.price.toLocaleString()}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {fieldErrors.service_name && (
-                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
-                  <AlertCircle size={11} />{fieldErrors.service_name}
-                </span>
-              )}
-            </div>
+          {/* Scrollable fields */}
+          <div className="flex-1 overflow-y-auto px-5 py-5"
+            style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
+            <div className="flex flex-col gap-5">
 
-            {/* Date */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
-                Preferred Date
-              </label>
-              <input style={{ ...IS.input, ...(fieldErrors.date ? IS.inputErr : {}) }}
-                type="date" value={form.date} min={today} onChange={handleChange('date')} />
-              {fieldErrors.date && (
-                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
-                  <AlertCircle size={11} />{fieldErrors.date}
-                </span>
-              )}
-            </div>
-
-            {/* Time */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
-                Preferred Time
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {TIME_SLOTS.map(slot => {
-                  const active = form.time === slot.time && form.ampm === slot.ampm;
-                  return (
-                    <button key={slot.label} type="button"
-                      onClick={() => handleTimeSlot(slot.time, slot.ampm)}
-                      className="py-2 rounded-lg text-xs font-semibold border cursor-pointer transition-all"
-                      style={active
-                        ? { background: theme.btnBg, color: theme.btnText, borderColor: theme.primary }
-                        : { background: N.white, color: N.textMuted, borderColor: N.border }
-                      }>
-                      {slot.label}
-                    </button>
-                  );
-                })}
+              {/* Service */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                  Service
+                </label>
+                {servicesLoading ? (
+                  <div className="h-12 rounded-xl animate-pulse bg-slate-100" />
+                ) : (
+                  <select style={{ ...IS.input, appearance: 'none' }} value={form.service_name}
+                    onChange={e => {
+                      const svc = services.find(s => s.name === e.target.value);
+                      setForm(f => ({ ...f, service_name: e.target.value, price: svc?.price ?? 0 }));
+                      setFieldErrors(fe => ({ ...fe, service_name: '' }));
+                    }}>
+                    <option value="">Select a service…</option>
+                    {services.map(svc => (
+                      <option key={svc.id} value={svc.name}>
+                        {svc.name} — ₦{svc.price.toLocaleString()}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {fieldErrors.service_name && (
+                  <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                    <AlertCircle size={11} />{fieldErrors.service_name}
+                  </span>
+                )}
               </div>
-              {fieldErrors.time && (
-                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
-                  <AlertCircle size={11} />{fieldErrors.time}
-                </span>
-              )}
-            </div>
 
-            {/* Name */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
-                Your Full Name
-              </label>
-              <input style={{ ...IS.input, ...(fieldErrors.client_name ? IS.inputErr : {}) }}
-                type="text" placeholder="e.g. Adaeze Okonkwo"
-                value={form.client_name} onChange={handleChange('client_name')} />
-              {fieldErrors.client_name && (
-                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
-                  <AlertCircle size={11} />{fieldErrors.client_name}
-                </span>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
-                Phone Number
-              </label>
-              <input style={{ ...IS.input, ...(fieldErrors.client_phone ? IS.inputErr : {}) }}
-                type="text" placeholder="e.g. 08012345678"
-                value={form.client_phone} onChange={handleChange('client_phone')} />
-              {fieldErrors.client_phone && (
-                <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
-                  <AlertCircle size={11} />{fieldErrors.client_phone}
-                </span>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
-                Notes{' '}
-                <span className="normal-case tracking-normal font-normal text-slate-300">(optional)</span>
-              </label>
-              <textarea style={IS.input} rows={3}
-                placeholder="Any special requests or additional information…"
-                value={form.notes} onChange={handleChange('notes')} />
-            </div>
-
-            {formError && (
-              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
-                <AlertCircle size={14} className="flex-shrink-0" />{formError}
+              {/* Date */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                  Preferred Date
+                </label>
+                <input style={{ ...IS.input, ...(fieldErrors.date ? IS.inputErr : {}) }}
+                  type="date" value={form.date} min={today} onChange={handleChange('date')} />
+                {fieldErrors.date && (
+                  <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                    <AlertCircle size={11} />{fieldErrors.date}
+                  </span>
+                )}
               </div>
-            )}
 
+              {/* Time */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                  Preferred Time
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {TIME_SLOTS.map(slot => {
+                    const active = form.time === slot.time && form.ampm === slot.ampm;
+                    return (
+                      <button key={slot.label} type="button"
+                        onClick={() => handleTimeSlot(slot.time, slot.ampm)}
+                        className="py-2 rounded-lg text-xs font-semibold border cursor-pointer transition-all"
+                        style={active
+                          ? { background: theme.btnBg, color: theme.btnText, borderColor: theme.primary }
+                          : { background: N.white, color: N.textMuted, borderColor: N.border }
+                        }>
+                        {slot.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {fieldErrors.time && (
+                  <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                    <AlertCircle size={11} />{fieldErrors.time}
+                  </span>
+                )}
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                  Your Full Name
+                </label>
+                <input style={{ ...IS.input, ...(fieldErrors.client_name ? IS.inputErr : {}) }}
+                  type="text" placeholder="e.g. Adaeze Okonkwo"
+                  value={form.client_name} onChange={handleChange('client_name')} />
+                {fieldErrors.client_name && (
+                  <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                    <AlertCircle size={11} />{fieldErrors.client_name}
+                  </span>
+                )}
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                  Phone Number
+                </label>
+                <input style={{ ...IS.input, ...(fieldErrors.client_phone ? IS.inputErr : {}) }}
+                  type="text" placeholder="e.g. 08012345678"
+                  value={form.client_phone} onChange={handleChange('client_phone')} />
+                {fieldErrors.client_phone && (
+                  <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                    <AlertCircle size={11} />{fieldErrors.client_phone}
+                  </span>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">
+                  Notes{' '}
+                  <span className="normal-case tracking-normal font-normal text-slate-300">(optional)</span>
+                </label>
+                <textarea style={IS.input} rows={3}
+                  placeholder="Any special requests or additional information…"
+                  value={form.notes} onChange={handleChange('notes')} />
+              </div>
+
+              {formError && (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+                  <AlertCircle size={14} className="flex-shrink-0" />{formError}
+                </div>
+              )}
+
+            </div>
+          </div>
+
+          {/* Sticky footer — submit button always visible */}
+          <div className="flex-shrink-0 border-t border-slate-200 bg-white px-5 py-4"
+            style={{ position: 'sticky', bottom: 0, zIndex: 10 }}>
             <button type="submit" disabled={formLoading}
               className="w-full py-4 rounded-xl font-bold text-base border-0 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
               style={{ background: theme.btnBg, color: theme.btnText }}>
@@ -674,13 +700,12 @@ export default function PublicView({
                 : 'Confirm Booking Request'
               }
             </button>
-
-            <p className="text-xs text-center text-slate-400">
+            <p className="text-xs text-center text-slate-400 mt-2">
               🔒 Your details are secure. Confirmation via WhatsApp.
             </p>
-          </form>
-        )}
-      </div>
+          </div>
+        </form>
+      )}
     </div>
   );
 
@@ -1275,17 +1300,18 @@ export default function PublicView({
       ══════════════════════════════════════════════════════════ */}
       {drawerOpen && (
         <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          {/* Backdrop — overflow hidden prevents background scroll on iOS */}
+          <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm overflow-hidden"
             onClick={() => setDrawerOpen(false)} />
           {/* Drawer panel */}
-          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl shadow-2xl overflow-hidden bg-white"
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl shadow-2xl bg-white"
             style={{
               maxWidth: 560,
               margin: '0 auto',
               maxHeight: '90vh',
               display: 'flex',
               flexDirection: 'column',
+              overflow: 'hidden',
             }}>
             {drawerContent}
           </div>
