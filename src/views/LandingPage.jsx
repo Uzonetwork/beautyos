@@ -616,9 +616,8 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto border-t border-sabi-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-5xl mx-auto border-t border-sabi-border pt-6">
           <p className="text-xs text-sabi-muted">© 2026 Sabi. All rights reserved.</p>
-          <p className="text-xs text-sabi-muted">Made with ❤️ in Nigeria 🇳🇬</p>
         </div>
       </footer>
 

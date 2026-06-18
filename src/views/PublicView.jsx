@@ -13,6 +13,8 @@ import {
   Shield,
   Clock,
   Star,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
@@ -322,6 +324,7 @@ export default function PublicView({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [bannerVisible,   setBannerVisible]   = useState(showWelcomeBanner);
+  const [copied,          setCopied]          = useState(false);
   const [sessionUserId,   setSessionUserId]   = useState(null);
   const [business,        setBusiness]        = useState(null);
   const [loadingBiz,      setLoadingBiz]      = useState(true);
@@ -714,12 +717,11 @@ export default function PublicView({
   return (
     <div className="font-sans bg-[#FAFAFA] min-h-screen">
 
-      {/* ── Owner bar ──────────────────────────────────────────── */}
+      {/* ── Owner floating button ──────────────────────────────── */}
       {isActualOwner && (
-        <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-sabi-gold text-sabi-dark text-sm font-semibold">
-          <span>Viewing your public page</span>
+        <div className="fixed top-4 right-4 z-50">
           <button
-            className="flex items-center gap-1.5 bg-sabi-dark text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer"
+            className="flex items-center gap-1.5 bg-sabi-dark text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer shadow-lg"
             onClick={onGoToDashboard}>
             <LayoutDashboard size={13} /> Go to Dashboard
           </button>
@@ -733,7 +735,21 @@ export default function PublicView({
             <Globe size={15} className="text-sabi-green flex-shrink-0" />
             <p className="text-sm text-white truncate">
               <strong>Your booking page is live.</strong>{' '}
-              Share: <span className="text-sabi-green">{bookingLink}</span>
+              Share:{' '}
+              <span className="flex items-center gap-2 inline-flex">
+                <span className="text-sabi-green">{bookingLink}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(bookingLink);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="bg-transparent border-0 cursor-pointer hover:opacity-80 p-0 flex-shrink-0"
+                  aria-label="Copy link"
+                  style={{ color: copied ? '#22c55e' : 'rgba(255,255,255,0.5)' }}>
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                </button>
+              </span>
             </p>
           </div>
           <button className="ml-3 w-6 h-6 flex items-center justify-center text-sabi-muted hover:text-white bg-transparent border-0 cursor-pointer flex-shrink-0"
