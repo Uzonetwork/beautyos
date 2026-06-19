@@ -10,7 +10,6 @@ const LoginView       = lazy(() => import('./views/LoginView'));
 const PublicView      = lazy(() => import('./views/PublicView'));
 const OwnerDashboard  = lazy(() => import('./views/OwnerDashboard'));
 const AdminDashboard  = lazy(() => import('./views/AdminDashboard'));
-const PaymentView     = lazy(() => import('./views/PaymentView'));
 const LegalView       = lazy(() => import('./views/LegalView'));
 const MarketplaceView = lazy(() => import('./views/MarketplaceView'));
 
@@ -203,19 +202,9 @@ export default function App() {
               business_type: biz?.business_type,
             });
             setAuthBusiness(biz);
-            navigateTo('payment');
+            navigateTo('dashboard');
           }}
           onLogin={() => navigateTo('login')}
-        />
-      )}
-
-      {view === 'payment' && authBusiness && (
-        <PaymentView
-          business={authBusiness}
-          onSuccess={() => {
-            setShowWelcomeBanner(true);
-            navigateTo('public-own');
-          }}
         />
       )}
 

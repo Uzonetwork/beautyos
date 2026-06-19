@@ -126,6 +126,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const daysLeft   = daysUntilExpiry(subBizSnap);
   const showRenewalBanner  = bizLoaded && subActive && daysLeft <= 7;
   const showExpiredOverlay = bizLoaded && !subActive;
+  const overlayMode        = subExpiresAt === null ? 'activate' : 'renew';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -303,32 +304,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   return (
     <div className="min-h-screen bg-sabi-dark font-sans">
 
-      {/* ── Expired subscription overlay ─────────────────────── */}
+      {/* ── Subscription overlay (activate for new / renew for expired) ── */}
       {showExpiredOverlay && (
-        <div className="fixed inset-0 z-[300] bg-sabi-dark/97 flex items-center justify-center px-4">
-          <div className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8 flex flex-col items-center gap-0">
-            <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
-              <SabiLogo size="md" />
-            </button>
-            <h2 className="font-serif text-2xl font-medium text-white text-center mt-5 mb-2.5">Your Sabi plan has expired</h2>
-            <p className="text-sm text-sabi-muted text-center mb-6 leading-relaxed">
-              Renew now to reactivate your booking page and continue accepting bookings.
-            </p>
-            <div className="w-full bg-sabi-dark border border-sabi-border/15 rounded-xl p-5 mb-5">
-              <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-xs text-sabi-muted line-through">₦{PRICING.fullPrice.toLocaleString()}/yr</span>
-                <span className="font-serif text-4xl font-semibold text-sabi-gold">₦{PRICING.promoPrice.toLocaleString()}<span className="font-sans text-sm text-sabi-muted font-normal">/yr</span></span>
-              </div>
-              <p className="text-xs text-sabi-muted">{PRICING.promoNote}</p>
-            </div>
-            <button
-              className="w-full bg-sabi-gold text-sabi-dark font-bold py-3.5 rounded-xl border-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-              onClick={handleRenew} disabled={renewalLoading}
-            >
-              {renewalLoading ? 'Opening payment…' : `Renew for ₦${PRICING.promoPrice.toLocaleString()}`}
-            </button>
-          </div>
-        </div>
+        <SubscriptionOverlay mode={overlayMode} loading={renewalLoading} onPay={handleRenew} />
       )}
 
       {/* ── Expiring-soon renewal banner ─────────────────────── */}
@@ -700,6 +678,47 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function SubscriptionOverlay({ mode, loading, onPay }) {
+  const isActivate = mode === 'activate';
+  return (
+    <div className="fixed inset-0 z-[300] bg-sabi-dark/97 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8 flex flex-col items-center gap-0">
+        <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
+          <SabiLogo size="md" />
+        </button>
+        <h2 className="font-serif text-2xl font-medium text-white text-center mt-5 mb-2.5">
+          {isActivate ? 'Activate Your Sabi Account' : 'Your Sabi plan has expired'}
+        </h2>
+        <p className="text-sm text-sabi-muted text-center mb-6 leading-relaxed">
+          {isActivate
+            ? 'One plan. Everything included. Cancel any time.'
+            : 'Renew now to reactivate your booking page and continue accepting bookings.'}
+        </p>
+        <div className="w-full bg-sabi-dark border border-sabi-border/15 rounded-xl p-5 mb-5">
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-xs text-sabi-muted line-through">₦{PRICING.fullPrice.toLocaleString()}/yr</span>
+            <span className="font-serif text-4xl font-semibold text-sabi-gold">
+              ₦{PRICING.promoPrice.toLocaleString()}<span className="font-sans text-sm text-sabi-muted font-normal">/yr</span>
+            </span>
+          </div>
+          <p className="text-xs text-sabi-muted">{PRICING.promoNote}</p>
+        </div>
+        <button
+          className="w-full bg-sabi-gold text-sabi-dark font-bold py-3.5 rounded-xl border-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+          onClick={onPay}
+          disabled={loading}
+        >
+          {loading
+            ? 'Opening payment…'
+            : isActivate
+              ? `Pay ₦${PRICING.promoPrice.toLocaleString()} — Activate Now`
+              : `Renew for ₦${PRICING.promoPrice.toLocaleString()}`}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function SkeletonList({ count = 4, height = 80 }) {
   return (
