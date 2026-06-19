@@ -1,17 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getSession, getCurrentBusiness } from './lib/auth';
 import { supabase } from './lib/supabase';
 import { posthog, track } from './lib/posthog';
-import LandingPage     from './views/LandingPage';
-import SignupView      from './views/SignupView';
-import LoginView       from './views/LoginView';
-import PublicView      from './views/PublicView';
-import OwnerDashboard  from './views/OwnerDashboard';
-import AdminDashboard  from './views/AdminDashboard';
-import PaymentView     from './views/PaymentView';
-import LegalView       from './views/LegalView';
-import MarketplaceView from './views/MarketplaceView';
+
+const LandingPage     = lazy(() => import('./views/LandingPage'));
+const SignupView      = lazy(() => import('./views/SignupView'));
+const LoginView       = lazy(() => import('./views/LoginView'));
+const PublicView      = lazy(() => import('./views/PublicView'));
+const OwnerDashboard  = lazy(() => import('./views/OwnerDashboard'));
+const AdminDashboard  = lazy(() => import('./views/AdminDashboard'));
+const PaymentView     = lazy(() => import('./views/PaymentView'));
+const LegalView       = lazy(() => import('./views/LegalView'));
+const MarketplaceView = lazy(() => import('./views/MarketplaceView'));
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -40,6 +41,17 @@ const VIEW_TO_HASH = {
   'public-own':  'page',
   marketplace:   '/marketplace',
 };
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-sabi-dark flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-sabi-gold border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sabi-muted text-sm">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [view, setView]                         = useState('loading');
@@ -150,9 +162,9 @@ export default function App() {
 
   // ── Synchronous hash checks — run before async init() resolves.
   // All hooks are declared above, so these early returns are safe.
-  if (window.location.hash === '#/admin')   return <AdminDashboard />;
-  if (window.location.hash === '#/terms')   return <LegalView page="terms" />;
-  if (window.location.hash === '#/privacy') return <LegalView page="privacy" />;
+  if (window.location.hash === '#/admin')   return <Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>;
+  if (window.location.hash === '#/terms')   return <Suspense fallback={<PageLoader />}><LegalView page="terms" /></Suspense>;
+  if (window.location.hash === '#/privacy') return <Suspense fallback={<PageLoader />}><LegalView page="privacy" /></Suspense>;
 
   // ── Loading splash ──────────────────────────────────────────────────────────
   if (view === 'loading') {
@@ -163,142 +175,119 @@ export default function App() {
     );
   }
 
-  // ── Landing ─────────────────────────────────────────────────────────────────
-  if (view === 'landing') {
-    return (
-      <LandingPage
-        onGetStarted={()   => { track('signup_started'); navigateTo('signup'); }}
-        onSeeDemo={()      => navigateTo('demo')}
-        onLogin={()        => navigateTo('login')}
-        onMarketplace={()  => navigateTo('marketplace')}
-      />
-    );
-  }
+  // ── View rendering — all routes wrapped in a single Suspense boundary ────────
+  return (
+    <Suspense fallback={<PageLoader />}>
 
-  // ── Sign up — on success go to payment wall ────────────────────────────────
-  if (view === 'signup') {
-    return (
-      <SignupView
-        onBack={() => navigateTo('landing')}
-        onSuccess={(biz) => {
-          if (biz?.user_id) {
-            posthog.identify(biz.user_id, {
-              business_name: biz.name,
-              business_type: biz.business_type,
+      {view === 'landing' && (
+        <LandingPage
+          onGetStarted={()   => { track('signup_started'); navigateTo('signup'); }}
+          onSeeDemo={()      => navigateTo('demo')}
+          onLogin={()        => navigateTo('login')}
+          onMarketplace={()  => navigateTo('marketplace')}
+        />
+      )}
+
+      {view === 'signup' && (
+        <SignupView
+          onBack={() => navigateTo('landing')}
+          onSuccess={(biz) => {
+            if (biz?.user_id) {
+              posthog.identify(biz.user_id, {
+                business_name: biz.name,
+                business_type: biz.business_type,
+              });
+            }
+            track('signup_completed', {
+              business_id:   biz?.id,
+              business_type: biz?.business_type,
             });
-          }
-          track('signup_completed', {
-            business_id:   biz?.id,
-            business_type: biz?.business_type,
-          });
-          setAuthBusiness(biz);
-          navigateTo('payment');
-        }}
-        onLogin={() => navigateTo('login')}
-      />
-    );
-  }
-
-  // ── Payment wall — after signup, before first dashboard access ──────────────
-  if (view === 'payment' && authBusiness) {
-    return (
-      <PaymentView
-        business={authBusiness}
-        onSuccess={() => {
-          setShowWelcomeBanner(true);
-          navigateTo('public-own');
-        }}
-      />
-    );
-  }
-
-  // ── Log in — on success go to owner's public page ───────────────────────────
-  if (view === 'login') {
-    return (
-      <LoginView
-        onSuccess={(biz) => {
-          if (biz?.user_id) {
-            posthog.identify(biz.user_id, {
-              business_name: biz.name,
-              business_type: biz.business_type,
-            });
-          }
-          track('owner_login', { business_id: biz?.id });
-          setAuthBusiness(biz);
-          setShowWelcomeBanner(true);
-          navigateTo('public-own');
-        }}
-        onSignup={() => navigateTo('signup')}
-      />
-    );
-  }
-
-  // ── Owner viewing their own public booking page ─────────────────────────────
-  if (view === 'public-own' && authBusiness) {
-    return (
-      <PublicView
-        businessId={authBusiness.id}
-        isOwner={true}
-        showWelcomeBanner={showWelcomeBanner}
-        onWelcomeDismiss={() => setShowWelcomeBanner(false)}
-        onGoToDashboard={() => navigateTo('dashboard')}
-      />
-    );
-  }
-
-  // ── Demo (CFO Nails, no owner bar) ──────────────────────────────────────────
-  if (view === 'demo') {
-    return (
-      <PublicView
-        businessId={DEMO_BUSINESS_ID}
-      />
-    );
-  }
-
-  // ── Specific business public page (?business=<uuid>) ────────────────────────
-  if (view === 'public') {
-    return (
-      <PublicView
-        businessId={publicBusinessId}
-        onGoToDashboard={async () => {
-          const biz = await getCurrentBusiness();
-          if (biz) {
             setAuthBusiness(biz);
-            navigateTo('dashboard');
-          }
-        }}
-      />
-    );
-  }
+            navigateTo('payment');
+          }}
+          onLogin={() => navigateTo('login')}
+        />
+      )}
 
-  // ── Owner dashboard ─────────────────────────────────────────────────────────
-  if (view === 'dashboard') {
-    return (
-      <OwnerDashboard
-        businessId={authBusiness?.id}
-        onViewPublicPage={() => navigateTo('public-own')}
-        onLogout={() => {
-          setAuthBusiness(null);
-          setShowWelcomeBanner(false);
-          navigateTo('landing');
-        }}
-      />
-    );
-  }
+      {view === 'payment' && authBusiness && (
+        <PaymentView
+          business={authBusiness}
+          onSuccess={() => {
+            setShowWelcomeBanner(true);
+            navigateTo('public-own');
+          }}
+        />
+      )}
 
-  // ── Marketplace (public, no auth required) ─────────────────────────────────
-  if (view === 'marketplace') {
-    return (
-      <MarketplaceView
-        onBack={() => navigateTo('landing')}
-      />
-    );
-  }
+      {view === 'login' && (
+        <LoginView
+          onSuccess={(biz) => {
+            if (biz?.user_id) {
+              posthog.identify(biz.user_id, {
+                business_name: biz.name,
+                business_type: biz.business_type,
+              });
+            }
+            track('owner_login', { business_id: biz?.id });
+            setAuthBusiness(biz);
+            setShowWelcomeBanner(true);
+            navigateTo('public-own');
+          }}
+          onSignup={() => navigateTo('signup')}
+        />
+      )}
 
-  // ── Admin dashboard (own password gate, no Supabase auth required) ─────────
-  if (view === 'admin')   return <AdminDashboard />;
-  if (view === 'terms')   return <LegalView page="terms" />;
-  if (view === 'privacy') return <LegalView page="privacy" />;
+      {view === 'public-own' && authBusiness && (
+        <PublicView
+          businessId={authBusiness.id}
+          isOwner={true}
+          showWelcomeBanner={showWelcomeBanner}
+          onWelcomeDismiss={() => setShowWelcomeBanner(false)}
+          onGoToDashboard={() => navigateTo('dashboard')}
+        />
+      )}
 
-  return null;
+      {view === 'demo' && (
+        <PublicView
+          businessId={DEMO_BUSINESS_ID}
+        />
+      )}
+
+      {view === 'public' && (
+        <PublicView
+          businessId={publicBusinessId}
+          onGoToDashboard={async () => {
+            const biz = await getCurrentBusiness();
+            if (biz) {
+              setAuthBusiness(biz);
+              navigateTo('dashboard');
+            }
+          }}
+        />
+      )}
+
+      {view === 'dashboard' && (
+        <OwnerDashboard
+          businessId={authBusiness?.id}
+          onViewPublicPage={() => navigateTo('public-own')}
+          onLogout={() => {
+            setAuthBusiness(null);
+            setShowWelcomeBanner(false);
+            navigateTo('landing');
+          }}
+        />
+      )}
+
+      {view === 'marketplace' && (
+        <MarketplaceView
+          onBack={() => navigateTo('landing')}
+        />
+      )}
+
+      {view === 'admin'   && <AdminDashboard />}
+      {view === 'terms'   && <LegalView page="terms" />}
+      {view === 'privacy' && <LegalView page="privacy" />}
+
+    </Suspense>
+  );
 }

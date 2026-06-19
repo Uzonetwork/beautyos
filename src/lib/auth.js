@@ -47,92 +47,64 @@ const TYPE_CATEGORIES = {
 };
 
 /**
- * signUp — creates a Supabase Auth account, inserts a linked businesses row,
- * then seeds default services for the chosen business type.
+ * signUp — creates a Supabase Auth user and triggers the OTP confirmation email.
  *
- * Common failure mode: the businesses INSERT needs auth.uid() = user_id.
- * That requires the Supabase client to have an active session when the insert
- * runs.  With email confirmation OFF (recommended for this app), signUp()
- * returns a session immediately.  With email confirmation ON, session is null
- * and we attempt a signInWithPassword to obtain one before inserting.
+ * Deliberately does NOT insert a businesses row. Business creation happens in
+ * createBusiness(), which must be called only after verifySignupOtp() succeeds.
+ * This ensures no unverified business records exist in the database.
+ *
+ * When email confirmation is enabled (as it is here), signUp() returns a user
+ * but session is null — that is expected and correct. verifyOtp() will establish
+ * the session once the user enters their code.
  */
-export async function signUp(email, password, businessData) {
-
-  // Log the full businessData so we can confirm businessType is set correctly
-  console.log('[signUp] businessData received:', {
-    name:               businessData?.name,
-    ownerName:          businessData?.ownerName,
-    businessType:       businessData?.businessType,   // ← must be non-empty for seeding
-    whatsapp:           businessData?.whatsapp,
-    customBusinessType: businessData?.customBusinessType,
-  });
-
-  if (!businessData?.businessType) {
-    throw new Error('businessType is required in businessData');
-  }
-
-  // ── Step 1: Create the auth user ──────────────────────────────────────────
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-
-  // Log everything so the caller can see exactly what Supabase returned.
-  console.log('[signUp] authData.user    :', authData?.user);
-  console.log('[signUp] authData.session :', authData?.session);
-  console.log('[signUp] authError        :', authError);
-
+export async function signUp(email, password) {
+  const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
   if (authError) throw authError;
-
-  // user is always returned (even when email confirmation is enabled).
   const user = authData?.user;
   if (!user?.id) {
-    throw new Error(
-      'signUp did not return a user object. Check your Supabase project settings.'
-    );
+    throw new Error('signUp did not return a user object. Check your Supabase project settings.');
+  }
+  return { user };
+}
+
+/**
+ * verifySignupOtp — confirms the 6-digit OTP the user received by email.
+ * On success, Supabase establishes an active session automatically.
+ * createBusiness() must be called immediately after this succeeds.
+ */
+export async function verifySignupOtp(email, token) {
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * resendSignupOtp — resends the OTP email for an unconfirmed signup.
+ */
+export async function resendSignupOtp(email) {
+  const { error } = await supabase.auth.resend({ type: 'signup', email });
+  if (error) throw error;
+}
+
+/**
+ * createBusiness — inserts a businesses row and seeds default services.
+ *
+ * Requires an active session (i.e. verifySignupOtp() must have succeeded first).
+ * The RLS policy "Owner insert businesses" enforces: auth.uid() = user_id.
+ */
+export async function createBusiness(businessData) {
+  if (!businessData?.businessType) {
+    throw new Error('businessType is required');
   }
 
-  const userId = user.id;   // captured explicitly before any async work
-  console.log('[signUp] user.id          :', userId);
-
-  // ── Step 2: Ensure the client has an active session ───────────────────────
-  // signUp() immediately grants a session when email confirmation is disabled.
-  // When it IS enabled, session is null — we try signInWithPassword to get one.
-  // If that also fails (e.g. confirmation genuinely required) we surface a
-  // clear message rather than a cryptic RLS error.
-  let session = authData?.session;
-
-  if (!session) {
-    console.warn('[signUp] No session from signUp — attempting signInWithPassword…');
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    console.log('[signUp] signIn session   :', signInData?.session);
-    console.log('[signUp] signIn error     :', signInError);
-
-    if (signInError || !signInData?.session) {
-      throw new Error(
-        'Account created but could not establish a session. ' +
-        'If email confirmation is enabled in your Supabase project, ' +
-        'please disable it under Authentication → Providers → Email ' +
-        'while in development, then try again.'
-      );
-    }
-    session = signInData.session;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    throw new Error('No active session. Please verify your email first.');
   }
 
-  // At this point auth.uid() == userId inside every subsequent Supabase call.
-  console.log('[signUp] session.user.id  :', session.user?.id);
-
-  // ── Step 3: Insert the businesses row ─────────────────────────────────────
-  // user_id is set explicitly; the RLS policy "Owner insert businesses" checks
-  //   with check (auth.uid() = user_id)
-  // which passes because the session above proves auth.uid() = userId.
+  const userId = user.id;
   const categories = TYPE_CATEGORIES[businessData.businessType] ?? ['other'];
-
   const slug = await generateSlug(businessData.name);
-  console.log('[signUp] generated slug:', slug);
 
   const { data: business, error: bizError } = await supabase
     .from('businesses')
@@ -153,20 +125,13 @@ export async function signUp(email, password, businessData) {
     .select()
     .single();
 
-  console.log('[signUp] businesses insert data  :', business);
-  console.log('[signUp] businesses insert error :', bizError);
-
   if (bizError) throw bizError;
 
-  // ── Step 4: Seed default services ─────────────────────────────────────────
-  // Queries default_services WHERE business_type = businessData.businessType,
-  // then bulk-inserts into services linked to the new business_id.
+  // Seed default services for this business type (non-fatal if it fails)
   const { data: defaults, error: defaultsError } = await supabase
     .from('default_services')
     .select('name, category, default_price')
     .eq('business_type', businessData.businessType);
-
-  console.log('[signUp] default_services rows found:', defaults?.length ?? 0, '| error:', defaultsError?.message ?? null);
 
   if (!defaultsError && defaults?.length) {
     const rows = defaults.map(d => ({
@@ -176,13 +141,9 @@ export async function signUp(email, password, businessData) {
       price:       d.default_price,
       active:      true,
     }));
-
     const { error: seedError } = await supabase.from('services').insert(rows);
-
     if (seedError) {
-      console.warn('[signUp] service seeding error (non-fatal):', seedError.message);
-    } else {
-      console.log('[signUp] seeded', rows.length, 'services for business', business.id);
+      console.warn('[createBusiness] service seeding error (non-fatal):', seedError.message);
     }
   }
 

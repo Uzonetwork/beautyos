@@ -5,7 +5,7 @@ import {
   Shirt, Camera, Home, GraduationCap, Dumbbell, PartyPopper,
   ChefHat, Video, Music2, Briefcase,
 } from 'lucide-react';
-import { signUp } from '../lib/auth';
+import { signUp, verifySignupOtp, resendSignupOtp, createBusiness } from '../lib/auth';
 import SabiLogo from '../components/SabiLogo';
 
 // ── Business type config ───────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ const OTHER_TYPES = [
 ];
 
 const ALL_BUSINESS_TYPES = [...BEAUTY_TYPES, ...OTHER_TYPES];
-const STEPS = ['Business Info', 'Business Type', 'Account Setup'];
+const STEPS = ['Business Info', 'Business Type', 'Account Setup', 'Verify Email'];
 
 const NIGERIAN_STATES = ['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'];
 
@@ -68,7 +68,13 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
   const [step3Errors, setStep3Errors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [loading,     setLoading]     = useState(false);
-  const [success,     setSuccess]     = useState(false);
+
+  // Step 4 — OTP verification
+  const [otpCode,        setOtpCode]        = useState('');
+  const [otpError,       setOtpError]       = useState('');
+  const [otpLoading,     setOtpLoading]     = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [success,        setSuccess]        = useState(false);
 
   // ── Validation ───────────────────────────────────────────────────────────────
 
@@ -102,6 +108,7 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
     return errs;
   }
 
+  // Step 3 submit: create auth user only, advance to OTP step
   async function handleSubmit(e) {
     e.preventDefault();
     const errs = validateStep3();
@@ -110,7 +117,27 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
     setSubmitError('');
     setLoading(true);
     try {
-      const { business } = await signUp(email.trim(), password, {
+      await signUp(email.trim(), password);
+      setStep(4);
+    } catch (err) {
+      setSubmitError(err.message || 'Sign up failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Step 4 verify: confirm OTP, then create business row
+  async function handleVerify(e) {
+    e.preventDefault();
+    if (otpCode.trim().length !== 6) {
+      setOtpError('Enter the 6-digit code from your email');
+      return;
+    }
+    setOtpError('');
+    setOtpLoading(true);
+    try {
+      await verifySignupOtp(email.trim(), otpCode.trim());
+      const { business } = await createBusiness({
         name:               businessName.trim(),
         ownerName:          ownerName.trim(),
         businessType,
@@ -123,9 +150,25 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
       setSuccess(true);
       setTimeout(() => onSuccess(business, email.trim()), 1200);
     } catch (err) {
-      setSubmitError(err.message || 'Sign up failed. Please try again.');
+      setOtpError(err.message || 'Invalid or expired code, please try again');
     } finally {
-      setLoading(false);
+      setOtpLoading(false);
+    }
+  }
+
+  // Resend OTP with 30-second cooldown
+  async function handleResend() {
+    try {
+      await resendSignupOtp(email.trim());
+      setResendCooldown(30);
+      const interval = setInterval(() => {
+        setResendCooldown(c => {
+          if (c <= 1) { clearInterval(interval); return 0; }
+          return c - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      setOtpError(err.message || 'Failed to resend code. Please try again.');
     }
   }
 
@@ -312,19 +355,71 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
           </div>
         )}
 
-        {/* ── Step 3 ─────────────────────────────────────────────── */}
+        {/* ── Step 3 — Account credentials ───────────────────────── */}
         {step === 3 && (
           <div>
+            <button className="flex items-center gap-1 text-sabi-muted text-sm mb-5 hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={() => setStep(2)}>
+              <ChevronLeft size={14} /> Back
+            </button>
+
+            <h1 className="font-serif text-3xl font-medium text-white mb-1">Create your account</h1>
+            <p className="text-sabi-muted text-sm mb-6">This is how you&apos;ll log into your dashboard.</p>
+
+            <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Email Address</label>
+                <input className={inputCls(step3Errors.email)} type="email" placeholder="you@example.com" value={email} autoComplete="email" autoFocus onChange={e => { setEmail(e.target.value); setStep3Errors(p => ({ ...p, email: '' })); }} />
+                {step3Errors.email && <span className="flex items-center gap-1 text-red-400 text-xs mt-1"><AlertCircle size={12} />{step3Errors.email}</span>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Password</label>
+                <input className={inputCls(step3Errors.password)} type="password" placeholder="At least 6 characters" value={password} autoComplete="new-password" onChange={e => { setPassword(e.target.value); setStep3Errors(p => ({ ...p, password: '' })); }} />
+                {step3Errors.password && <span className="flex items-center gap-1 text-red-400 text-xs mt-1"><AlertCircle size={12} />{step3Errors.password}</span>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Confirm Password</label>
+                <input className={inputCls(step3Errors.confirm)} type="password" placeholder="Repeat your password" value={confirm} autoComplete="new-password" onChange={e => { setConfirm(e.target.value); setStep3Errors(p => ({ ...p, confirm: '' })); }} />
+                {step3Errors.confirm && <span className="flex items-center gap-1 text-red-400 text-xs mt-1"><AlertCircle size={12} />{step3Errors.confirm}</span>}
+              </div>
+
+              {submitError && (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
+                  <AlertCircle size={14} className="flex-shrink-0" />{submitError}
+                </div>
+              )}
+
+              <button className="btn-gold w-full justify-center py-3 mt-1 disabled:opacity-60 disabled:cursor-not-allowed" type="submit" disabled={loading}>
+                {loading && <Loader2 size={15} className="sv-spin" />}
+                {loading ? 'Creating account…' : 'Create Account'}
+              </button>
+
+              <p className="text-xs text-sabi-muted text-center">
+                By signing up you agree to our{' '}
+                <a href="/#/terms"   className="text-sabi-green hover:underline" target="_blank" rel="noopener noreferrer">Terms of Service</a>{' '}
+                and{' '}
+                <a href="/#/privacy" className="text-sabi-green hover:underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+              </p>
+            </form>
+          </div>
+        )}
+
+        {/* ── Step 4 — Email OTP verification ────────────────────── */}
+        {step === 4 && (
+          <div>
             {!success && (
-              <button className="flex items-center gap-1 text-sabi-muted text-sm mb-5 hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={() => setStep(2)}>
+              <button
+                className="flex items-center gap-1 text-sabi-muted text-sm mb-5 hover:text-white transition-colors bg-transparent border-0 cursor-pointer"
+                onClick={() => { setStep(3); setOtpCode(''); setOtpError(''); }}
+              >
                 <ChevronLeft size={14} /> Back
               </button>
             )}
 
             <h1 className="font-serif text-3xl font-medium text-white mb-1">
-              {success ? "You're in." : 'Create your account'}
+              {success ? "You're in." : 'Verify your email'}
             </h1>
-            {!success && <p className="text-sabi-muted text-sm mb-6">This is how you&apos;ll log into your dashboard.</p>}
 
             {success ? (
               <div className="flex flex-col items-center py-10 gap-4">
@@ -334,43 +429,59 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
                 <p className="text-sabi-muted text-sm">Setting up your dashboard…</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Email Address</label>
-                  <input className={inputCls(step3Errors.email)} type="email" placeholder="you@example.com" value={email} autoComplete="email" autoFocus onChange={e => { setEmail(e.target.value); setStep3Errors(p => ({ ...p, email: '' })); }} />
-                  {step3Errors.email && <span className="flex items-center gap-1 text-red-400 text-xs mt-1"><AlertCircle size={12} />{step3Errors.email}</span>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Password</label>
-                  <input className={inputCls(step3Errors.password)} type="password" placeholder="At least 6 characters" value={password} autoComplete="new-password" onChange={e => { setPassword(e.target.value); setStep3Errors(p => ({ ...p, password: '' })); }} />
-                  {step3Errors.password && <span className="flex items-center gap-1 text-red-400 text-xs mt-1"><AlertCircle size={12} />{step3Errors.password}</span>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Confirm Password</label>
-                  <input className={inputCls(step3Errors.confirm)} type="password" placeholder="Repeat your password" value={confirm} autoComplete="new-password" onChange={e => { setConfirm(e.target.value); setStep3Errors(p => ({ ...p, confirm: '' })); }} />
-                  {step3Errors.confirm && <span className="flex items-center gap-1 text-red-400 text-xs mt-1"><AlertCircle size={12} />{step3Errors.confirm}</span>}
-                </div>
-
-                {submitError && (
-                  <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
-                    <AlertCircle size={14} className="flex-shrink-0" />{submitError}
-                  </div>
-                )}
-
-                <button className="btn-gold w-full justify-center py-3 mt-1 disabled:opacity-60 disabled:cursor-not-allowed" type="submit" disabled={loading}>
-                  {loading && <Loader2 size={15} className="sv-spin" />}
-                  {loading ? 'Creating your account…' : 'Create Account & Go to Dashboard'}
-                </button>
-
-                <p className="text-xs text-sabi-muted text-center">
-                  By signing up you agree to our{' '}
-                  <a href="/#/terms"   className="text-sabi-green hover:underline" target="_blank" rel="noopener noreferrer">Terms of Service</a>{' '}
-                  and{' '}
-                  <a href="/#/privacy" className="text-sabi-green hover:underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+              <>
+                <p className="text-sabi-muted text-sm mb-6">
+                  We sent a 6-digit code to{' '}
+                  <span className="text-white font-semibold">{email}</span>.
+                  Enter it below to confirm your account.
                 </p>
-              </form>
+
+                <form onSubmit={handleVerify} noValidate className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Verification Code</label>
+                    <input
+                      className={inputCls(!!otpError)}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={otpCode}
+                      autoFocus
+                      autoComplete="one-time-code"
+                      onChange={e => { setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setOtpError(''); }}
+                    />
+                    {otpError && (
+                      <span className="flex items-center gap-1 text-red-400 text-xs mt-1">
+                        <AlertCircle size={12} />{otpError}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    className="btn-gold w-full justify-center py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                    type="submit"
+                    disabled={otpLoading}
+                  >
+                    {otpLoading && <Loader2 size={15} className="sv-spin" />}
+                    {otpLoading ? 'Verifying…' : 'Verify & Create Account'}
+                  </button>
+
+                  <p className="text-sm text-sabi-muted text-center">
+                    Didn&apos;t receive it?{' '}
+                    {resendCooldown > 0 ? (
+                      <span className="text-sabi-border">Resend in {resendCooldown}s</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-sabi-green font-semibold hover:underline bg-transparent border-0 cursor-pointer"
+                        onClick={handleResend}
+                      >
+                        Resend code
+                      </button>
+                    )}
+                  </p>
+                </form>
+              </>
             )}
           </div>
         )}
