@@ -1,16 +1,9 @@
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import SabiLogo from '../components/SabiLogo';
 
-const ADMIN_PASSWORD = 'beautyos_admin_2024';
+const ADMIN_PASSWORD = 'Cha8mB7er@12345678';
 const SESSION_KEY    = 'bos_admin_auth';
-
-const DB = (() => {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_SERVICE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-})();
+const EDGE_FN_URL    = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-data`;
 
 function fmtTimestamp(iso) {
   if (!iso) return '—';
@@ -93,55 +86,60 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!authed) return;
-    if (!DB) { setLoadError('VITE_SUPABASE_SERVICE_KEY is not set. Add it to .env.local and restart the dev server.'); return; }
     load();
   }, [authed]);
 
   async function load() {
     setLoading(true); setLoadError('');
     try {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const [bizCountRes, bookingCountRes, clientCountRes, monthBizRes, activeSubsRes, bizDataRes, bizBookingIdsRes, recentBkgRes, servicesRes, allBkgRes, usersRes] = await Promise.all([
-        DB.from('businesses').select('*', { count: 'exact', head: true }),
-        DB.from('bookings').select('*',   { count: 'exact', head: true }),
-        DB.from('clients').select('*',    { count: 'exact', head: true }),
-        DB.from('businesses').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
-        DB.from('businesses').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active').gt('plan_expires_at', now.toISOString()),
-        DB.from('businesses').select('*').order('created_at', { ascending: false }),
-        DB.from('bookings').select('business_id'),
-        DB.from('bookings').select('id, client_name, client_phone, service_name, status, date, created_at, businesses(name)').order('created_at', { ascending: false }).limit(20),
-        DB.from('services').select('id, name, price, business_id, businesses(name)'),
-        DB.from('bookings').select('service_name, business_id'),
-        DB.auth.admin.listUsers({ perPage: 1000 }),
-      ]);
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${ADMIN_PASSWORD}` },
+      });
+
+      if (res.status === 403) {
+        setLoadError('Access denied. You are not authorised to view this dashboard.');
+        setLoading(false);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(`Edge Function returned ${res.status}`);
+      }
+
+      const data = await res.json();
 
       const emailMap = {};
-      (usersRes.data?.users ?? []).forEach(u => { if (u.id) emailMap[u.id] = u.email ?? '—'; });
+      (data.users ?? []).forEach(u => { if (u.id) emailMap[u.id] = u.email ?? '—'; });
 
       const bizBkgMap = {};
-      (bizBookingIdsRes.data ?? []).forEach(b => { bizBkgMap[b.business_id] = (bizBkgMap[b.business_id] || 0) + 1; });
+      (data.bizBookingIds ?? []).forEach(b => { bizBkgMap[b.business_id] = (bizBkgMap[b.business_id] || 0) + 1; });
 
       const svcBkgMap = {};
-      (allBkgRes.data ?? []).forEach(b => { const k = `${b.business_id}::${b.service_name}`; svcBkgMap[k] = (svcBkgMap[k] || 0) + 1; });
+      (data.allBookings ?? []).forEach(b => { const k = `${b.business_id}::${b.service_name}`; svcBkgMap[k] = (svcBkgMap[k] || 0) + 1; });
 
-      const top10 = (servicesRes.data ?? []).map(s => ({ ...s, booking_count: svcBkgMap[`${s.business_id}::${s.name}`] || 0 })).sort((a, b) => b.booking_count - a.booking_count).slice(0, 10);
+      const top10 = (data.services ?? [])
+        .map(s => ({ ...s, booking_count: svcBkgMap[`${s.business_id}::${s.name}`] || 0 }))
+        .sort((a, b) => b.booking_count - a.booking_count)
+        .slice(0, 10);
 
-      setStats({ totalBiz: bizCountRes.count ?? 0, totalBookings: bookingCountRes.count ?? 0, totalClients: clientCountRes.count ?? 0, monthBiz: monthBizRes.count ?? 0, activeSubs: activeSubsRes.count ?? 0 });
-      setBusinesses((bizDataRes.data ?? []).map(b => ({ ...b, email: emailMap[b.user_id] ?? '—', booking_count: bizBkgMap[b.id] ?? 0 })));
-      setRecentBookings(recentBkgRes.data ?? []);
+      setStats({
+        totalBiz:      data.bizCount,
+        totalBookings: data.bookingCount,
+        totalClients:  data.clientCount,
+        monthBiz:      data.monthBizCount,
+        activeSubs:    data.activeSubsCount,
+      });
+      setBusinesses((data.businesses ?? []).map(b => ({ ...b, email: emailMap[b.user_id] ?? '—', booking_count: bizBkgMap[b.id] ?? 0 })));
+      setRecentBookings(data.recentBookings ?? []);
       setTopServices(top10);
 
-      try {
-        const { data: reviewRows } = await DB.from('reviews').select('business_id, rating');
-        if (reviewRows?.length) {
-          const acc = {};
-          reviewRows.forEach(r => { if (!acc[r.business_id]) acc[r.business_id] = { sum: 0, count: 0 }; acc[r.business_id].sum += r.rating; acc[r.business_id].count += 1; });
-          const avgMap = {};
-          Object.entries(acc).forEach(([id, v]) => { avgMap[id] = { avg: +(v.sum / v.count).toFixed(1), count: v.count }; });
-          setRatings(avgMap);
-        }
-      } catch { /* reviews table not yet created */ }
+      if (data.reviews?.length) {
+        const acc = {};
+        data.reviews.forEach(r => { if (!acc[r.business_id]) acc[r.business_id] = { sum: 0, count: 0 }; acc[r.business_id].sum += r.rating; acc[r.business_id].count += 1; });
+        const avgMap = {};
+        Object.entries(acc).forEach(([id, v]) => { avgMap[id] = { avg: +(v.sum / v.count).toFixed(1), count: v.count }; });
+        setRatings(avgMap);
+      }
     } catch (err) {
       console.error('[Admin] load failed:', err);
       setLoadError('Failed to load data. Check console for details.');
