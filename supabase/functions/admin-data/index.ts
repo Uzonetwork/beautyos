@@ -11,25 +11,21 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: CORS });
   }
 
-  // ── 1. Verify caller is an admin ─────────────────────────────────────────
-  // The admin password is stored as an Edge Function secret (ADMIN_PASSWORD),
-  // set via: supabase secrets set ADMIN_PASSWORD=<value>
-  // The frontend sends it as Bearer <password> — never as a VITE_ env var.
+  // ── 1. Extract the caller's Supabase JWT ─────────────────────────────────
   const authHeader = req.headers.get('Authorization') ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  const adminPassword = Deno.env.get('ADMIN_PASSWORD') ?? '';
 
-  if (!token || !adminPassword || token !== adminPassword) {
-    return new Response(JSON.stringify({ error: 'Forbidden' }), {
-      status: 403,
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Missing authorization token' }), {
+      status: 401,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   }
 
-  // ── 2. Build service-role client (server-side only) ──────────────────────
-  // Supabase auto-injects SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
-  // SERVICE_ROLE_KEY is a manually set fallback (Supabase rejects custom
-  // secrets prefixed with SUPABASE_).
+  // ── 2. Build service-role client ─────────────────────────────────────────
+  // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are auto-injected by Supabase.
+  // SERVICE_ROLE_KEY is a manually set fallback (Supabase rejects custom secrets
+  // prefixed with SUPABASE_).
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
   const serviceKey =
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ??
@@ -47,7 +43,33 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // ── 3. Run privileged queries ─────────────────────────────────────────────
+  // ── 3. Verify the JWT and identify the caller ─────────────────────────────
+  // DB.auth.getUser(token) validates the JWT against Supabase Auth and returns
+  // the user object if valid. Returns an error for expired or invalid tokens.
+  const { data: { user }, error: authError } = await DB.auth.getUser(token);
+
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: 'Invalid or expired session' }), {
+      status: 401,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // ── 4. Confirm the caller exists in admin_users ───────────────────────────
+  const { data: adminRow } = await DB
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!adminRow) {
+    return new Response(JSON.stringify({ error: 'Forbidden — not an admin' }), {
+      status: 403,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // ── 5. Run privileged queries ─────────────────────────────────────────────
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -78,7 +100,7 @@ Deno.serve(async (req: Request) => {
       DB.auth.admin.listUsers({ perPage: 1000 }),
     ]);
 
-    // Reviews may not exist yet — catch independently like the original did
+    // Reviews may not exist yet — catch independently
     let reviews: Array<{ business_id: string; rating: number }> = [];
     try {
       const { data: reviewRows } = await DB.from('reviews').select('business_id, rating');

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { signIn, signOut, getSession } from '../lib/auth';
 import SabiLogo from '../components/SabiLogo';
 
-const ADMIN_PASSWORD = 'Cha8mB7er@12345678';
-const SESSION_KEY    = 'bos_admin_auth';
-const EDGE_FN_URL    = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-data`;
+const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-data`;
 
 function fmtTimestamp(iso) {
   if (!iso) return '—';
@@ -60,9 +60,13 @@ const STATUS_BADGE = {
 };
 
 export default function AdminDashboard() {
-  const [authed,  setAuthed]  = useState(() => sessionStorage.getItem(SESSION_KEY) === '1');
-  const [pwInput, setPwInput] = useState('');
-  const [pwError, setPwError] = useState(false);
+  // 'loading' = checking existing session; 'login' = show form; 'forbidden' = authed but not admin; 'dashboard' = all good
+  const [view, setView] = useState('loading');
+
+  const [email,        setEmail]        = useState('');
+  const [password,     setPassword]     = useState('');
+  const [loginErr,     setLoginErr]     = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const [loading,        setLoading]        = useState(false);
   const [loadError,      setLoadError]      = useState('');
@@ -73,38 +77,70 @@ export default function AdminDashboard() {
   const [topServices,    setTopServices]    = useState([]);
   const [search,         setSearch]         = useState('');
 
-  function handleLogin(e) {
-    e.preventDefault();
-    if (pwInput === ADMIN_PASSWORD) { sessionStorage.setItem(SESSION_KEY, '1'); setAuthed(true); setPwError(false); }
-    else { setPwError(true); setPwInput(''); }
-  }
-
-  function handleLogout() {
-    sessionStorage.removeItem(SESSION_KEY); setAuthed(false);
-    setStats(null); setBusinesses([]); setRecentBookings([]); setTopServices([]);
-  }
-
+  // On mount: reuse an existing Supabase session if present
   useEffect(() => {
-    if (!authed) return;
-    load();
-  }, [authed]);
+    async function init() {
+      const session = await getSession();
+      if (session?.access_token) {
+        await load(session.access_token);
+      } else {
+        setView('login');
+      }
+    }
+    init();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function load() {
-    setLoading(true); setLoadError('');
+  async function handleLogin(e) {
+    e.preventDefault();
+    if (!email.trim() || !password) return;
+    setLoginLoading(true);
+    setLoginErr('');
+    try {
+      const { session } = await signIn(email.trim(), password);
+      if (session?.access_token) {
+        await load(session.access_token);
+      } else {
+        setLoginErr('Login succeeded but no session was returned. Please try again.');
+      }
+    } catch (err) {
+      setLoginErr(err.message || 'Login failed. Check your email and password.');
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    try { await signOut(); } catch { /* ignore */ }
+    setView('login');
+    setEmail('');
+    setPassword('');
+    setStats(null);
+    setBusinesses([]);
+    setRecentBookings([]);
+    setTopServices([]);
+  }
+
+  // Called from the dashboard header "Refresh" button
+  async function refresh() {
+    const session = await getSession();
+    if (!session?.access_token) { setView('login'); return; }
+    await load(session.access_token);
+  }
+
+  async function load(token) {
+    setLoading(true);
+    setLoadError('');
     try {
       const res = await fetch(EDGE_FN_URL, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${ADMIN_PASSWORD}` },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      if (res.status === 403) {
-        setLoadError('Access denied. You are not authorised to view this dashboard.');
-        setLoading(false);
-        return;
-      }
-      if (!res.ok) {
-        throw new Error(`Edge Function returned ${res.status}`);
-      }
+      // 403 = authenticated but not in admin_users
+      if (res.status === 403) { setView('forbidden'); return; }
+      // 401 = token expired or invalid — prompt re-login
+      if (res.status === 401) { setView('login'); return; }
+      if (!res.ok) throw new Error(`Edge Function returned ${res.status}`);
 
       const data = await res.json();
 
@@ -140,11 +176,15 @@ export default function AdminDashboard() {
         Object.entries(acc).forEach(([id, v]) => { avgMap[id] = { avg: +(v.sum / v.count).toFixed(1), count: v.count }; });
         setRatings(avgMap);
       }
+
+      setView('dashboard');
     } catch (err) {
       console.error('[Admin] load failed:', err);
       setLoadError('Failed to load data. Check console for details.');
+      setView('dashboard');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const filtered = businesses.filter(b => {
@@ -153,28 +193,94 @@ export default function AdminDashboard() {
     return b.name?.toLowerCase().includes(q) || b.email?.toLowerCase().includes(q) || b.owner_name?.toLowerCase().includes(q);
   });
 
-  // ── Password gate ─────────────────────────────────────────────────────────────
+  // ── Initial session check ─────────────────────────────────────────────────
 
-  if (!authed) {
+  if (view === 'loading') {
+    return (
+      <div className="min-h-screen bg-sabi-dark flex items-center justify-center">
+        <Loader2 size={24} className="text-sabi-green animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Login form ─────────────────────────────────────────────────────────────
+
+  if (view === 'login') {
+    return (
+      <div className="min-h-screen bg-sabi-dark flex items-start justify-center px-4 py-12">
+        <div className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8">
+          <div className="flex justify-center mb-6">
+            <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
+              <SabiLogo size="lg" />
+            </button>
+          </div>
+          <h1 className="font-serif text-3xl font-medium text-white text-center mb-1">Admin Access</h1>
+          <p className="text-sabi-muted text-sm text-center mb-8">Sign in with your admin account.</p>
+          <form onSubmit={handleLogin} noValidate className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Email</label>
+              <div className="relative">
+                <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-sabi-muted pointer-events-none" />
+                <input
+                  className="input-dark pl-9"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  autoComplete="email"
+                  autoFocus
+                  onChange={e => { setEmail(e.target.value); setLoginErr(''); }}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Password</label>
+              <div className="relative">
+                <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-sabi-muted pointer-events-none" />
+                <input
+                  className="input-dark pl-9"
+                  type="password"
+                  placeholder="Your password"
+                  value={password}
+                  autoComplete="current-password"
+                  onChange={e => { setPassword(e.target.value); setLoginErr(''); }}
+                />
+              </div>
+            </div>
+            {loginErr && (
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
+                <AlertCircle size={14} className="flex-shrink-0" />
+                {loginErr}
+              </div>
+            )}
+            <button
+              className="btn-gold w-full justify-center py-3 mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
+              type="submit"
+              disabled={loginLoading || !email || !password}
+            >
+              {loginLoading && <Loader2 size={15} className="animate-spin" />}
+              {loginLoading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Forbidden (authenticated but not in admin_users) ───────────────────────
+
+  if (view === 'forbidden') {
     return (
       <div className="min-h-screen bg-sabi-dark flex items-center justify-center px-4">
-        <form className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8 flex flex-col gap-4" onSubmit={handleLogin}>
-          <button type="button" onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0 self-start">
+        <div className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-8 flex flex-col items-center gap-4 text-center">
+          <button onClick={() => { window.location.href = '/'; }} className="bg-transparent border-0 cursor-pointer p-0">
             <SabiLogo size="md" />
           </button>
-          <h1 className="font-serif text-3xl font-medium text-white">Admin Access</h1>
-          <p className="text-sabi-muted text-sm">This area is restricted to authorised users.</p>
-          <input
-            className={`w-full bg-sabi-dark border rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors placeholder:text-sabi-muted ${pwError ? 'border-red-500' : 'border-sabi-border focus:border-sabi-green'}`}
-            type="password"
-            placeholder="Enter admin password"
-            value={pwInput}
-            autoFocus
-            onChange={e => { setPwInput(e.target.value); setPwError(false); }}
-          />
-          {pwError && <p className="text-red-400 text-sm">Incorrect password. Try again.</p>}
-          <button className="btn-gold w-full justify-center py-3" type="submit">Enter Dashboard</button>
-        </form>
+          <h1 className="font-serif text-2xl font-medium text-white">Access Denied</h1>
+          <p className="text-sabi-muted text-sm">Your account is not authorised to access the admin dashboard.</p>
+          <button className="btn-gold w-full justify-center py-3 mt-2" onClick={handleLogout}>
+            Sign in with a different account
+          </button>
+        </div>
       </div>
     );
   }
@@ -194,7 +300,7 @@ export default function AdminDashboard() {
             <span className="text-xs font-black uppercase tracking-widest bg-sabi-gold text-sabi-dark px-2.5 py-1 rounded">Admin</span>
           </div>
           <div className="flex items-center gap-4">
-            <button className="text-sabi-muted text-sm border border-sabi-border px-3 py-1.5 rounded-lg hover:text-white hover:border-sabi-green transition-colors bg-transparent cursor-pointer" onClick={load} disabled={loading}>
+            <button className="text-sabi-muted text-sm border border-sabi-border px-3 py-1.5 rounded-lg hover:text-white hover:border-sabi-green transition-colors bg-transparent cursor-pointer" onClick={refresh} disabled={loading}>
               {loading ? 'Refreshing…' : 'Refresh'}
             </button>
             <button className="text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={handleLogout}>Log out</button>
