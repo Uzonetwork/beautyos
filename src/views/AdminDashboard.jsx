@@ -77,18 +77,9 @@ export default function AdminDashboard() {
   const [topServices,    setTopServices]    = useState([]);
   const [search,         setSearch]         = useState('');
 
-  // On mount: reuse an existing Supabase session if present
-  useEffect(() => {
-    async function init() {
-      const session = await getSession();
-      if (session?.access_token) {
-        await load(session.access_token);
-      } else {
-        setView('login');
-      }
-    }
-    init();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Always show the login form on mount — never silently reuse a pre-existing
+  // session (e.g. from a business owner logged in on the same device).
+  useEffect(() => { setView('login'); }, []);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -96,6 +87,9 @@ export default function AdminDashboard() {
     setLoginLoading(true);
     setLoginErr('');
     try {
+      // Clear any stale session before signing in so the admin-data fetch
+      // always uses the credentials just submitted, not a leftover token.
+      try { await signOut(); } catch { /* ignore */ }
       const { session } = await signIn(email.trim(), password);
       if (session?.access_token) {
         await load(session.access_token);
