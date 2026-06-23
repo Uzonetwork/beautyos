@@ -717,17 +717,6 @@ export default function PublicView({
   return (
     <div className="font-sans bg-[#FAFAFA] min-h-screen">
 
-      {/* ── Owner floating button ──────────────────────────────── */}
-      {isActualOwner && (
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            className="flex items-center gap-1.5 bg-sabi-dark text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer shadow-lg"
-            onClick={onGoToDashboard}>
-            <LayoutDashboard size={13} /> Go to Dashboard
-          </button>
-        </div>
-      )}
-
       {/* ── Welcome banner ─────────────────────────────────────── */}
       {isOwner && bannerVisible && (
         <div className="flex items-center justify-between px-4 py-3 bg-sabi-green/20 border-b border-sabi-green/30">
@@ -786,13 +775,22 @@ export default function PublicView({
             ))}
           </div>
 
-          {/* Book CTA */}
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm border-0 cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
-            style={{ background: theme.btnBg, color: theme.btnText }}>
-            Book Appointment
-          </button>
+          {/* Right: Dashboard link (owner only) + Book CTA */}
+          <div className="flex items-center gap-2">
+            {isActualOwner && (
+              <button
+                className="flex items-center gap-1.5 bg-sabi-dark text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer shadow-lg"
+                onClick={onGoToDashboard}>
+                <LayoutDashboard size={13} /> Go to Dashboard
+              </button>
+            )}
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm border-0 cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
+              style={{ background: theme.btnBg, color: theme.btnText }}>
+              Book Appointment
+            </button>
+          </div>
         </div>
       </nav>
 
