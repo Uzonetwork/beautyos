@@ -15,6 +15,7 @@ import {
   Star,
   Copy,
   Check,
+  Menu,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
@@ -321,7 +322,8 @@ export default function PublicView({
   onGoToDashboard,
 }) {
   const bookingRef = useRef(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen,    setDrawerOpen]    = useState(false);
+  const [navDrawerOpen, setNavDrawerOpen] = useState(false);
 
   const [bannerVisible,   setBannerVisible]   = useState(showWelcomeBanner);
   const [copied,          setCopied]          = useState(false);
@@ -349,15 +351,15 @@ export default function PublicView({
     });
   }, []);
 
-  // Lock body scroll while drawer is open (prevents iOS background scroll)
+  // Lock body scroll while any drawer is open (prevents iOS background scroll)
   useEffect(() => {
-    if (drawerOpen) {
+    if (drawerOpen || navDrawerOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [drawerOpen]);
+  }, [drawerOpen, navDrawerOpen]);
 
   useEffect(() => {
     async function loadAll() {
@@ -754,18 +756,12 @@ export default function PublicView({
       <nav className="sticky top-0 z-40 bg-white/90 border-b border-slate-200 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 md:px-8 h-16">
 
-          {/* Business identity */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm flex-shrink-0"
-              style={{ background: theme.btnBg, color: theme.btnText, fontFamily: 'Georgia,serif' }}>
-              {bizInitial}
-            </div>
-            <span className="font-bold text-sm leading-tight hidden sm:block text-slate-900">
-              {business?.name}
-            </span>
-          </div>
+          {/* Business name */}
+          <span className="font-serif font-semibold text-lg text-slate-900 truncate max-w-[180px] sm:max-w-xs">
+            {business?.name}
+          </span>
 
-          {/* Nav anchors — desktop */}
+          {/* Nav anchors — desktop only */}
           <div className="hidden md:flex items-center gap-7">
             {[['#services-section', 'Services'], ['#about-section', 'About'], ['#gallery-section', 'Gallery']].map(([href, label]) => (
               <a key={href} href={href}
@@ -775,22 +771,21 @@ export default function PublicView({
             ))}
           </div>
 
-          {/* Right: Dashboard link (owner only) + Book CTA */}
-          <div className="flex items-center gap-2">
-            {isActualOwner && (
-              <button
-                className="flex items-center gap-1.5 bg-sabi-dark text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer shadow-lg"
-                onClick={onGoToDashboard}>
-                <LayoutDashboard size={13} /> Go to Dashboard
-              </button>
-            )}
+          {/* Right: owner dashboard OR visitor hamburger */}
+          {isActualOwner ? (
             <button
-              onClick={() => setDrawerOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm border-0 cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
-              style={{ background: theme.btnBg, color: theme.btnText }}>
-              Book Appointment
+              className="flex items-center gap-1.5 bg-sabi-dark text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer shadow-lg"
+              onClick={onGoToDashboard}>
+              <LayoutDashboard size={13} /> Go to Dashboard
             </button>
-          </div>
+          ) : (
+            <button
+              onClick={() => setNavDrawerOpen(true)}
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-slate-700 hover:bg-slate-100 border-0 cursor-pointer transition-colors"
+              aria-label="Open menu">
+              <Menu size={24} />
+            </button>
+          )}
         </div>
       </nav>
 
@@ -1328,6 +1323,74 @@ export default function PublicView({
               overflow: 'hidden',
             }}>
             {drawerContent}
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          NAV DRAWER (slide-in from right, visitor only)
+      ══════════════════════════════════════════════════════════ */}
+      {!isActualOwner && (
+        <>
+          {/* Backdrop */}
+          <div
+            className={`fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity duration-300 ${navDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+            onClick={() => setNavDrawerOpen(false)}
+          />
+          {/* Panel */}
+          <div className={`fixed inset-y-0 right-0 z-50 w-72 bg-sabi-dark flex flex-col shadow-2xl transition-transform duration-300 ${navDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 flex-shrink-0">
+              <span className="font-serif font-semibold text-xl text-white truncate pr-4">
+                {business?.name}
+              </span>
+              <button
+                onClick={() => setNavDrawerOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-transparent border-0 cursor-pointer flex-shrink-0 text-white/60 hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Nav links */}
+            <div className="flex flex-col flex-1 px-4 py-4 overflow-y-auto">
+              {[
+                { label: 'Services', target: 'services-section' },
+                ...(gallery.length > 0 || galleryLoading
+                  ? [{ label: 'Gallery', target: 'gallery-section' }]
+                  : []),
+                { label: 'About', target: 'about-section' },
+              ].map(({ label, target }) => (
+                <div key={label} className="border-b border-white/10">
+                  <button
+                    onClick={() => {
+                      setNavDrawerOpen(false);
+                      setTimeout(() => {
+                        document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' });
+                      }, 300);
+                    }}
+                    className="w-full text-left py-4 px-2 text-white font-medium text-base bg-transparent border-0 cursor-pointer hover:text-sabi-gold transition-colors">
+                    {label}
+                  </button>
+                </div>
+              ))}
+
+              {/* Book Appointment — prominent CTA */}
+              <button
+                onClick={() => {
+                  setNavDrawerOpen(false);
+                  setTimeout(() => setDrawerOpen(true), 300);
+                }}
+                className="mt-6 w-full py-4 rounded-xl font-bold text-sm border-0 cursor-pointer"
+                style={{ background: theme.btnBg, color: theme.btnText }}>
+                Book Appointment
+              </button>
+            </div>
+
+            {/* Footer */}
+            <p className="text-center text-xs text-white/30 py-5 flex-shrink-0">
+              Powered by Sabi
+            </p>
           </div>
         </>
       )}
