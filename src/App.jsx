@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import { getSession, getCurrentBusiness } from './lib/auth';
+import { getSession, getCurrentBusiness, signOut } from './lib/auth';
 import { supabase } from './lib/supabase';
 import { posthog, track } from './lib/posthog';
 
@@ -139,9 +139,13 @@ export default function App() {
       if (hash === 'signup') { setView('signup'); return; }
       if (hash === 'login')  { setView('login');  return; }
 
-      // Existing session → restore auth-gated view
+      // Existing session → restore auth-gated view only if the token is still valid
       const session = await getSession();
-      if (session) {
+      const isValidSession = session &&
+        session.expires_at &&
+        (session.expires_at * 1000) > Date.now();
+
+      if (isValidSession) {
         const biz = await getCurrentBusiness();
         if (biz) {
           setAuthBusiness(biz);
@@ -259,7 +263,8 @@ export default function App() {
         <OwnerDashboard
           businessId={authBusiness?.id}
           onViewPublicPage={() => navigateTo('public-own')}
-          onLogout={() => {
+          onLogout={async () => {
+            try { await signOut(); } catch { /* ignore — navigate regardless */ }
             setAuthBusiness(null);
             setShowWelcomeBanner(false);
             navigateTo('landing');

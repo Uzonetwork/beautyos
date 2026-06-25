@@ -160,11 +160,17 @@ export async function signIn(email, password) {
 }
 
 /**
- * signOut — clears the active session.
+ * signOut — clears the active session and removes all Supabase tokens from
+ * local/session storage so a refresh can never restore the session.
  */
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
+  // Belt-and-suspenders: purge any sb-* keys that survived the signOut call
+  Object.keys(localStorage)
+    .filter(key => key.startsWith('sb-'))
+    .forEach(key => localStorage.removeItem(key));
+  sessionStorage.clear();
 }
 
 /**
