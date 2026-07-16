@@ -5,7 +5,7 @@ import {
   Shirt, Camera, Home, GraduationCap, Dumbbell, PartyPopper,
   ChefHat, Video, Music2, Briefcase,
 } from 'lucide-react';
-import { signUp, verifySignupOtp, resendSignupOtp, createBusiness } from '../lib/auth';
+import { signUp, verifySignupOtp, resendSignupOtp, createBusiness, uploadBusinessAvatar } from '../lib/auth';
 import SabiLogo from '../components/SabiLogo';
 
 // ── Business type config ───────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ const OTHER_TYPES = [
 ];
 
 const ALL_BUSINESS_TYPES = [...BEAUTY_TYPES, ...OTHER_TYPES];
-const STEPS = ['Business Info', 'Business Type', 'Account Setup', 'Verify Email'];
+const STEPS = ['Business Info', 'Business Type', 'Account Setup', 'Upload Photo', 'Verify Email'];
 
 const NIGERIAN_STATES = ['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'];
 
@@ -69,7 +69,13 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
   const [submitError, setSubmitError] = useState('');
   const [loading,     setLoading]     = useState(false);
 
-  // Step 4 — OTP verification
+  // Step 4 — Profile photo
+  const [photoFile,          setPhotoFile]          = useState(null);
+  const [photoPreview,       setPhotoPreview]       = useState(null);
+  const [photoError,         setPhotoError]         = useState('');
+  const [photoUploadWarning, setPhotoUploadWarning] = useState('');
+
+  // Step 5 — OTP verification
   const [otpCode,        setOtpCode]        = useState('');
   const [otpError,       setOtpError]       = useState('');
   const [otpLoading,     setOtpLoading]     = useState(false);
@@ -108,7 +114,7 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
     return errs;
   }
 
-  // Step 3 submit: create auth user only, advance to OTP step
+  // Step 3 submit: create auth user only, advance to photo step
   async function handleSubmit(e) {
     e.preventDefault();
     const errs = validateStep3();
@@ -126,7 +132,23 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
     }
   }
 
-  // Step 4 verify: confirm OTP, then create business row
+  // Step 4: mandatory profile photo selection
+  function handlePhotoChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setPhotoError('Only image files are allowed'); return; }
+    setPhotoError('');
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function nextFromStep4() {
+    if (!photoFile) { setPhotoError('Please add a photo to continue'); return; }
+    setPhotoError('');
+    setStep(5);
+  }
+
+  // Step 5 verify: confirm OTP, create business row, then upload the photo
   async function handleVerify(e) {
     e.preventDefault();
     if (otpCode.trim().length !== 6) {
@@ -148,6 +170,15 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
         customBusinessType: businessType === 'other_professional' ? customBusinessType.trim() : undefined,
       });
       setSuccess(true);
+
+      if (photoFile) {
+        try {
+          await uploadBusinessAvatar(business.id, photoFile);
+        } catch {
+          setPhotoUploadWarning('Photo upload failed, you can add it from your dashboard');
+        }
+      }
+
       setTimeout(() => onSuccess(business, email.trim()), 1200);
     } catch (err) {
       setOtpError(err.message || 'Invalid or expired code, please try again');
@@ -405,13 +436,51 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
           </div>
         )}
 
-        {/* ── Step 4 — Email OTP verification ────────────────────── */}
+        {/* ── Step 4 — Upload profile photo ───────────────────────── */}
         {step === 4 && (
+          <div>
+            <button className="flex items-center gap-1 text-sabi-muted text-sm mb-5 hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={() => setStep(3)}>
+              <ChevronLeft size={14} /> Back
+            </button>
+
+            <h1 className="font-serif text-3xl font-medium text-white mb-1">Add your profile photo</h1>
+            <p className="text-sabi-muted text-sm mb-6">Help clients recognise you. A real photo builds trust and gets more bookings.</p>
+
+            <div className="flex flex-col items-center gap-3 py-4">
+              <label className="relative w-[120px] h-[120px] rounded-full overflow-hidden bg-sabi-dark border-2 border-sabi-border flex items-center justify-center cursor-pointer hover:border-sabi-green transition-colors flex-shrink-0">
+                {photoPreview
+                  ? <img src={photoPreview} alt="Profile preview" className="w-full h-full object-cover" />
+                  : <Camera size={36} strokeWidth={1.25} className="text-sabi-muted" />
+                }
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+              </label>
+              <p className="text-sm">
+                {photoFile
+                  ? <span className="flex items-center gap-1 text-sabi-green font-semibold"><Check size={13} /> Photo selected</span>
+                  : <span className="text-sabi-muted">Tap to upload a photo</span>
+                }
+              </p>
+            </div>
+
+            {photoError && (
+              <div className="flex items-center justify-center gap-2 text-red-400 text-sm mb-4">
+                <AlertCircle size={13} />{photoError}
+              </div>
+            )}
+
+            <button className="btn-gold w-full justify-center py-3 disabled:opacity-60 disabled:cursor-not-allowed" onClick={nextFromStep4} disabled={!photoFile}>
+              Continue
+            </button>
+          </div>
+        )}
+
+        {/* ── Step 5 — Email OTP verification ────────────────────── */}
+        {step === 5 && (
           <div>
             {!success && (
               <button
                 className="flex items-center gap-1 text-sabi-muted text-sm mb-5 hover:text-white transition-colors bg-transparent border-0 cursor-pointer"
-                onClick={() => { setStep(3); setOtpCode(''); setOtpError(''); }}
+                onClick={() => { setStep(4); setOtpCode(''); setOtpError(''); }}
               >
                 <ChevronLeft size={14} /> Back
               </button>
@@ -427,6 +496,11 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
                   <Check size={28} strokeWidth={2} className="text-sabi-green" />
                 </div>
                 <p className="text-sabi-muted text-sm">Setting up your dashboard…</p>
+                {photoUploadWarning && (
+                  <p className="flex items-center gap-1.5 text-sabi-gold text-xs">
+                    <AlertCircle size={12} />{photoUploadWarning}
+                  </p>
+                )}
               </div>
             ) : (
               <>

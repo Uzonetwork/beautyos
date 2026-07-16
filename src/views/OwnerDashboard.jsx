@@ -5,6 +5,7 @@ import {
   Settings, Eye, EyeOff,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { uploadBusinessAvatar } from '../lib/auth';
 import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
 import SabiLogo from '../components/SabiLogo';
@@ -268,15 +269,15 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     setAvatarError('');
     if (!file.type.startsWith('image/')) { setAvatarError('Only image files are allowed'); return; }
     setAvatarUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `${businessId}/avatar.${ext}`;
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { cacheControl: '3600', upsert: true });
-    if (uploadError) { setAvatarError('Upload failed. Please try again.'); setAvatarUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-    await supabase.from('businesses').update({ avatar_url: publicUrl }).eq('id', businessId);
-    track('avatar_uploaded', { business_id: businessId });
-    setAvatarUrl(publicUrl);
-    setAvatarUploading(false);
+    try {
+      const publicUrl = await uploadBusinessAvatar(businessId, file);
+      track('avatar_uploaded', { business_id: businessId });
+      setAvatarUrl(publicUrl);
+    } catch {
+      setAvatarError('Upload failed. Please try again.');
+    } finally {
+      setAvatarUploading(false);
+    }
   }
 
   async function saveSettings() {

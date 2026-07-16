@@ -151,6 +151,22 @@ export async function createBusiness(businessData) {
 }
 
 /**
+ * uploadBusinessAvatar — uploads a profile photo to the "avatars" storage
+ * bucket and updates the businesses.avatar_url column. Shared by the signup
+ * flow and OwnerDashboard so both write through the same bucket/path/column.
+ */
+export async function uploadBusinessAvatar(businessId, file) {
+  const ext = file.name.split('.').pop();
+  const path = `${businessId}/avatar.${ext}`;
+  const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { cacheControl: '3600', upsert: true });
+  if (uploadError) throw uploadError;
+  const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+  const { error: updateError } = await supabase.from('businesses').update({ avatar_url: publicUrl }).eq('id', businessId);
+  if (updateError) throw updateError;
+  return publicUrl;
+}
+
+/**
  * signIn — authenticates an existing business owner.
  */
 export async function signIn(email, password) {

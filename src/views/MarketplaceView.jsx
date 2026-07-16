@@ -62,7 +62,7 @@ export default function MarketplaceView({ onBack }) {
     try {
       const { data, error: err } = await supabase
         .from('businesses')
-        .select('id, name, business_type, owner_name, tagline, city, state, created_at')
+        .select('id, name, business_type, owner_name, tagline, city, state, created_at, avatar_url')
         .order('created_at', { ascending: false })
         .limit(200);
       if (err) throw err;
@@ -239,12 +239,20 @@ function BusinessCard({ business, bio, svcList, avgRating, reviewCount, onBook }
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-3">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg"
-            style={{ background: theme.primary, color: theme.btnText }}
-          >
-            {initial}
-          </div>
+          {business.avatar_url ? (
+            <img
+              src={business.avatar_url}
+              alt={business.name}
+              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg"
+              style={{ background: theme.primary, color: theme.btnText }}
+            >
+              {initial}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm leading-tight truncate text-slate-900">{business.name}</p>
             {business.owner_name && <p className="text-xs mt-0.5 truncate text-slate-500">{business.owner_name}</p>}
