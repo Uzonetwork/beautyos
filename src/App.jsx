@@ -41,6 +41,19 @@ const VIEW_TO_HASH = {
   marketplace:   '/marketplace',
 };
 
+// Maps view names → document titles (views with dynamic titles, e.g. public
+// booking pages, set document.title themselves and are omitted here)
+const VIEW_TO_TITLE = {
+  landing:     'Sabi — Booking Pages for Nigerian Professionals',
+  marketplace: 'Find a Professional — Sabi Marketplace',
+  login:       'Log in — Sabi',
+  signup:      'Get Started — Sabi',
+  terms:       'Terms of Service — Sabi',
+  privacy:     'Privacy Policy — Sabi',
+  dashboard:   'Dashboard — Sabi',
+  admin:       'Admin — Sabi',
+};
+
 function PageLoader() {
   return (
     <div className="min-h-screen bg-sabi-dark flex items-center justify-center">
@@ -64,6 +77,13 @@ export default function App() {
     if (view !== 'loading') {
       track('page_viewed', { view });
     }
+  }, [view]);
+
+  // ── document.title per view — public/public-own set their own title once
+  // the business loads (see PublicView), so they're intentionally omitted.
+  useEffect(() => {
+    const title = VIEW_TO_TITLE[view];
+    if (title) document.title = title;
   }, [view]);
 
   // ── Navigate and sync URL hash ──────────────────────────────────────────────

@@ -12,6 +12,7 @@
       ],
       "destination": "/api/og"
     },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/:slug", "destination": "/index.html" }
   ]
 }

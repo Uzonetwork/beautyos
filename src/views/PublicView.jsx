@@ -231,6 +231,16 @@ function firstName(fullName) {
   return fullName?.trim().split(/\s+/)[0] ?? 'Your artist';
 }
 
+function setMetaDescription(content) {
+  let tag = document.querySelector('meta[name="description"]');
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('name', 'description');
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
+
 function ownerTitle(type, customType) {
   if (type === 'other_professional') return customType?.trim() || 'Professional';
   return OWNER_TITLES[type] ?? 'Beauty Professional';
@@ -366,7 +376,7 @@ export default function PublicView({
       setBusiness(null); setServices([]); setGallery([]);
       setServicesLoading(true); setGalleryLoading(true); setLoadingBiz(true);
 
-      const cols = 'id,name,owner_name,tagline,business_type,user_id,avatar_url,whatsapp,custom_business_type,subscription_status,plan_expires_at,city,state,slug';
+      const cols = 'id,name,owner_name,tagline,business_type,user_id,avatar_url,whatsapp,custom_business_type,subscription_status,plan_expires_at,city,state,slug,avg_rating,rating_count';
       const bizQuery = propBusinessId
         ? supabase.from('businesses').select(cols).eq('id', propBusinessId).single()
         : supabase.from('businesses').select(cols).limit(1).single();
@@ -375,7 +385,12 @@ export default function PublicView({
       setLoadingBiz(false);
       if (!biz) { setServicesLoading(false); setGalleryLoading(false); return; }
       setBusiness(biz);
-      document.title = `${biz.name.toUpperCase()} | Sabi`;
+      document.title = `${biz.name} — Book on Sabi`;
+      const bizOwnerTitle = ownerTitle(biz.business_type, biz.custom_business_type);
+      const bizLocation = [biz.city, biz.state].filter(Boolean).join(', ');
+      setMetaDescription(
+        `Book with ${biz.name}${bizLocation ? ` in ${bizLocation}` : ''} — ${bizOwnerTitle.toLowerCase()} on Sabi. Fast, easy online booking.`
+      );
 
       const [svcRes, galRes] = await Promise.all([
         supabase.from('services').select('id,name,price,category')
@@ -390,8 +405,47 @@ export default function PublicView({
       setGalleryLoading(false);
     }
     loadAll();
-    return () => { document.title = 'Sabi'; };
+    return () => {
+      document.title = 'Sabi — Booking Pages for Nigerian Professionals';
+      setMetaDescription(
+        'Get your own booking page, client dashboard, and earnings tracker. Sabi helps Nigerian professionals look professional and get booked. Nail techs, photographers, tailors, DJs and more.'
+      );
+    };
   }, [propBusinessId]);
+
+  // ── LocalBusiness JSON-LD structured data ───────────────────────────────────
+  useEffect(() => {
+    if (!business?.slug) return;
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      name: business.name,
+      image: business.avatar_url || undefined,
+      url: `https://sabipro.ng/${business.slug}`,
+      telephone: business.whatsapp || undefined,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: business.city || undefined,
+        addressRegion: business.state || undefined,
+        addressCountry: 'NG',
+      },
+      ...(business.rating_count > 0 ? {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: business.avg_rating,
+          reviewCount: business.rating_count,
+        },
+      } : {}),
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+
+    return () => { document.head.removeChild(script); };
+  }, [business]);
 
   function handleChange(field) {
     return (e) => {
