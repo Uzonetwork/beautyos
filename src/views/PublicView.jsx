@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  User,
   Image as ImageIcon,
   CheckCircle,
   AlertCircle,
@@ -22,6 +21,8 @@ import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
 import { isSubscriptionActive } from '../lib/payments';
 import { StarPicker } from '../components/StarRating';
+import Monogram from '../components/public/Monogram';
+import SectionHeader from '../components/public/SectionHeader';
 
 // ── Static content maps ───────────────────────────────────────────────────────
 
@@ -1038,15 +1039,7 @@ export default function PublicView({
       <section className="py-20 px-5 md:px-8 bg-white">
         <div className="max-w-5xl mx-auto">
 
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3"
-              style={{ color: theme.primary }}>Why us</p>
-            <h2 className="font-serif font-medium leading-tight text-slate-900"
-              style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
-              Why Choose {business?.name}?
-            </h2>
-          </div>
+          <SectionHeader eyebrow="Why us" title={`Why Choose ${business?.name}?`} color={theme.primary} />
 
           {/* 3-column grid */}
           <div className="grid sm:grid-cols-3 gap-5">
@@ -1076,18 +1069,12 @@ export default function PublicView({
       <section id="services-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA]" ref={bookingRef}>
         <div className="max-w-5xl mx-auto">
 
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3"
-              style={{ color: theme.primary }}>What we offer</p>
-            <h2 className="font-serif font-medium mb-2 text-slate-900"
-              style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
-              Our Services
-            </h2>
-            <p className="text-sm text-slate-500">
-              {SERVICE_SUBTITLES[business?.business_type] ?? 'Professional services, every detail attended to'}
-            </p>
-          </div>
+          <SectionHeader
+            eyebrow="What we offer"
+            title="Our Services"
+            subtitle={SERVICE_SUBTITLES[business?.business_type] ?? 'Professional services, every detail attended to'}
+            color={theme.primary}
+          />
 
           {/* Service cards */}
           {servicesLoading ? (
@@ -1200,15 +1187,7 @@ export default function PublicView({
         <section id="gallery-section" className="py-20 px-5 md:px-8 bg-white">
           <div className="max-w-5xl mx-auto">
 
-            <div className="text-center mb-12">
-              <p className="text-xs font-bold uppercase tracking-widest mb-3"
-                style={{ color: theme.primary }}>Portfolio</p>
-              <h2 className="font-serif font-medium text-slate-900"
-                style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
-                Our Work
-              </h2>
-              <p className="text-sm mt-2 text-slate-500">A glimpse of the craft</p>
-            </div>
+            <SectionHeader eyebrow="Portfolio" title="Our Work" subtitle="A glimpse of the craft" color={theme.primary} />
 
             {galleryLoading ? (
               <div className="columns-2 md:columns-3 gap-3">
@@ -1243,17 +1222,12 @@ export default function PublicView({
       <section id="about-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA]">
         <div className="max-w-5xl mx-auto">
 
-          <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3"
-              style={{ color: theme.primary }}>About</p>
-            <h2 className="font-serif font-medium text-slate-900"
-              style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)' }}>
-              Meet {firstName(business?.owner_name)}
-            </h2>
-            <p className="text-sm mt-2 text-slate-500">
-              {MEET_SUBTITLES[business?.business_type] ?? 'The professional behind every booking'}
-            </p>
-          </div>
+          <SectionHeader
+            eyebrow="About"
+            title={`Meet ${firstName(business?.owner_name)}`}
+            subtitle={MEET_SUBTITLES[business?.business_type] ?? 'The professional behind every booking'}
+            color={theme.primary}
+          />
 
           {/* Owner profile card */}
           <div className="rounded-3xl overflow-hidden border border-slate-200/60 shadow-md grid md:grid-cols-2">
@@ -1266,9 +1240,7 @@ export default function PublicView({
                     <img src={business.avatar_url} alt={business.owner_name}
                       className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <User size={44} strokeWidth={1} className="text-slate-300" />
-                    </div>
+                    <Monogram name={business?.name} size={112} rounded="2xl" primary={theme.primary} />
                   )}
                 </div>
                 {/* Verified badge */}
@@ -1287,19 +1259,30 @@ export default function PublicView({
                 </p>
               </div>
 
-              {/* Stats row */}
-              <div className="flex gap-5">
-                {[
-                  ['200+', 'Clients'],
-                  [servicesLoading ? '—' : String(services.length), 'Services'],
-                  ['3+', 'Years'],
-                ].map(([val, lbl]) => (
-                  <div key={lbl} className="text-center">
-                    <p className="font-serif font-bold text-xl" style={{ color: theme.primary }}>{val}</p>
-                    <p className="text-xs text-slate-400">{lbl}</p>
+              {/* Stats row — only real, non-zero data; hidden entirely otherwise */}
+              {(() => {
+                const stats = [
+                  !servicesLoading && services.length > 0 && {
+                    val: String(services.length),
+                    lbl: services.length === 1 ? 'Service' : 'Services',
+                  },
+                  business?.rating_count > 0 && {
+                    val: Number(business.avg_rating).toFixed(1),
+                    lbl: `${business.rating_count} Review${business.rating_count === 1 ? '' : 's'}`,
+                  },
+                ].filter(Boolean);
+                if (stats.length === 0) return null;
+                return (
+                  <div className="flex gap-5">
+                    {stats.map(({ val, lbl }) => (
+                      <div key={lbl} className="text-center">
+                        <p className="font-serif font-bold text-xl" style={{ color: theme.primary }}>{val}</p>
+                        <p className="text-xs text-slate-400">{lbl}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
 
             {/* Right: bio + CTA */}
@@ -1315,9 +1298,12 @@ export default function PublicView({
               <div className="flex flex-col gap-2 mt-1">
                 {[
                   { icon: <CheckCircle size={14} />, text: 'Verified & professional' },
-                  { icon: <Star size={14} />, text: '4.9 average client rating' },
+                  business?.rating_count > 0 && {
+                    icon: <Star size={14} />,
+                    text: `${Number(business.avg_rating).toFixed(1)} average client rating`,
+                  },
                   { icon: <Clock size={14} />, text: 'On-time, every appointment' },
-                ].map(({ icon, text }, i) => (
+                ].filter(Boolean).map(({ icon, text }, i) => (
                   <div key={i} className="flex items-center gap-2.5">
                     <span style={{ color: theme.primary }}>{icon}</span>
                     <span className="text-sm font-medium text-slate-500">{text}</span>
