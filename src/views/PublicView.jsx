@@ -1286,7 +1286,7 @@ export default function PublicView({
                 <a href={`https://wa.me/${formatNigerianWhatsApp(business.whatsapp)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-500 no-underline transition-all hover:border-slate-300 hover:text-slate-700 bg-white self-start">
-                  💬 Message on WhatsApp
+                  <MessageCircle size={15} /> Message on WhatsApp
                 </a>
               )}
             </div>
@@ -1427,6 +1427,17 @@ export default function PublicView({
                 style={{ background: theme.btnBg, color: theme.btnText }}>
                 Book Appointment
               </button>
+
+              {/* WhatsApp contact */}
+              {business?.whatsapp && (
+                <a
+                  href={`https://wa.me/${formatNigerianWhatsApp(business.whatsapp)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={() => setNavDrawerOpen(false)}
+                  className="mt-3 w-full py-4 rounded-xl font-bold text-sm border border-white/15 text-white no-underline flex items-center justify-center gap-2 hover:border-white/30 transition-colors">
+                  <MessageCircle size={16} /> Message on WhatsApp
+                </a>
+              )}
             </div>
 
             {/* Footer */}
