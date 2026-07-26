@@ -27,26 +27,30 @@ export default async function handler(req, res) {
 
   const entries = [
     urlEntry(`${SITE_URL}/`, '1.0'),
-    urlEntry(`${SITE_URL}/#/marketplace`, '0.9'),
-    urlEntry(`${SITE_URL}/#/terms`, '0.3'),
-    urlEntry(`${SITE_URL}/#/privacy`, '0.3'),
   ];
+
+  console.log('[sitemap] VITE_SUPABASE_URL set:', !!supabaseUrl);
+  console.log('[sitemap] VITE_SUPABASE_ANON_KEY set:', !!supabaseAnonKey);
 
   if (supabaseUrl && supabaseAnonKey) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { data: businesses } = await supabase
+    const { data: businesses, error } = await supabase
       .from('businesses')
-      .select('slug, updated_at')
+      .select('slug')
       .eq('subscription_status', 'active')
       .gt('plan_expires_at', new Date().toISOString())
       .not('slug', 'is', null);
 
-    for (const biz of businesses || []) {
-      const lastmod = biz.updated_at
-        ? new Date(biz.updated_at).toISOString().split('T')[0]
-        : undefined;
-      entries.push(urlEntry(`${SITE_URL}/${biz.slug}`, '0.8', lastmod));
+    if (error) {
+      console.error('[sitemap] supabase query error:', JSON.stringify(error));
     }
+    console.log('[sitemap] businesses returned:', businesses?.length ?? 0);
+
+    for (const biz of businesses || []) {
+      entries.push(urlEntry(`${SITE_URL}/${biz.slug}`, '0.8'));
+    }
+  } else {
+    console.error('[sitemap] missing env vars — returning static sitemap only');
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
