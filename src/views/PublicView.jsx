@@ -58,6 +58,7 @@ import { isSubscriptionActive } from '../lib/payments';
 import { StarPicker } from '../components/StarRating';
 import Monogram from '../components/public/Monogram';
 import SectionHeader from '../components/public/SectionHeader';
+import ServiceCard from '../components/public/ServiceCard';
 
 // ── Static content maps ───────────────────────────────────────────────────────
 
@@ -1131,81 +1132,24 @@ export default function PublicView({
             <div className="flex flex-col gap-4">
               {services.map(svc => {
                 const isSelected = form.service_name === svc.name;
-                const SvcIcon = getSvcIcon(svc.category, svc.name);
                 return (
-                  <div key={svc.id}
-                    className="rounded-2xl border transition-all duration-200 overflow-hidden bg-white"
-                    style={{
-                      borderColor: isSelected ? theme.primary : N.border,
-                      boxShadow:   isSelected
-                        ? `0 0 0 1px ${theme.primary}, 0 2px 8px rgba(0,0,0,0.06)`
-                        : '0 1px 3px rgba(0,0,0,0.05)',
-                    }}>
-                    <div className="flex items-center gap-4 p-5">
-
-                      {/* Icon block */}
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: isSelected ? `${theme.primary}22` : `${theme.primary}10` }}>
-                        <SvcIcon size={20} style={{ color: theme.primary }} />
-                      </div>
-
-                      {/* Info block */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm leading-tight text-slate-900">
-                          {svc.name}
-                        </p>
-                        {svc.category && (
-                          <p className="text-xs mt-0.5 capitalize font-medium text-slate-400">
-                            {svc.category}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Price + Select */}
-                      <div className="flex items-center gap-4 flex-shrink-0">
-                        <span className="font-bold text-base" style={{ color: theme.primary }}>
-                          ₦{svc.price.toLocaleString()}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleServiceCard(svc);
-                            if (!isSelected) {
-                              setTimeout(() => {
-                                document.getElementById('booking-cta-section')
-                                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                              }, 100);
-                            }
-                          }}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border-0 cursor-pointer transition-all active:scale-95"
-                          style={{
-                            background: isSelected ? theme.btnBg : `${theme.primary}14`,
-                            color:      isSelected ? theme.btnText : theme.primary,
-                          }}>
-                          {isSelected ? (
-                            <><CheckCircle size={13} /> Selected</>
-                          ) : (
-                            'Select'
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Expanded booking prompt when selected */}
-                    {isSelected && (
-                      <div className="border-t border-slate-200 px-5 py-3 flex items-center justify-between">
-                        <p className="text-xs font-medium text-slate-400">
-                          Ready to book? Choose your date and time.
-                        </p>
-                        <button
-                          onClick={() => setDrawerOpen(true)}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold border-0 cursor-pointer"
-                          style={{ background: theme.btnBg, color: theme.btnText }}>
-                          Continue Booking →
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <ServiceCard
+                    key={svc.id}
+                    svc={svc}
+                    isSelected={isSelected}
+                    Icon={getSvcIcon(svc.category, svc.name)}
+                    theme={theme}
+                    onSelect={() => {
+                      handleServiceCard(svc);
+                      if (!isSelected) {
+                        setTimeout(() => {
+                          document.getElementById('booking-cta-section')
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                      }
+                    }}
+                    onContinueBooking={() => setDrawerOpen(true)}
+                  />
                 );
               })}
             </div>
