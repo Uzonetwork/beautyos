@@ -856,8 +856,8 @@ export default function PublicView({
                 : 'Confirm Booking Request'
               }
             </button>
-            <p className="text-xs text-center text-slate-400 mt-2">
-              🔒 Your details are secure. Confirmation via WhatsApp.
+            <p className="flex items-center justify-center gap-1 text-xs text-center text-slate-400 mt-2">
+              <Lock size={11} /> Your details are secure. Confirmation via WhatsApp.
             </p>
           </div>
         </form>
