@@ -21,6 +21,7 @@ import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
 import { isSubscriptionActive } from '../lib/payments';
+import { StarPicker } from '../components/StarRating';
 
 // ── Static content maps ───────────────────────────────────────────────────────
 
@@ -355,6 +356,16 @@ export default function PublicView({
   const [fieldErrors, setFieldErrors] = useState({});
   const [whatsappUrl, setWhatsappUrl] = useState(null);
 
+  // ── Rating prompt (?rate={booking_id}) ──────────────────────────────────────
+  const [ratingBookingId,  setRatingBookingId]  = useState(() =>
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('rate') : null
+  );
+  const [ratingValue,      setRatingValue]      = useState(0);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratingSubmitted,  setRatingSubmitted]  = useState(false);
+  const [ratingAlready,    setRatingAlready]    = useState(false);
+  const [ratingError,      setRatingError]      = useState('');
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessionUserId(session?.user?.id ?? null);
@@ -511,6 +522,40 @@ export default function PublicView({
   }
 
   function handleBannerDismiss() { setBannerVisible(false); onWelcomeDismiss?.(); }
+
+  function closeRatingPrompt() {
+    setRatingBookingId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('rate');
+    history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  async function handleRatingSubmit() {
+    if (!ratingValue || !business?.id || !ratingBookingId) return;
+    setRatingSubmitting(true);
+    setRatingError('');
+
+    const { error } = await supabase.from('ratings').insert({
+      business_id: business.id,
+      booking_id:  ratingBookingId,
+      stars:       ratingValue,
+    });
+
+    if (error) {
+      setRatingSubmitting(false);
+      if (error.code === '23505') {
+        setRatingAlready(true);
+      } else {
+        setRatingError('Something went wrong. Please try again.');
+      }
+      return;
+    }
+
+    await supabase.rpc('update_business_rating', { biz_id: business.id });
+    track('rating_submitted', { business_id: business.id, booking_id: ratingBookingId, stars: ratingValue });
+    setRatingSubmitting(false);
+    setRatingSubmitted(true);
+  }
 
   const bookingLink = typeof window !== 'undefined'
     ? business?.slug
@@ -1445,6 +1490,75 @@ export default function PublicView({
             <p className="text-center text-xs text-white/30 py-5 flex-shrink-0">
               Powered by Sabi
             </p>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          RATING PROMPT (?rate={booking_id})
+      ══════════════════════════════════════════════════════════ */}
+      {ratingBookingId && business && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm" onClick={closeRatingPrompt} />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center px-5 pointer-events-none">
+            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 pointer-events-auto">
+              <button onClick={closeRatingPrompt}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer border border-slate-200 bg-slate-50 text-slate-400">
+                <X size={16} />
+              </button>
+
+              {ratingSubmitted ? (
+                <div className="flex flex-col items-center text-center gap-4 py-4">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                    style={{ background: '#F5C84222', border: '2px solid #F5C842' }}>
+                    <CheckCircle size={32} style={{ color: '#F5C842' }} strokeWidth={1.5} />
+                  </div>
+                  <h3 className="font-serif text-xl font-medium text-slate-900">Thank you!</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Your rating has been submitted.
+                  </p>
+                  <button onClick={closeRatingPrompt}
+                    className="mt-1 px-6 py-3 rounded-xl font-bold text-sm border-0 cursor-pointer"
+                    style={{ background: theme.btnBg, color: theme.btnText }}>
+                    Done
+                  </button>
+                </div>
+              ) : ratingAlready ? (
+                <div className="flex flex-col items-center text-center gap-4 py-4">
+                  <CheckCircle size={40} style={{ color: theme.primary }} />
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    You&apos;ve already rated this visit — thank you!
+                  </p>
+                  <button onClick={closeRatingPrompt}
+                    className="mt-1 px-6 py-3 rounded-xl font-bold text-sm border-0 cursor-pointer"
+                    style={{ background: theme.btnBg, color: theme.btnText }}>
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center text-center gap-5 py-2">
+                  <h3 className="font-serif text-xl font-medium text-slate-900">
+                    How was your experience with {business?.name}?
+                  </h3>
+                  <StarPicker value={ratingValue} onChange={setRatingValue} />
+                  {ratingError && (
+                    <span className="flex items-center gap-1 text-red-400 text-xs">
+                      <AlertCircle size={12} />{ratingError}
+                    </span>
+                  )}
+                  <button
+                    disabled={!ratingValue || ratingSubmitting}
+                    onClick={handleRatingSubmit}
+                    className="w-full py-3.5 rounded-xl font-bold text-sm border-0 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    style={{ background: theme.btnBg, color: theme.btnText }}>
+                    {ratingSubmitting
+                      ? <><Loader2 size={16} className="pv-spin" /> Submitting…</>
+                      : 'Submit Rating'
+                    }
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

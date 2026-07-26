@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
   LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2, ChevronDown,
-  Settings, Eye, EyeOff,
+  Settings, Eye, EyeOff, Star,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadBusinessAvatar } from '../lib/auth';
@@ -92,6 +92,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const [subStatus,      setSubStatus]      = useState('inactive');
   const [subExpiresAt,   setSubExpiresAt]   = useState(null);
   const [bizLoaded,      setBizLoaded]      = useState(false);
+  const [bizSlug,        setBizSlug]        = useState('');
   const [ownerEmail,     setOwnerEmail]     = useState('');
   const [renewalLoading, setRenewalLoading] = useState(false);
   const [showEarningsHistory, setShowEarningsHistory] = useState(false);
@@ -160,7 +161,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         supabase.from('services').select('*').eq('business_id', businessId).order('category').order('name'),
         supabase.from('clients').select('*').eq('business_id', businessId).order('visit_count', { ascending: false }),
         supabase.from('gallery').select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
-        supabase.from('businesses').select('avatar_url, business_type, name, owner_name, tagline, whatsapp, pin, subscription_status, plan_expires_at').eq('id', businessId).single(),
+        supabase.from('businesses').select('avatar_url, business_type, name, owner_name, tagline, whatsapp, pin, subscription_status, plan_expires_at, slug').eq('id', businessId).single(),
       ]);
       setBookings(bRes.data || []);       setBookingsLoading(false);
       setServices(sRes.data || []);       setServicesLoading(false);
@@ -177,6 +178,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         setSettings({ name: biz.name ?? '', owner_name: biz.owner_name ?? '', tagline: biz.tagline ?? '', whatsapp: biz.whatsapp ?? '', pin: biz.pin ?? '' });
         setSubStatus(biz.subscription_status ?? 'inactive');
         setSubExpiresAt(biz.plan_expires_at ?? null);
+        setBizSlug(biz.slug ?? '');
         setBizLoaded(true);
       }
     }
@@ -423,7 +425,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
               </div>
               {bookingsLoading ? <SkeletonList count={2} /> : todayBookings.length === 0
                 ? <EmptyState icon={<Calendar size={28} strokeWidth={1} />} text="No appointments today" />
-                : <div className="flex flex-col gap-3">{todayBookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} fmtDate={fmtDate} />)}</div>
+                : <div className="flex flex-col gap-3">{todayBookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} fmtDate={fmtDate} bizSlug={bizSlug} />)}</div>
               }
             </div>
 
@@ -435,7 +437,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
               </div>
               {bookingsLoading ? <SkeletonList count={4} /> : bookings.length === 0
                 ? <EmptyState icon={<Calendar size={28} strokeWidth={1} />} text="No bookings yet" />
-                : <div className="flex flex-col gap-3">{bookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} fmtDate={fmtDate} />)}</div>
+                : <div className="flex flex-col gap-3">{bookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} fmtDate={fmtDate} bizSlug={bizSlug} />)}</div>
               }
             </div>
           </div>
@@ -746,8 +748,18 @@ const STATUS_STYLES = {
   cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
-function BookingCard({ booking, onStatus, onDelete, fmtDate }) {
+function BookingCard({ booking, onStatus, onDelete, fmtDate, bizSlug }) {
   const { id, client_name, client_phone, service_name, price, date, time, ampm, status, notes } = booking;
+  const [ratingCopied, setRatingCopied] = useState(false);
+
+  function copyRatingLink() {
+    if (!bizSlug) return;
+    const link = `${window.location.origin}/${bizSlug}?rate=${id}`;
+    navigator.clipboard.writeText(link);
+    setRatingCopied(true);
+    setTimeout(() => setRatingCopied(false), 2000);
+  }
+
   return (
     <div className={`bg-sabi-card border rounded-xl p-4 ${status === 'confirmed' ? 'border-sabi-green/20' : status === 'cancelled' ? 'border-red-500/10' : 'border-sabi-border'}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -779,6 +791,14 @@ function BookingCard({ booking, onStatus, onDelete, fmtDate }) {
         {status === 'cancelled' && (
           <button className="text-sabi-muted text-xs font-semibold px-3 py-1.5 rounded-lg border border-sabi-border bg-transparent cursor-pointer hover:text-white transition-colors" onClick={() => onStatus(id, 'pending')}>
             Restore
+          </button>
+        )}
+        {status === 'confirmed' && bizSlug && (
+          <button
+            className="flex items-center gap-1 bg-sabi-gold/10 text-sabi-gold text-xs font-bold px-3 py-1.5 rounded-lg border border-sabi-gold/20 cursor-pointer hover:bg-sabi-gold/20 transition-colors"
+            onClick={copyRatingLink}
+            aria-label="Copy rating request link">
+            {ratingCopied ? <><Check size={11} /> Copied!</> : <><Star size={11} /> Request rating</>}
           </button>
         )}
         <button className="flex items-center gap-1 bg-red-500/5 text-red-400/70 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-500/10 cursor-pointer hover:bg-red-500/15 transition-colors ml-auto" onClick={() => onDelete(id)}>
