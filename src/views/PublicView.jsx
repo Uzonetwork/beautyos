@@ -15,6 +15,41 @@ import {
   Copy,
   Check,
   Menu,
+  Sparkles,
+  Sparkle,
+  Eye,
+  Leaf,
+  HeartPulse,
+  Droplet,
+  Scissors,
+  Zap,
+  Brush,
+  Flower2,
+  Shirt,
+  Ruler,
+  Camera,
+  Wrench,
+  Phone,
+  BookOpen,
+  GraduationCap,
+  Target,
+  Laptop,
+  Dumbbell,
+  Salad,
+  TrendingUp,
+  PartyPopper,
+  MessageCircle,
+  ChefHat,
+  Utensils,
+  Clapperboard,
+  Smartphone,
+  Rocket,
+  Headphones,
+  Music2,
+  Handshake,
+  Calendar,
+  CircleCheck,
+  Lock,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
@@ -84,81 +119,81 @@ const HERO_SUBS = {
 
 const WHY_CARDS = {
   nail_studio: [
-    { icon: '💅', title: 'Premium Products', desc: 'Professional-grade gels and polishes for long-lasting, beautiful results every time.' },
-    { icon: '🎨', title: 'Custom Nail Art', desc: 'From minimalist designs to intricate nail art — every set is unique to your style.' },
-    { icon: '📅', title: 'Easy Online Booking', desc: 'Book your appointment in under 2 minutes, any time, from any device.' },
+    { icon: Sparkles, title: 'Premium Products', desc: 'Professional-grade gels and polishes for long-lasting, beautiful results every time.' },
+    { icon: Brush, title: 'Custom Nail Art', desc: 'From minimalist designs to intricate nail art — every set is unique to your style.' },
+    { icon: Calendar, title: 'Easy Online Booking', desc: 'Book your appointment in under 2 minutes, any time, from any device.' },
   ],
   lash_studio: [
-    { icon: '✨', title: 'Certified Technique', desc: 'Trained in the latest lash extension and lift methods for safe, stunning results.' },
-    { icon: '👁️', title: 'Custom Lash Mapping', desc: 'Every set mapped to complement your unique eye shape and personal aesthetic.' },
-    { icon: '🕐', title: 'Flexible Slots', desc: 'Morning, afternoon, and weekend slots available to fit your schedule.' },
+    { icon: Sparkles, title: 'Certified Technique', desc: 'Trained in the latest lash extension and lift methods for safe, stunning results.' },
+    { icon: Eye, title: 'Custom Lash Mapping', desc: 'Every set mapped to complement your unique eye shape and personal aesthetic.' },
+    { icon: Clock, title: 'Flexible Slots', desc: 'Morning, afternoon, and weekend slots available to fit your schedule.' },
   ],
   spa: [
-    { icon: '🌿', title: 'Luxury Treatments', desc: 'Premium products and expert therapists committed to your total relaxation.' },
-    { icon: '🧘', title: 'Holistic Wellness', desc: 'Treatments designed to nurture mind, body, and spirit in a calm environment.' },
-    { icon: '🔒', title: 'Private & Discreet', desc: 'A peaceful sanctuary where your comfort and privacy always come first.' },
+    { icon: Leaf, title: 'Luxury Treatments', desc: 'Premium products and expert therapists committed to your total relaxation.' },
+    { icon: HeartPulse, title: 'Holistic Wellness', desc: 'Treatments designed to nurture mind, body, and spirit in a calm environment.' },
+    { icon: Lock, title: 'Private & Discreet', desc: 'A peaceful sanctuary where your comfort and privacy always come first.' },
   ],
   barbershop: [
-    { icon: '✂️', title: 'Precision Cuts', desc: 'Expert barbers trained in the latest techniques for clean fades and sharp lines.' },
-    { icon: '💈', title: 'Full Grooming', desc: 'From haircuts to beard trims and hot towel shaves — complete grooming in one place.' },
-    { icon: '⚡', title: 'On-Time, Every Time', desc: 'We respect your time with punctual, efficient appointments and no long waits.' },
+    { icon: Scissors, title: 'Precision Cuts', desc: 'Expert barbers trained in the latest techniques for clean fades and sharp lines.' },
+    { icon: Sparkles, title: 'Full Grooming', desc: 'From haircuts to beard trims and hot towel shaves — complete grooming in one place.' },
+    { icon: Zap, title: 'On-Time, Every Time', desc: 'We respect your time with punctual, efficient appointments and no long waits.' },
   ],
   mua: [
-    { icon: '💄', title: 'Pro-Grade Products', desc: 'Premium, long-lasting makeup brands trusted by professional artists worldwide.' },
-    { icon: '🌸', title: 'Every Occasion', desc: 'Bridal, editorial, glam, natural — every look crafted to your exact vision.' },
-    { icon: '📸', title: 'Camera-Ready', desc: 'Flawless application that looks stunning in person and in every photograph.' },
+    { icon: Brush, title: 'Pro-Grade Products', desc: 'Premium, long-lasting makeup brands trusted by professional artists worldwide.' },
+    { icon: Flower2, title: 'Every Occasion', desc: 'Bridal, editorial, glam, natural — every look crafted to your exact vision.' },
+    { icon: Camera, title: 'Camera-Ready', desc: 'Flawless application that looks stunning in person and in every photograph.' },
   ],
   tailor: [
-    { icon: '👗', title: 'Bespoke Craftsmanship', desc: 'Cut and sewn to your exact measurements for a flawless, custom-fit every time.' },
-    { icon: '🧵', title: 'Premium Fabrics', desc: 'Quality Ankara, lace, velvet and imported fabrics for every style and budget.' },
-    { icon: '⏱️', title: 'On-Time Delivery', desc: 'We respect your deadlines — your outfit will be ready when promised.' },
+    { icon: Shirt, title: 'Bespoke Craftsmanship', desc: 'Cut and sewn to your exact measurements for a flawless, custom-fit every time.' },
+    { icon: Ruler, title: 'Premium Fabrics', desc: 'Quality Ankara, lace, velvet and imported fabrics for every style and budget.' },
+    { icon: Clock, title: 'On-Time Delivery', desc: 'We respect your deadlines — your outfit will be ready when promised.' },
   ],
   photography: [
-    { icon: '📸', title: 'Pro Equipment', desc: 'Full-frame cameras, premium lenses, and professional lighting for stunning shots.' },
-    { icon: '🖼️', title: 'Expert Editing', desc: 'Every image professionally edited to look its absolute best inside and out.' },
-    { icon: '💾', title: 'Fast Turnaround', desc: 'Receive your full gallery in high resolution within the agreed timeline.' },
+    { icon: Camera, title: 'Pro Equipment', desc: 'Full-frame cameras, premium lenses, and professional lighting for stunning shots.' },
+    { icon: ImageIcon, title: 'Expert Editing', desc: 'Every image professionally edited to look its absolute best inside and out.' },
+    { icon: Zap, title: 'Fast Turnaround', desc: 'Receive your full gallery in high resolution within the agreed timeline.' },
   ],
   home_services: [
-    { icon: '🔧', title: 'Skilled Tradespeople', desc: 'Experienced professionals for plumbing, electrical, AC, and all home repairs.' },
-    { icon: '✅', title: 'Quality Guaranteed', desc: 'All work is performed to a professional standard with post-service checks.' },
-    { icon: '📞', title: 'Responsive Support', desc: 'Quick response times and clear communication from booking to completion.' },
+    { icon: Wrench, title: 'Skilled Tradespeople', desc: 'Experienced professionals for plumbing, electrical, AC, and all home repairs.' },
+    { icon: CircleCheck, title: 'Quality Guaranteed', desc: 'All work is performed to a professional standard with post-service checks.' },
+    { icon: Phone, title: 'Responsive Support', desc: 'Quick response times and clear communication from booking to completion.' },
   ],
   tutor: [
-    { icon: '📚', title: 'Personalised Lessons', desc: 'Curriculum tailored to each student\'s learning style, pace, and objectives.' },
-    { icon: '🎯', title: 'Proven Results', desc: 'A track record of helping students improve grades and pass key examinations.' },
-    { icon: '💻', title: 'Flexible Delivery', desc: 'In-person and online sessions to fit your schedule and location.' },
+    { icon: BookOpen, title: 'Personalised Lessons', desc: 'Curriculum tailored to each student\'s learning style, pace, and objectives.' },
+    { icon: Target, title: 'Proven Results', desc: 'A track record of helping students improve grades and pass key examinations.' },
+    { icon: Laptop, title: 'Flexible Delivery', desc: 'In-person and online sessions to fit your schedule and location.' },
   ],
   fitness: [
-    { icon: '💪', title: 'Expert Coaching', desc: 'Certified fitness professionals creating programs that deliver real results.' },
-    { icon: '🥗', title: 'Holistic Approach', desc: 'Training, nutrition, and lifestyle guidance for sustainable transformation.' },
-    { icon: '📈', title: 'Progress Tracking', desc: 'Regular assessments to keep you on track toward your personal fitness goals.' },
+    { icon: Dumbbell, title: 'Expert Coaching', desc: 'Certified fitness professionals creating programs that deliver real results.' },
+    { icon: Salad, title: 'Holistic Approach', desc: 'Training, nutrition, and lifestyle guidance for sustainable transformation.' },
+    { icon: TrendingUp, title: 'Progress Tracking', desc: 'Regular assessments to keep you on track toward your personal fitness goals.' },
   ],
   events: [
-    { icon: '🎉', title: 'Full-Service Planning', desc: 'Decoration, MC, catering, music — every element handled with perfection.' },
-    { icon: '⭐', title: 'Flawless Execution', desc: 'Meticulous attention to detail ensures every event runs smoothly on schedule.' },
-    { icon: '💬', title: 'Clear Communication', desc: 'Regular updates and open dialogue from first booking to your event day.' },
+    { icon: PartyPopper, title: 'Full-Service Planning', desc: 'Decoration, MC, catering, music — every element handled with perfection.' },
+    { icon: Star, title: 'Flawless Execution', desc: 'Meticulous attention to detail ensures every event runs smoothly on schedule.' },
+    { icon: MessageCircle, title: 'Clear Communication', desc: 'Regular updates and open dialogue from first booking to your event day.' },
   ],
   private_chef: [
-    { icon: '👨‍🍳', title: 'Restaurant-Quality', desc: 'Michelin-inspired menus crafted from fresh, premium ingredients at your home.' },
-    { icon: '🍽️', title: 'Custom Menus', desc: 'Every menu designed around your preferences, dietary needs, and occasion.' },
-    { icon: '🫙', title: 'Full Cleanup Included', desc: 'We handle everything from setup to cleanup — you just enjoy the experience.' },
+    { icon: ChefHat, title: 'Restaurant-Quality', desc: 'Michelin-inspired menus crafted from fresh, premium ingredients at your home.' },
+    { icon: Utensils, title: 'Custom Menus', desc: 'Every menu designed around your preferences, dietary needs, and occasion.' },
+    { icon: CircleCheck, title: 'Full Cleanup Included', desc: 'We handle everything from setup to cleanup — you just enjoy the experience.' },
   ],
   content_creator: [
-    { icon: '🎬', title: 'High Production Quality', desc: 'Professional-grade video and photography that makes your content stand out.' },
-    { icon: '📱', title: 'Platform Expertise', desc: 'Content optimised for Instagram, TikTok, YouTube, and all major platforms.' },
-    { icon: '🚀', title: 'Quick Turnaround', desc: 'Timely delivery without compromising on quality — content when you need it.' },
+    { icon: Clapperboard, title: 'High Production Quality', desc: 'Professional-grade video and photography that makes your content stand out.' },
+    { icon: Smartphone, title: 'Platform Expertise', desc: 'Content optimised for Instagram, TikTok, YouTube, and all major platforms.' },
+    { icon: Rocket, title: 'Quick Turnaround', desc: 'Timely delivery without compromising on quality — content when you need it.' },
   ],
   dj: [
-    { icon: '🎧', title: 'Pro Equipment', desc: 'Pioneer CDJs and a premium sound system that delivers the perfect audio.' },
-    { icon: '🎵', title: 'Any Genre, Any Vibe', desc: 'Afrobeats, Amapiano, R&B, Hip-Hop, House — the perfect soundtrack for your event.' },
-    { icon: '⚡', title: 'High Energy Sets', desc: 'Reading the crowd and keeping energy levels at their peak all night long.' },
+    { icon: Headphones, title: 'Pro Equipment', desc: 'Pioneer CDJs and a premium sound system that delivers the perfect audio.' },
+    { icon: Music2, title: 'Any Genre, Any Vibe', desc: 'Afrobeats, Amapiano, R&B, Hip-Hop, House — the perfect soundtrack for your event.' },
+    { icon: Zap, title: 'High Energy Sets', desc: 'Reading the crowd and keeping energy levels at their peak all night long.' },
   ],
 };
 
 const DEFAULT_WHY_CARDS = [
-  { icon: '⭐', title: 'Premium Quality', desc: 'Committed to delivering exceptional results with every single appointment.' },
-  { icon: '🤝', title: 'Personalised Service', desc: 'Every client receives individual attention and a tailored experience.' },
-  { icon: '📅', title: 'Easy Scheduling', desc: 'Simple online booking available 24/7 from any device, in under 2 minutes.' },
+  { icon: Star, title: 'Premium Quality', desc: 'Committed to delivering exceptional results with every single appointment.' },
+  { icon: Handshake, title: 'Personalised Service', desc: 'Every client receives individual attention and a tailored experience.' },
+  { icon: Calendar, title: 'Easy Scheduling', desc: 'Simple online booking available 24/7 from any device, in under 2 minutes.' },
 ];
 
 const SERVICE_SUBTITLES = {
@@ -199,32 +234,32 @@ const MEET_SUBTITLES = {
   other:              'The professional behind every appointment',
 };
 
-// ── Category → emoji ──────────────────────────────────────────────────────────
-const CATEGORY_EMOJIS = {
-  nails:'💅', lash:'👁️', spa:'🌿', body:'💆', facial:'🧴', massage:'💆',
-  waxing:'✨', barber:'✂️', hair:'💇', beard:'🪒', makeup:'💄', bridal:'💍',
-  fashion:'👗', alterations:'🧵', portrait:'📸', events:'🎉', plumbing:'🔧',
-  electrical:'⚡', cleaning:'🧹', primary:'📚', secondary:'📖', jamb:'✏️',
-  waec:'📝', training:'💪', nutrition:'🥗', wellness:'🧘', mc:'🎤', dj:'🎧',
-  decoration:'🌸', catering:'🍽️', chef:'👨‍🍳', content:'🎬', music:'🎵',
-  other:'✨', general:'✅', photography:'📷',
+// ── Category → icon ───────────────────────────────────────────────────────────
+const CATEGORY_ICONS = {
+  nails: Sparkles, lash: Eye, spa: Leaf, body: HeartPulse, facial: Droplet, massage: HeartPulse,
+  waxing: Sparkles, barber: Scissors, hair: Scissors, beard: Scissors, makeup: Brush, bridal: Flower2,
+  fashion: Shirt, alterations: Ruler, portrait: Camera, events: PartyPopper, plumbing: Wrench,
+  electrical: Zap, cleaning: Sparkles, primary: BookOpen, secondary: BookOpen, jamb: GraduationCap,
+  waec: GraduationCap, training: Dumbbell, nutrition: Salad, wellness: Leaf, mc: MessageCircle, dj: Music2,
+  decoration: Flower2, catering: Utensils, chef: ChefHat, content: Clapperboard, music: Music2,
+  other: Sparkle, general: CircleCheck, photography: Camera,
 };
 
-function getSvcEmoji(category, name) {
+function getSvcIcon(category, name) {
   const n = (name || '').toLowerCase();
-  if (n.includes('gel') || n.includes('nail')) return '💅';
-  if (n.includes('lash')) return '👁️';
-  if (n.includes('massage')) return '💆';
-  if (n.includes('facial')) return '🧴';
-  if (n.includes('wax')) return '✨';
-  if (n.includes('cut') || n.includes('hair')) return '✂️';
-  if (n.includes('makeup') || n.includes('glam')) return '💄';
-  if (n.includes('bridal') || n.includes('wedding')) return '💍';
-  if (n.includes('photo') || n.includes('portrait')) return '📸';
-  if (n.includes('dinner') || n.includes('catering') || n.includes('food')) return '🍽️';
-  if (n.includes('train') || n.includes('workout')) return '💪';
-  if (n.includes('lesson') || n.includes('jamb') || n.includes('waec')) return '📚';
-  return CATEGORY_EMOJIS[category] || '✨';
+  if (n.includes('gel') || n.includes('nail')) return Sparkles;
+  if (n.includes('lash')) return Eye;
+  if (n.includes('massage')) return HeartPulse;
+  if (n.includes('facial')) return Droplet;
+  if (n.includes('wax')) return Sparkles;
+  if (n.includes('cut') || n.includes('hair')) return Scissors;
+  if (n.includes('makeup') || n.includes('glam')) return Brush;
+  if (n.includes('bridal') || n.includes('wedding')) return Flower2;
+  if (n.includes('photo') || n.includes('portrait')) return Camera;
+  if (n.includes('dinner') || n.includes('catering') || n.includes('food')) return Utensils;
+  if (n.includes('train') || n.includes('workout')) return Dumbbell;
+  if (n.includes('lesson') || n.includes('jamb') || n.includes('waec')) return GraduationCap;
+  return CATEGORY_ICONS[category] || Sparkle;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1041,24 +1076,28 @@ export default function PublicView({
 
           <SectionHeader eyebrow="Why us" title={`Why Choose ${business?.name}?`} color={theme.primary} />
 
-          {/* 3-column grid */}
-          <div className="grid sm:grid-cols-3 gap-5">
-            {whyCards.map((card, i) => (
-              <div key={i}
-                className="rounded-2xl p-6 bg-white border border-slate-200/60 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-                {/* Icon box */}
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"
-                  style={{ background: `${theme.primary}12` }}>
-                  {card.icon}
+          {/* Grid — 2 columns on mobile to keep each card compact, 3 from tablet up */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
+            {whyCards.map((card, i) => {
+              const Icon = card.icon;
+              return (
+                <div key={i}
+                  className="rounded-2xl p-4 sm:p-6 bg-white border border-slate-200/60 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+                  {/* Icon box */}
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4"
+                    style={{ background: `${theme.primary}12` }}>
+                    <Icon size={18} className="sm:hidden" style={{ color: theme.primary }} />
+                    <Icon size={22} className="hidden sm:block" style={{ color: theme.primary }} />
+                  </div>
+                  <h3 className="font-bold text-sm sm:text-base mb-1.5 sm:mb-2 text-slate-900">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm leading-relaxed text-slate-500">
+                    {card.desc}
+                  </p>
                 </div>
-                <h3 className="font-bold text-base mb-2 text-slate-900">
-                  {card.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-slate-500">
-                  {card.desc}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -1092,7 +1131,7 @@ export default function PublicView({
             <div className="flex flex-col gap-4">
               {services.map(svc => {
                 const isSelected = form.service_name === svc.name;
-                const emoji = getSvcEmoji(svc.category, svc.name);
+                const SvcIcon = getSvcIcon(svc.category, svc.name);
                 return (
                   <div key={svc.id}
                     className="rounded-2xl border transition-all duration-200 overflow-hidden bg-white"
@@ -1105,9 +1144,9 @@ export default function PublicView({
                     <div className="flex items-center gap-4 p-5">
 
                       {/* Icon block */}
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: isSelected ? `${theme.primary}22` : `${theme.primary}10` }}>
-                        {emoji}
+                        <SvcIcon size={20} style={{ color: theme.primary }} />
                       </div>
 
                       {/* Info block */}
