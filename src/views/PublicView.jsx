@@ -59,6 +59,7 @@ import { StarPicker } from '../components/StarRating';
 import Monogram from '../components/public/Monogram';
 import SectionHeader from '../components/public/SectionHeader';
 import ServiceCard from '../components/public/ServiceCard';
+import TrustStrip from '../components/public/TrustStrip';
 
 // ── Static content maps ───────────────────────────────────────────────────────
 
@@ -928,7 +929,7 @@ export default function PublicView({
       {/* ══════════════════════════════════════════════════════════
           2. HERO SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden min-h-[92vh] flex items-center bg-[#FAFAFA]">
+      <section className="relative overflow-hidden flex items-center bg-[#FAFAFA] md:min-h-[88vh]">
 
         {/* Very subtle dot texture */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -937,7 +938,7 @@ export default function PublicView({
             backgroundSize: '32px 32px',
           }} />
 
-        <div className="relative z-10 max-w-6xl mx-auto w-full px-5 md:px-8 py-16 md:py-24 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+        <div className="relative z-10 max-w-6xl mx-auto w-full px-5 md:px-8 py-12 md:py-24 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
 
           {/* ── Left: Headline + CTAs ── */}
           <div className="animate-slide-up">
@@ -988,18 +989,7 @@ export default function PublicView({
             </div>
 
             {/* Trust badges */}
-            <div className="flex flex-wrap gap-3">
-              {[
-                { icon: '⭐', text: '4.9 Rating' },
-                { icon: '✅', text: 'Verified Pro' },
-                { icon: '🔒', text: 'Secure Booking' },
-              ].map(({ icon, text }) => (
-                <div key={text}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-500">
-                  {icon} {text}
-                </div>
-              ))}
-            </div>
+            <TrustStrip business={business} />
           </div>
 
           {/* ── Right: Media frame ── */}
@@ -1017,10 +1007,7 @@ export default function PublicView({
                       className="w-28 h-28 rounded-full object-cover"
                       style={{ border: `3px solid ${theme.primary}` }} />
                   ) : (
-                    <div className="w-24 h-24 rounded-full flex items-center justify-center font-black text-5xl"
-                      style={{ background: `${theme.primary}18`, color: theme.primary, fontFamily: 'Georgia,serif' }}>
-                      {bizInitial}
-                    </div>
+                    <Monogram name={business?.name} size={96} rounded="full" primary={theme.primary} />
                   )}
                   <p className="font-serif text-2xl font-semibold text-center px-6 text-slate-900">
                     {business?.name}
@@ -1051,21 +1038,7 @@ export default function PublicView({
                 {servicesLoading ? '…' : `${services.length}+`}
               </p>
             </div>
-
-            {/* Floating: Clients stat card */}
-            <div className="absolute -bottom-4 right-8 rounded-2xl px-5 py-3.5 shadow-xl bg-white border border-slate-200">
-              <p className="text-xs mb-0.5 text-slate-400">Happy Clients</p>
-              <p className="font-serif text-2xl font-bold leading-none" style={{ color: theme.primary }}>
-                200+
-              </p>
-            </div>
           </div>
-        </div>
-
-        {/* Scroll hint */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 opacity-30">
-          <span className="text-xs font-medium text-slate-500">Scroll to explore</span>
-          <ChevronDown size={16} className="text-slate-400" />
         </div>
       </section>
 
