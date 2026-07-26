@@ -60,6 +60,7 @@ import Monogram from '../components/public/Monogram';
 import SectionHeader from '../components/public/SectionHeader';
 import ServiceCard from '../components/public/ServiceCard';
 import TrustStrip from '../components/public/TrustStrip';
+import StickyBookBar from '../components/public/StickyBookBar';
 
 // ── Static content maps ───────────────────────────────────────────────────────
 
@@ -371,8 +372,10 @@ export default function PublicView({
   onGoToDashboard,
 }) {
   const bookingRef = useRef(null);
-  const [drawerOpen,    setDrawerOpen]    = useState(false);
-  const [navDrawerOpen, setNavDrawerOpen] = useState(false);
+  const heroRef = useRef(null);
+  const [drawerOpen,       setDrawerOpen]       = useState(false);
+  const [navDrawerOpen,    setNavDrawerOpen]    = useState(false);
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
 
   const [bannerVisible,   setBannerVisible]   = useState(showWelcomeBanner);
   const [copied,          setCopied]          = useState(false);
@@ -409,6 +412,17 @@ export default function PublicView({
       setSessionUserId(session?.user?.id ?? null);
     });
   }, []);
+
+  // Show the sticky book bar once the hero has scrolled fully out of view
+  useEffect(() => {
+    function onScroll() {
+      const pastHero = heroRef.current ? heroRef.current.getBoundingClientRect().bottom <= 0 : false;
+      setScrolledPastHero(prev => (prev === pastHero ? prev : pastHero));
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [business]);
 
   // Lock body scroll while any drawer is open (prevents iOS background scroll)
   useEffect(() => {
@@ -929,7 +943,7 @@ export default function PublicView({
       {/* ══════════════════════════════════════════════════════════
           2. HERO SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden flex items-center bg-[#FAFAFA] md:min-h-[88vh]">
+      <section ref={heroRef} className="relative overflow-hidden flex items-center bg-[#FAFAFA] md:min-h-[88vh]">
 
         {/* Very subtle dot texture */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -1322,28 +1336,15 @@ export default function PublicView({
       </footer>
 
       {/* ══════════════════════════════════════════════════════════
-          STICKY BOOKING FOOTER (when service selected, drawer closed)
+          STICKY BOOK BAR (once scrolled past hero, drawer closed)
       ══════════════════════════════════════════════════════════ */}
-      {form.service_name && !drawerOpen && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 px-4 py-3 border-t border-slate-200 flex items-center gap-3 animate-slide-up shadow-2xl bg-white">
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate text-slate-900">
-              {form.service_name}
-            </p>
-            {form.price > 0 && (
-              <p className="text-xs font-bold" style={{ color: theme.primary }}>
-                ₦{form.price.toLocaleString()}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="px-5 py-2.5 rounded-xl font-bold text-sm border-0 cursor-pointer flex-shrink-0 active:scale-95"
-            style={{ background: theme.btnBg, color: theme.btnText }}>
-            Book Now →
-          </button>
-        </div>
-      )}
+      <StickyBookBar
+        show={scrolledPastHero && !drawerOpen}
+        serviceName={form.service_name}
+        price={form.price}
+        theme={theme}
+        onBook={() => setDrawerOpen(true)}
+      />
 
       {/* ══════════════════════════════════════════════════════════
           BOOKING DRAWER (full-height slide-up)
