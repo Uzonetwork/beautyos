@@ -1015,42 +1015,56 @@ export default function PublicView({
                 <img src={gallery[0].image_url} alt={business?.name}
                   className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 to-white">
+                <div className="w-full h-full flex flex-col items-center justify-center gap-5 bg-gradient-to-br from-slate-50 to-white">
                   {business?.avatar_url ? (
                     <img src={business.avatar_url} alt={business.owner_name}
-                      className="w-28 h-28 rounded-full object-cover"
-                      style={{ border: `3px solid ${theme.primary}` }} />
+                      className="w-40 h-40 rounded-full object-cover"
+                      style={{ border: `4px solid ${theme.primary}` }} />
                   ) : (
-                    <Monogram name={business?.name} size={96} rounded="full" primary={theme.primary} />
+                    <Monogram name={business?.name} size={160} rounded="full" primary={theme.primary} />
                   )}
-                  <p className="font-serif text-2xl font-semibold text-center px-6 text-slate-900">
+                  <p className="font-serif text-3xl font-semibold text-center px-6 text-slate-900">
                     {business?.name}
                   </p>
-                  <p className="text-sm text-center px-6 text-slate-400">
+                  <p className="text-base text-center px-6 text-slate-400">
                     {ownerTitle(business?.business_type, business?.custom_business_type)}
                   </p>
                 </div>
               )}
 
-              {/* Gradient overlay at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 h-24"
-                style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.7), transparent)' }} />
+              {/* Gradient overlay at bottom — backs the chip row below */}
+              <div className="absolute bottom-0 left-0 right-0 h-32"
+                style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.85), transparent)' }} />
+
+              {/* Chip row — fully inside the panel */}
+              <div className="absolute bottom-5 left-5 right-5 flex items-center gap-3 flex-wrap">
+                <div className="rounded-2xl px-5 py-3.5 shadow-xl bg-white border border-slate-200">
+                  <p className="text-xs mb-0.5 text-slate-400">
+                    {servicesLoading ? 'Services Available' : `${services.length} Service${services.length !== 1 ? 's' : ''} Available`}
+                  </p>
+                  <p className="font-serif text-2xl font-bold leading-none" style={{ color: theme.primary }}>
+                    {servicesLoading ? '…' : `${services.length}+`}
+                  </p>
+                </div>
+                {business?.rating_count > 0 && (
+                  <div className="rounded-2xl px-5 py-3.5 shadow-xl bg-white border border-slate-200">
+                    <p className="text-xs mb-0.5 text-slate-400">
+                      {business.rating_count} Review{business.rating_count === 1 ? '' : 's'}
+                    </p>
+                    <p className="font-serif text-2xl font-bold leading-none flex items-center gap-1"
+                      style={{ color: theme.primary }}>
+                      <Star size={16} fill={theme.primary} style={{ color: theme.primary }} />
+                      {Number(business.avg_rating).toFixed(1)}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Floating: Accepting Bookings badge */}
             <div className="absolute top-5 right-5 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold shadow-md bg-white border border-slate-200 text-slate-900">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               Accepting Bookings
-            </div>
-
-            {/* Floating: Services count card */}
-            <div className="absolute -bottom-4 -left-4 rounded-2xl px-5 py-3.5 shadow-xl bg-white border border-slate-200">
-              <p className="text-xs mb-0.5 text-slate-400">
-                {servicesLoading ? 'Services Available' : `${services.length} Service${services.length !== 1 ? 's' : ''} Available`}
-              </p>
-              <p className="font-serif text-2xl font-bold leading-none" style={{ color: theme.primary }}>
-                {servicesLoading ? '…' : `${services.length}+`}
-              </p>
             </div>
           </div>
         </div>
