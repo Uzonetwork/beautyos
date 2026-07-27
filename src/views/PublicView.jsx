@@ -249,6 +249,12 @@ const CATEGORY_ICONS = {
 };
 
 function getSvcIcon(category, name) {
+  // The tenant's own declared category is authoritative — check it first, so a
+  // service name that happens to contain e.g. "cut" or "photo" can't override
+  // a clearly different category (this previously made unrelated services show
+  // a Camera or Scissors icon just from a name coincidence).
+  if (category && CATEGORY_ICONS[category]) return CATEGORY_ICONS[category];
+
   const n = (name || '').toLowerCase();
   if (n.includes('gel') || n.includes('nail')) return Sparkles;
   if (n.includes('lash')) return Eye;
@@ -262,7 +268,7 @@ function getSvcIcon(category, name) {
   if (n.includes('dinner') || n.includes('catering') || n.includes('food')) return Utensils;
   if (n.includes('train') || n.includes('workout')) return Dumbbell;
   if (n.includes('lesson') || n.includes('jamb') || n.includes('waec')) return GraduationCap;
-  return CATEGORY_ICONS[category] || Sparkle;
+  return Sparkle;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1117,50 +1123,52 @@ export default function PublicView({
             color={theme.primary}
           />
 
-          {/* Service cards */}
-          {servicesLoading ? (
-            <div className="flex flex-col gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 rounded-2xl animate-pulse bg-slate-200" />
-              ))}
-            </div>
-          ) : services.length === 0 ? (
-            <div className="text-center py-16 rounded-2xl bg-white border border-slate-200/60">
-              <p className="text-base mb-1 font-medium text-slate-900">No services listed yet</p>
-              <p className="text-sm text-slate-400">Check back soon.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {services.map(svc => {
-                const isSelected = form.service_name === svc.name;
-                return (
-                  <ServiceCard
-                    key={svc.id}
-                    svc={svc}
-                    isSelected={isSelected}
-                    Icon={getSvcIcon(svc.category, svc.name)}
-                    theme={theme}
-                    onSelect={() => {
-                      handleServiceCard(svc);
-                      if (!isSelected) {
-                        setTimeout(() => {
-                          document.getElementById('booking-cta-section')
-                            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 100);
-                      }
-                    }}
-                    onContinueBooking={() => setDrawerOpen(true)}
-                  />
-                );
-              })}
-            </div>
-          )}
+          {/* Service cards — capped width on desktop so name/price don't stretch apart */}
+          <div className="max-w-3xl mx-auto">
+            {servicesLoading ? (
+              <div className="flex flex-col gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-20 rounded-2xl animate-pulse bg-slate-200" />
+                ))}
+              </div>
+            ) : services.length === 0 ? (
+              <div className="text-center py-16 rounded-2xl bg-white border border-slate-200/60">
+                <p className="text-base mb-1 font-medium text-slate-900">No services listed yet</p>
+                <p className="text-sm text-slate-400">Check back soon.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {services.map(svc => {
+                  const isSelected = form.service_name === svc.name;
+                  return (
+                    <ServiceCard
+                      key={svc.id}
+                      svc={svc}
+                      isSelected={isSelected}
+                      Icon={getSvcIcon(svc.category, svc.name)}
+                      theme={theme}
+                      onSelect={() => {
+                        handleServiceCard(svc);
+                        if (!isSelected) {
+                          setTimeout(() => {
+                            document.getElementById('booking-cta-section')
+                              ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }, 100);
+                        }
+                      }}
+                      onContinueBooking={() => setDrawerOpen(true)}
+                    />
+                  );
+                })}
+              </div>
+            )}
 
-          {fieldErrors.service_name && (
-            <span className="flex items-center gap-1 text-red-400 text-xs mt-3">
-              <AlertCircle size={12} />{fieldErrors.service_name}
-            </span>
-          )}
+            {fieldErrors.service_name && (
+              <span className="flex items-center gap-1 text-red-400 text-xs mt-3">
+                <AlertCircle size={12} />{fieldErrors.service_name}
+              </span>
+            )}
+          </div>
         </div>
       </section>
 
@@ -1286,7 +1294,7 @@ export default function PublicView({
                     icon: <Star size={14} />,
                     text: `${Number(business.avg_rating).toFixed(1)} average client rating`,
                   },
-                  { icon: <Clock size={14} />, text: 'On-time, every appointment' },
+                  { icon: <MessageCircle size={14} />, text: 'Instant WhatsApp confirmation' },
                 ].filter(Boolean).map(({ icon, text }, i) => (
                   <div key={i} className="flex items-center gap-2.5">
                     <span style={{ color: theme.primary }}>{icon}</span>
