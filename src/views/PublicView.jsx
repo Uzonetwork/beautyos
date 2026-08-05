@@ -55,7 +55,7 @@ import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
 import { isSubscriptionActive } from '../lib/payments';
-import { normalizeNgPhone, isValidNgPhone } from '../lib/phone';
+import { normalizeNgPhone, isPlausibleNgPhone } from '../lib/phone';
 import { StarPicker } from '../components/StarRating';
 import Monogram from '../components/public/Monogram';
 import SectionHeader from '../components/public/SectionHeader';
@@ -545,7 +545,7 @@ export default function PublicView({
     const errors = {};
     if (!form.client_name.trim())       errors.client_name  = 'Full name is required';
     if (!form.client_phone.trim())      errors.client_phone = 'Phone number is required';
-    else if (!isValidNgPhone(form.client_phone))
+    else if (!isPlausibleNgPhone(form.client_phone))
                                          errors.client_phone = 'Enter a valid Nigerian phone number (e.g. 08012345678)';
     if (!form.service_name)             errors.service_name = 'Please select a service';
     if (!form.date)                     errors.date         = 'Please choose a date';
@@ -585,7 +585,13 @@ export default function PublicView({
       const waUrl = buildWhatsAppUrl(business.whatsapp, snapshot);
       if (waUrl) {
         setWhatsappUrl(waUrl);
-        setTimeout(() => window.open(waUrl, '_blank', 'noopener,noreferrer'), 1500);
+        // No setTimeout — a deferred window.open() falls outside the
+        // click's user-activation window and gets blocked on mobile
+        // Safari/Chrome. If this still gets blocked (e.g. Safari treating
+        // the preceding await as having consumed activation), the "Tap
+        // here if WhatsApp didn't open automatically" link below is the
+        // fallback.
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
       }
     }
   }

@@ -1,3 +1,6 @@
+-- MUST be applied before this app code is deployed — PublicView now inserts
+-- starts_at on every booking submission and will 400 until this column exists.
+--
 -- Booking reminders, phase 1 (manual wa.me / sms: links — no scheduled jobs).
 --
 -- Adds two columns to bookings:

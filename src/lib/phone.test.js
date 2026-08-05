@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeNgPhone, isValidNgPhone } from './phone.js';
+import { normalizeNgPhone, isValidNgPhone, isPlausibleNgPhone } from './phone.js';
 
 test('local format with leading 0', () => {
   assert.equal(normalizeNgPhone('08031234567'), '2348031234567');
@@ -47,4 +47,19 @@ test('wrong digit count returns null', () => {
 test('isValidNgPhone mirrors normalizeNgPhone', () => {
   assert.equal(isValidNgPhone('08031234567'), true);
   assert.equal(isValidNgPhone('55'), false);
+});
+
+test('isPlausibleNgPhone accepts a non-mobile prefix that normalizeNgPhone rejects', () => {
+  // Same landline-shaped number as the "non-mobile prefix" test above —
+  // isPlausibleNgPhone only checks digit shape, not the network prefix,
+  // so a false rejection at the booking form doesn't cost a real booking.
+  assert.equal(isPlausibleNgPhone('01234567890'), true);
+  assert.equal(normalizeNgPhone('01234567890'), null);
+});
+
+test('isPlausibleNgPhone still rejects implausible shapes', () => {
+  assert.equal(isPlausibleNgPhone('55'), false);
+  assert.equal(isPlausibleNgPhone(''), false);
+  assert.equal(isPlausibleNgPhone('080312345'), false);
+  assert.equal(isPlausibleNgPhone('080312345678'), false);
 });
