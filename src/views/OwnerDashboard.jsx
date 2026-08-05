@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
   LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2, ChevronDown,
-  Settings, Eye, EyeOff, Star,
+  Settings, Eye, EyeOff, Star, MessageCircle, Smartphone, Moon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadBusinessAvatar } from '../lib/auth';
 import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
+import { normalizeNgPhone } from '../lib/phone';
+import { reminderMessage } from '../lib/reminderMessages';
 import SabiLogo from '../components/SabiLogo';
 import { openPaystackPopup } from '../components/PaystackPayment';
 import { activateSubscription, isSubscriptionActive, daysUntilExpiry } from '../lib/payments';
@@ -36,15 +38,8 @@ const CATEGORY_OPTIONS = {
   other:         [['general','General'],['other','Other']],
 };
 
-function normaliseNgPhone(raw) {
-  let d = (raw ?? '').replace(/\D/g, '');
-  if (d.startsWith('234')) d = d.slice(3);
-  if (d.startsWith('0'))   d = d.slice(1);
-  return d ? '234' + d : '';
-}
-
 function buildClientWhatsAppUrl(phone, status, booking) {
-  const number = normaliseNgPhone(phone);
+  const number = normalizeNgPhone(phone);
   if (!number) return null;
   const { client_name, service_name, date, time, ampm } = booking;
   let readableDate = date ?? '';
@@ -107,6 +102,8 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
 
   const _now = new Date();
   const today = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`;
+  const _tomorrow = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + 1);
+  const tomorrowStr = `${_tomorrow.getFullYear()}-${String(_tomorrow.getMonth()+1).padStart(2,'0')}-${String(_tomorrow.getDate()).padStart(2,'0')}`;
   const currentMonth = today.slice(0, 7);
   const confirmed = bookings.filter(b => b.status === 'confirmed');
   const todayEarnings   = confirmed.filter(b => b.date === today).reduce((s, b) => s + (b.price || 0), 0);
@@ -121,7 +118,11 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     prefix, label,
     total: confirmed.filter(b => typeof b.date === 'string' && b.date.startsWith(prefix)).reduce((s, b) => s + (b.price || 0), 0),
   }));
-  const todayBookings = [...bookings].filter(b => b.date === today).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const startsAtMs = b => b.starts_at ? new Date(b.starts_at).getTime() : Infinity;
+  const todayBookings = [...bookings].filter(b => b.date === today).sort((a, b) => startsAtMs(a) - startsAtMs(b));
+  const tomorrowBookings = [...bookings]
+    .filter(b => b.date === tomorrowStr && b.status === 'confirmed')
+    .sort((a, b) => startsAtMs(a) - startsAtMs(b));
 
   const subBizSnap = { subscription_status: subStatus, plan_expires_at: subExpiresAt };
   const subActive  = isSubscriptionActive(subBizSnap);
@@ -193,10 +194,6 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     setBookings(bs => bs.map(b => b.id === id ? { ...b, status } : b));
     const { error: bookingErr } = await supabase.from('bookings').update({ status }).eq('id', id);
     if (bookingErr) { setBookings(bs => bs.map(b => b.id === id ? { ...b, status: original } : b)); return; }
-    if (booking && (status === 'confirmed' || status === 'cancelled')) {
-      const waUrl = buildClientWhatsAppUrl(booking.client_phone, status, booking);
-      if (waUrl) setTimeout(() => window.open(waUrl, '_blank', 'noopener,noreferrer'), 1000);
-    }
     if (status !== 'confirmed' || !booking) return;
     track('booking_confirmed', { booking_id: id, business_id: businessId });
     const { client_name, client_phone, service_name, date } = booking;
@@ -218,6 +215,16 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     setBookings(bs => bs.filter(b => b.id !== id));
     const { error } = await supabase.from('bookings').delete().eq('id', id);
     if (error && backup) setBookings(bs => [backup, ...bs]);
+  }
+
+  // Optimistic — we can't confirm the client actually received it, so this
+  // only records that the owner tapped a reminder button ("Reminded").
+  async function markReminderSent(id) {
+    const previous = bookings.find(b => b.id === id)?.reminder_sent_at ?? null;
+    const nowIso = new Date().toISOString();
+    setBookings(bs => bs.map(b => b.id === id ? { ...b, reminder_sent_at: nowIso } : b));
+    const { error } = await supabase.from('bookings').update({ reminder_sent_at: nowIso }).eq('id', id);
+    if (error) setBookings(bs => bs.map(b => b.id === id ? { ...b, reminder_sent_at: previous } : b));
   }
 
   function startEdit(svc) { setEditingId(svc.id); setEditDraft({ name: svc.name, category: svc.category, price: String(svc.price) }); }
@@ -417,6 +424,18 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
               )}
             </div>
 
+            {/* Tomorrow's bookings — the primary night-before worklist */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="font-semibold text-white">Tomorrow</h3>
+                {tomorrowBookings.length > 0 && <span className="bg-sabi-gold text-sabi-dark text-xs font-black px-2 py-0.5 rounded-full">{tomorrowBookings.length}</span>}
+              </div>
+              {bookingsLoading ? <SkeletonList count={2} /> : tomorrowBookings.length === 0
+                ? <EmptyState icon={<Moon size={28} strokeWidth={1} />} text="Nothing booked for tomorrow yet — enjoy the quiet." />
+                : <div className="flex flex-col gap-3">{tomorrowBookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} onRemind={markReminderSent} fmtDate={fmtDate} bizSlug={bizSlug} businessName={settings.name} />)}</div>
+              }
+            </div>
+
             {/* Today's bookings */}
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -425,7 +444,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
               </div>
               {bookingsLoading ? <SkeletonList count={2} /> : todayBookings.length === 0
                 ? <EmptyState icon={<Calendar size={28} strokeWidth={1} />} text="No appointments today" />
-                : <div className="flex flex-col gap-3">{todayBookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} fmtDate={fmtDate} bizSlug={bizSlug} />)}</div>
+                : <div className="flex flex-col gap-3">{todayBookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} onRemind={markReminderSent} fmtDate={fmtDate} bizSlug={bizSlug} businessName={settings.name} />)}</div>
               }
             </div>
 
@@ -437,7 +456,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
               </div>
               {bookingsLoading ? <SkeletonList count={4} /> : bookings.length === 0
                 ? <EmptyState icon={<Calendar size={28} strokeWidth={1} />} text="No bookings yet" />
-                : <div className="flex flex-col gap-3">{bookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} fmtDate={fmtDate} bizSlug={bizSlug} />)}</div>
+                : <div className="flex flex-col gap-3">{bookings.map(b => <BookingCard key={b.id} booking={b} onStatus={setBookingStatus} onDelete={removeBooking} onRemind={markReminderSent} fmtDate={fmtDate} bizSlug={bizSlug} businessName={settings.name} />)}</div>
               }
             </div>
           </div>
@@ -748,9 +767,12 @@ const STATUS_STYLES = {
   cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
-function BookingCard({ booking, onStatus, onDelete, fmtDate, bizSlug }) {
-  const { id, client_name, client_phone, service_name, price, date, time, ampm, status, notes } = booking;
+function BookingCard({ booking, onStatus, onDelete, onRemind, fmtDate, bizSlug, businessName }) {
+  const { id, client_name, client_phone, service_name, price, date, time, ampm, status, notes, reminder_sent_at } = booking;
   const [ratingCopied, setRatingCopied] = useState(false);
+
+  const waPhone = normalizeNgPhone(client_phone);
+  const phoneInvalid = !waPhone;
 
   function copyRatingLink() {
     if (!bizSlug) return;
@@ -760,6 +782,28 @@ function BookingCard({ booking, onStatus, onDelete, fmtDate, bizSlug }) {
     setTimeout(() => setRatingCopied(false), 2000);
   }
 
+  function confirmBooking() {
+    const waUrl = buildClientWhatsAppUrl(client_phone, 'confirmed', booking);
+    if (waUrl) window.open(waUrl, '_blank', 'noopener,noreferrer');
+    onStatus(id, 'confirmed');
+  }
+
+  function cancelBooking() {
+    const waUrl = buildClientWhatsAppUrl(client_phone, 'cancelled', booking);
+    if (waUrl) window.open(waUrl, '_blank', 'noopener,noreferrer');
+    onStatus(id, 'cancelled');
+  }
+
+  function sendReminder(channel) {
+    if (phoneInvalid) return;
+    const message = reminderMessage(booking, { name: businessName });
+    const url = channel === 'whatsapp'
+      ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
+      : `sms:${waPhone}?body=${encodeURIComponent(message)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    onRemind(id);
+  }
+
   return (
     <div className={`bg-sabi-card border rounded-xl p-4 ${status === 'confirmed' ? 'border-sabi-green/20' : status === 'cancelled' ? 'border-red-500/10' : 'border-sabi-border'}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -767,9 +811,16 @@ function BookingCard({ booking, onStatus, onDelete, fmtDate, bizSlug }) {
           <p className="font-semibold text-white text-sm">{client_name}</p>
           <p className="text-sabi-muted text-xs">{client_phone}</p>
         </div>
-        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${STATUS_STYLES[status] ?? 'bg-sabi-border/20 text-sabi-muted border-sabi-border/30'}`}>
-          {status}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${STATUS_STYLES[status] ?? 'bg-sabi-border/20 text-sabi-muted border-sabi-border/30'}`}>
+            {status}
+          </span>
+          {reminder_sent_at && (
+            <span className="flex items-center gap-0.5 text-sabi-green text-[11px] font-semibold">
+              <Check size={10} strokeWidth={2.5} /> Reminded
+            </span>
+          )}
+        </div>
       </div>
       <p className="text-sm text-sabi-muted mb-1">
         <span className="text-white font-medium">{service_name}</span>
@@ -779,12 +830,12 @@ function BookingCard({ booking, onStatus, onDelete, fmtDate, bizSlug }) {
       {notes && <p className="text-xs text-sabi-muted bg-sabi-dark rounded px-3 py-2 mt-2 mb-2">{notes}</p>}
       <div className="flex items-center gap-2 mt-3 flex-wrap">
         {status === 'pending' && (
-          <button className="flex items-center gap-1 bg-sabi-green/15 text-sabi-green text-xs font-bold px-3 py-1.5 rounded-lg border border-sabi-green/20 cursor-pointer hover:bg-sabi-green/25 transition-colors" onClick={() => onStatus(id, 'confirmed')}>
+          <button className="flex items-center gap-1 bg-sabi-green/15 text-sabi-green text-xs font-bold px-3 py-1.5 rounded-lg border border-sabi-green/20 cursor-pointer hover:bg-sabi-green/25 transition-colors" onClick={confirmBooking}>
             <Check size={11} /> Confirm
           </button>
         )}
         {status !== 'cancelled' && (
-          <button className="flex items-center gap-1 bg-red-500/10 text-red-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-500/20 cursor-pointer hover:bg-red-500/20 transition-colors" onClick={() => onStatus(id, 'cancelled')}>
+          <button className="flex items-center gap-1 bg-red-500/10 text-red-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-500/20 cursor-pointer hover:bg-red-500/20 transition-colors" onClick={cancelBooking}>
             <X size={11} /> Cancel
           </button>
         )}
@@ -801,6 +852,22 @@ function BookingCard({ booking, onStatus, onDelete, fmtDate, bizSlug }) {
             {ratingCopied ? <><Check size={11} /> Copied!</> : <><Star size={11} /> Request rating</>}
           </button>
         )}
+        <button
+          className={`flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] text-xs font-bold px-3 py-1.5 rounded-lg border border-[#25D366]/20 transition-colors ${phoneInvalid ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-[#25D366]/20'}`}
+          disabled={phoneInvalid}
+          title={phoneInvalid ? 'This phone number looks invalid — check it before sending' : undefined}
+          onClick={() => sendReminder('whatsapp')}
+          aria-label="Remind client on WhatsApp">
+          <MessageCircle size={11} /> Remind on WhatsApp
+        </button>
+        <button
+          className={`flex items-center gap-1 bg-sabi-border/20 text-sabi-muted text-xs font-bold px-3 py-1.5 rounded-lg border border-sabi-border transition-colors ${phoneInvalid ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:text-white hover:bg-sabi-border/40'}`}
+          disabled={phoneInvalid}
+          title={phoneInvalid ? 'This phone number looks invalid — check it before sending' : undefined}
+          onClick={() => sendReminder('sms')}
+          aria-label="Remind client by SMS">
+          <Smartphone size={11} /> Remind by SMS
+        </button>
         <button className="flex items-center gap-1 bg-red-500/5 text-red-400/70 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-500/10 cursor-pointer hover:bg-red-500/15 transition-colors ml-auto" onClick={() => onDelete(id)}>
           <Trash2 size={11} /> Delete
         </button>
