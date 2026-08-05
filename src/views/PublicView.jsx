@@ -55,6 +55,7 @@ import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
 import { isSubscriptionActive } from '../lib/payments';
+import { normalizeNgPhone, isValidNgPhone } from '../lib/phone';
 import { StarPicker } from '../components/StarRating';
 import Monogram from '../components/public/Monogram';
 import SectionHeader from '../components/public/SectionHeader';
@@ -314,16 +315,23 @@ function ownerBio(type, ownerName, bizName) {
   }
 }
 
-function formatNigerianWhatsApp(raw) {
-  let digits = (raw ?? '').replace(/\D/g, '');
-  if (!digits) return '';
-  if (digits.startsWith('234')) digits = digits.slice(3);
-  if (digits.startsWith('0'))   digits = digits.slice(1);
-  return '234' + digits;
+// Africa/Lagos has no DST (fixed UTC+1 year-round), so the appointment's
+// wall-clock date/time/ampm can be turned into a correct timestamptz
+// without needing the submitting browser's own timezone.
+function buildStartsAtIso(dateStr, timeStr, ampm) {
+  const [hStr, mStr] = (timeStr ?? '').split(':');
+  let hour = parseInt(hStr, 10);
+  const minute = parseInt(mStr, 10);
+  if (!dateStr || Number.isNaN(hour) || Number.isNaN(minute)) return null;
+  if (ampm === 'PM' && hour !== 12) hour += 12;
+  if (ampm === 'AM' && hour === 12) hour = 0;
+  const hh = String(hour).padStart(2, '0');
+  const mm = String(minute).padStart(2, '0');
+  return `${dateStr}T${hh}:${mm}:00+01:00`;
 }
 
 function buildWhatsAppUrl(whatsapp, submittedForm) {
-  const number = formatNigerianWhatsApp(whatsapp);
+  const number = normalizeNgPhone(whatsapp);
   if (!number) return null;
   const { client_name, client_phone, service_name, date, time, ampm, notes } = submittedForm;
   let readableDate = date;
@@ -535,11 +543,13 @@ export default function PublicView({
 
   function validate() {
     const errors = {};
-    if (!form.client_name.trim())  errors.client_name  = 'Full name is required';
-    if (!form.client_phone.trim()) errors.client_phone = 'Phone number is required';
-    if (!form.service_name)        errors.service_name = 'Please select a service';
-    if (!form.date)                errors.date         = 'Please choose a date';
-    if (!form.time.trim())         errors.time         = 'Please select a time';
+    if (!form.client_name.trim())       errors.client_name  = 'Full name is required';
+    if (!form.client_phone.trim())      errors.client_phone = 'Phone number is required';
+    else if (!isValidNgPhone(form.client_phone))
+                                         errors.client_phone = 'Enter a valid Nigerian phone number (e.g. 08012345678)';
+    if (!form.service_name)             errors.service_name = 'Please select a service';
+    if (!form.date)                     errors.date         = 'Please choose a date';
+    if (!form.time.trim())              errors.time         = 'Please select a time';
     return errors;
   }
 
@@ -561,6 +571,7 @@ export default function PublicView({
       ampm:         form.ampm,
       status:       'pending',
       notes:        form.notes.trim(),
+      starts_at:    buildStartsAtIso(form.date, form.time.trim(), form.ampm),
     });
 
     setFormLoading(false);
@@ -649,7 +660,7 @@ export default function PublicView({
 
   // ── Subscription gate ────────────────────────────────────────────────────────
   if (business && !isOwner && !isSubscriptionActive(business)) {
-    const waNumber = formatNigerianWhatsApp(business.whatsapp);
+    const waNumber = normalizeNgPhone(business.whatsapp);
     return (
       <div className="min-h-screen bg-sabi-dark flex flex-col items-center justify-center px-6 py-10 text-center font-sans">
         <div className="w-12 h-12 bg-sabi-gold rounded-xl flex items-center justify-center font-black text-sabi-dark text-2xl mb-6"
@@ -1304,8 +1315,8 @@ export default function PublicView({
               </div>
 
               {/* WhatsApp direct link */}
-              {business?.whatsapp && (
-                <a href={`https://wa.me/${formatNigerianWhatsApp(business.whatsapp)}`}
+              {normalizeNgPhone(business?.whatsapp) && (
+                <a href={`https://wa.me/${normalizeNgPhone(business.whatsapp)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-500 no-underline transition-all hover:border-slate-300 hover:text-slate-700 bg-white self-start">
                   <MessageCircle size={15} /> Message on WhatsApp
@@ -1451,9 +1462,9 @@ export default function PublicView({
               </button>
 
               {/* WhatsApp contact */}
-              {business?.whatsapp && (
+              {normalizeNgPhone(business?.whatsapp) && (
                 <a
-                  href={`https://wa.me/${formatNigerianWhatsApp(business.whatsapp)}`}
+                  href={`https://wa.me/${normalizeNgPhone(business.whatsapp)}`}
                   target="_blank" rel="noopener noreferrer"
                   onClick={() => setNavDrawerOpen(false)}
                   className="mt-3 w-full py-4 rounded-xl font-bold text-sm border border-white/15 text-white no-underline flex items-center justify-center gap-2 hover:border-white/30 transition-colors">
