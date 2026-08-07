@@ -86,8 +86,7 @@ beautyos/
 │       ├── SignupView.jsx     # Multi-step onboarding
 │       ├── LoginView.jsx      # Owner login
 │       ├── PublicView.jsx     # Client-facing booking page
-│       ├── OwnerDashboard.jsx # Business management dashboard
-│       └── PinEntry.jsx       # Legacy PIN access
+│       └── OwnerDashboard.jsx # Business management dashboard
 ├── supabase/
 │   ├── schema.sql            # Full database schema + RLS policies
 │   └── seed_services.sql     # Default services per business type
