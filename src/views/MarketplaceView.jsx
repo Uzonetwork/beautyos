@@ -61,7 +61,7 @@ export default function MarketplaceView({ onBack }) {
     setLoading(true); setError('');
     try {
       const { data, error: err } = await supabase
-        .from('businesses')
+        .from('businesses_public')
         .select('id, name, business_type, owner_name, tagline, city, state, created_at, avatar_url')
         .order('created_at', { ascending: false })
         .limit(200);

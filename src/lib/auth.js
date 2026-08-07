@@ -18,7 +18,7 @@ async function generateSlug(name) {
   let slug = base;
   let counter = 0;
   while (true) {
-    const { data } = await supabase.from('businesses').select('id').eq('slug', slug).maybeSingle();
+    const { data } = await supabase.from('businesses_public').select('id').eq('slug', slug).maybeSingle();
     if (!data) break; // slug is free
     counter++;
     slug = `${base}-${counter}`;

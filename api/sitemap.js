@@ -35,10 +35,9 @@ export default async function handler(req, res) {
   if (supabaseUrl && supabaseAnonKey) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { data: businesses, error } = await supabase
-      .from('businesses')
+      .from('businesses_public')
       .select('slug')
-      .eq('subscription_status', 'active')
-      .gt('plan_expires_at', new Date().toISOString())
+      .eq('is_active', true)
       .not('slug', 'is', null);
 
     if (error) {

@@ -138,7 +138,7 @@ export default function App() {
       const slug = getSlugFromPathname();
       if (slug) {
         const { data: bizBySlug } = await supabase
-          .from('businesses').select('id').eq('slug', slug).maybeSingle();
+          .from('businesses_public').select('id').eq('slug', slug).maybeSingle();
         if (bizBySlug?.id) {
           setPublicBusinessId(bizBySlug.id);
           setView('public');

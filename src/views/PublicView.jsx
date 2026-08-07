@@ -54,7 +54,6 @@ import {
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
-import { isSubscriptionActive } from '../lib/payments';
 import { normalizeNgPhone, isPlausibleNgPhone } from '../lib/phone';
 import { StarPicker } from '../components/StarRating';
 import Monogram from '../components/public/Monogram';
@@ -394,6 +393,7 @@ export default function PublicView({
   const [bannerVisible,   setBannerVisible]   = useState(showWelcomeBanner);
   const [copied,          setCopied]          = useState(false);
   const [sessionUserId,   setSessionUserId]   = useState(null);
+  const [isActualOwner,   setIsActualOwner]   = useState(false);
   const [business,        setBusiness]        = useState(null);
   const [loadingBiz,      setLoadingBiz]      = useState(true);
   const [services,        setServices]        = useState([]);
@@ -427,6 +427,20 @@ export default function PublicView({
     });
   }, []);
 
+  // Owner check — only re-queries the real `businesses` table (gated by the
+  // "Owner select businesses" RLS policy: auth.uid() = user_id) when a
+  // session actually exists. An anonymous visitor has sessionUserId === null
+  // and never triggers this query. Selects 'id' rather than 'user_id' — the
+  // RLS policy alone determines whether a row comes back, so there's no
+  // need to pull user_id to the client at all.
+  useEffect(() => {
+    if (!sessionUserId || !business?.id) { setIsActualOwner(false); return; }
+    let cancelled = false;
+    supabase.from('businesses').select('id').eq('id', business.id).maybeSingle()
+      .then(({ data }) => { if (!cancelled) setIsActualOwner(!!data); });
+    return () => { cancelled = true; };
+  }, [sessionUserId, business?.id]);
+
   // Show the sticky book bar once the hero has scrolled fully out of view
   useEffect(() => {
     function onScroll() {
@@ -453,10 +467,10 @@ export default function PublicView({
       setBusiness(null); setServices([]); setGallery([]);
       setServicesLoading(true); setGalleryLoading(true); setLoadingBiz(true);
 
-      const cols = 'id,name,owner_name,tagline,business_type,user_id,avatar_url,whatsapp,custom_business_type,subscription_status,plan_expires_at,city,state,slug,avg_rating,rating_count';
+      const cols = 'id,name,owner_name,tagline,business_type,avatar_url,whatsapp,custom_business_type,city,state,slug,avg_rating,rating_count,is_active';
       const bizQuery = propBusinessId
-        ? supabase.from('businesses').select(cols).eq('id', propBusinessId).single()
-        : supabase.from('businesses').select(cols).limit(1).single();
+        ? supabase.from('businesses_public').select(cols).eq('id', propBusinessId).single()
+        : supabase.from('businesses_public').select(cols).limit(1).single();
 
       const { data: biz } = await bizQuery;
       setLoadingBiz(false);
@@ -637,7 +651,6 @@ export default function PublicView({
       ? `${window.location.origin}/${business.slug}`
       : `${window.location.origin}/?business=${propBusinessId}`
     : '';
-  const isActualOwner = !!sessionUserId && !!business && business.user_id === sessionUserId;
   const today = new Date().toISOString().split('T')[0];
 
   // ── Waiting on fetch ─────────────────────────────────────────────────────────
@@ -665,7 +678,7 @@ export default function PublicView({
   };
 
   // ── Subscription gate ────────────────────────────────────────────────────────
-  if (business && !isOwner && !isSubscriptionActive(business)) {
+  if (business && !isOwner && !business.is_active) {
     const waNumber = normalizeNgPhone(business.whatsapp);
     return (
       <div className="min-h-screen bg-sabi-dark flex flex-col items-center justify-center px-6 py-10 text-center font-sans">
