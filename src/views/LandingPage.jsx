@@ -434,7 +434,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
               Run your business<br />like a CEO
             </h1>
             <p className="text-sabi-muted text-base leading-relaxed mb-8 max-w-md">
-              Sabi gives you a booking page, earnings dashboard, and client management —
+              Danda gives you a booking page, earnings dashboard, and client management —
               everything a skilled professional needs to look and run professionally.
             </p>
             <div className="flex flex-wrap gap-3 mb-6">
@@ -527,7 +527,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
           <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">Discover Professionals</p>
           <h2 className="font-serif text-4xl font-medium text-white mb-4">Book any skill, any time</h2>
           <p className="text-sabi-muted mb-8 leading-relaxed">
-            From nail artists to private chefs — browse every professional on Sabi and book
+            From nail artists to private chefs — browse every professional on Danda and book
             directly from their page. No middleman, no calls.
           </p>
           <div className="flex flex-wrap justify-center gap-2 mb-8">
@@ -617,7 +617,7 @@ export default function LandingPage({ onGetStarted, onSeeDemo, onLogin, onMarket
         </div>
 
         <div className="max-w-5xl mx-auto border-t border-sabi-border pt-6">
-          <p className="text-xs text-sabi-muted">© 2026 Sabi. All rights reserved.</p>
+          <p className="text-xs text-sabi-muted">© 2026 Danda. All rights reserved.</p>
         </div>
       </footer>
 

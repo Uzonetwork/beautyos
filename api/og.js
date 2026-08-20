@@ -45,10 +45,10 @@ export default async function handler(req, res) {
   console.log('[og] supabase data:', JSON.stringify(biz));
   console.log('[og] supabase error:', bizError ? JSON.stringify(bizError) : null);
 
-  const name = biz?.name ?? 'Sabi';
+  const name = biz?.name ?? 'Danda';
   const tagline = biz?.tagline ?? 'Book your appointment online';
 
-  const host = req.headers.host ?? 'sabipro.ng';
+  const host = req.headers.host ?? 'danda.ng';
   const protocol = host.startsWith('localhost') ? 'http' : 'https';
   const pageUrl = `${protocol}://${host}/?business=${encodeURIComponent(businessId)}`;
 
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     <meta property="og:description" content="${escapeHtml(tagline)}" />
     <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Sabi" />
+    <meta property="og:site_name" content="Danda" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="${escapeHtml(name)}" />
     <meta name="twitter:description" content="${escapeHtml(tagline)}" />

@@ -139,7 +139,7 @@ export default function MarketplaceView({ onBack }) {
 
       {/* ── Hero ────────────────────────────────────────────── */}
       <div className="max-w-2xl mx-auto px-6 pt-14 pb-6 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">Sabi Marketplace</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-sabi-green mb-3">Danda Marketplace</p>
         <h1 className="font-serif text-4xl md:text-5xl font-medium text-white mb-3 leading-tight">Find a professional near you</h1>
         <p className="text-sabi-muted text-sm mb-7 leading-relaxed">
           Browse verified Nigerian professionals. Book directly — no DMs, no calls.
@@ -194,7 +194,7 @@ export default function MarketplaceView({ onBack }) {
                 {search || category ? 'No results found' : 'No professionals listed yet'}
               </h2>
               <p className="text-slate-500 text-sm">
-                {search || category ? 'Try a different search or category.' : 'Check back soon — more professionals are joining Sabi every week.'}
+                {search || category ? 'Try a different search or category.' : 'Check back soon — more professionals are joining Danda every week.'}
               </p>
             </div>
           ) : (

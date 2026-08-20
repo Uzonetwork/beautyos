@@ -1,4 +1,4 @@
--- BeautyOS Schema — full reference (run on a fresh database)
+-- Danda Schema — full reference (run on a fresh database)
 -- For an existing database, run supabase/migrations/add_auth.sql instead.
 
 create extension if not exists "pgcrypto";

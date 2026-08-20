@@ -3,7 +3,7 @@ export const PRICING = {
   fullPrice:       24000,     // ₦24,000 — future price shown as strikethrough
   promoPriceKobo:  1440000,   // Paystack uses kobo (14400 × 100)
   currency:        'NGN',
-  planName:        'Sabi Pro — Yearly',
+  planName:        'Danda — Yearly',
   promoLabel:      'Launch Price',
   promoNote:       'Price increases to ₦24,000/yr soon',
   features: [

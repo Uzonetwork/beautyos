@@ -27,7 +27,7 @@ function loadPaystackScript() {
  *
  * @param {object} opts
  * @param {string}   opts.email      - Payer's email address
- * @param {string}   opts.businessId - Sabi business UUID (embedded in ref + metadata)
+ * @param {string}   opts.businessId - Danda business UUID (embedded in ref + metadata)
  * @param {function} opts.onSuccess  - Called with Paystack response object on payment success
  * @param {function} [opts.onClose]  - Called when the popup is closed without payment
  */

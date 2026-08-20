@@ -323,7 +323,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
       {showRenewalBanner && (
         <div className="bg-sabi-gold px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
           <p className="text-sm font-medium text-sabi-dark">
-            ⚠️ Your Sabi plan expires in <strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong> — Renew now to keep your booking page live.
+            ⚠️ Your Danda plan expires in <strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong> — Renew now to keep your booking page live.
           </p>
           <button className="bg-sabi-dark text-sabi-gold text-xs font-bold px-4 py-1.5 rounded border-0 cursor-pointer whitespace-nowrap" onClick={handleRenew} disabled={renewalLoading}>
             {renewalLoading ? 'Opening…' : 'Renew Now'}
@@ -710,7 +710,7 @@ function SubscriptionOverlay({ mode, loading, onPay }) {
           <SabiLogo size="md" />
         </button>
         <h2 className="font-serif text-2xl font-medium text-white text-center mt-5 mb-2.5">
-          {isActivate ? 'Activate Your Sabi Account' : 'Your Sabi plan has expired'}
+          {isActivate ? 'Activate Your Danda Account' : 'Your Danda plan has expired'}
         </h2>
         <p className="text-sm text-sabi-muted text-center mb-6 leading-relaxed">
           {isActivate

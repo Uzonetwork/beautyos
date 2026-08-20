@@ -1,8 +1,8 @@
-# BeautyOS
+# Danda
 
 **The professional booking and business management platform for beauty businesses in Nigeria.**
 
-BeautyOS gives every beauty professional — nail technicians, lash artists, spa therapists, barbers, and makeup artists — a complete digital toolkit: a public booking page, earnings dashboard, client management, service menu, and gallery, all in one place.
+Danda gives every beauty professional — nail technicians, lash artists, spa therapists, barbers, and makeup artists — a complete digital toolkit: a public booking page, earnings dashboard, client management, service menu, and gallery, all in one place.
 
 ---
 

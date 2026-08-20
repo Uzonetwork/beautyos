@@ -27,7 +27,7 @@ function LegalLayout({ title, children, altPage, altLabel }) {
       </main>
 
       <footer style={S.footer}>
-        <p style={S.footerText}>© 2026 Sabi · <a href="/#/terms" style={S.footerLink}>Terms</a> · <a href="/#/privacy" style={S.footerLink}>Privacy</a></p>
+        <p style={S.footerText}>© 2026 Danda · <a href="/#/terms" style={S.footerLink}>Terms</a> · <a href="/#/privacy" style={S.footerLink}>Privacy</a></p>
       </footer>
     </div>
   );
@@ -53,13 +53,13 @@ function TermsContent() {
   return (
     <>
       <P>
-        Welcome to Sabi. By creating an account and using our platform, you agree to
+        Welcome to Danda. By creating an account and using our platform, you agree to
         these Terms of Service. Please read them carefully before signing up.
       </P>
 
-      <H2>1. About Sabi</H2>
+      <H2>1. About Danda</H2>
       <P>
-        Sabi is a booking and business management platform built for Nigerian professionals.
+        Danda is a booking and business management platform built for Nigerian professionals.
         We provide tools including a public booking page, earnings tracker, client management,
         service menu, gallery, and WhatsApp notifications — everything a skilled professional
         needs to run their business efficiently.
@@ -68,7 +68,7 @@ function TermsContent() {
       <H2>2. Eligibility</H2>
       <P>
         You must be at least 18 years old and legally authorised to operate a business in
-        Nigeria to create a Sabi account. By registering, you confirm that all information
+        Nigeria to create a Danda account. By registering, you confirm that all information
         you provide is accurate and up to date.
       </P>
 
@@ -76,28 +76,28 @@ function TermsContent() {
       <P>
         You are responsible for maintaining the confidentiality of your login credentials
         and for all activity that occurs under your account. Notify us immediately at{' '}
-        <a href="mailto:legal@sabi.ng" style={S.link}>legal@sabi.ng</a> if you suspect
+        <a href="mailto:legal@danda.ng" style={S.link}>legal@danda.ng</a> if you suspect
         unauthorised access to your account.
       </P>
 
       <H2>4. User Responsibilities</H2>
       <Ul items={[
         'Provide accurate and truthful information about your business, services, and pricing.',
-        'Conduct yourself professionally in all interactions with clients facilitated through Sabi.',
+        'Conduct yourself professionally in all interactions with clients facilitated through Danda.',
         'Keep your booking page information current and up to date.',
-        'Not use Sabi for any unlawful, fraudulent, or abusive purpose.',
-        'Not attempt to reverse-engineer, scrape, or disrupt the Sabi platform.',
+        'Not use Danda for any unlawful, fraudulent, or abusive purpose.',
+        'Not attempt to reverse-engineer, scrape, or disrupt the Danda platform.',
       ]} />
 
       <H2>5. Subscription and Payment</H2>
       <P>
-        Sabi operates on a yearly subscription model. The current launch price is ₦14,400/year,
+        Danda operates on a yearly subscription model. The current launch price is ₦14,400/year,
         payable through Paystack at the time of registration. This price is locked in for your
         first year; future renewal pricing may change and will be communicated in advance.
       </P>
       <P>
         <strong>Refund Policy:</strong> You may request a full refund within 7 days of payment
-        by contacting us at <a href="mailto:legal@sabi.ng" style={S.link}>legal@sabi.ng</a>.
+        by contacting us at <a href="mailto:legal@danda.ng" style={S.link}>legal@danda.ng</a>.
         After 7 days, subscription fees are non-refundable.
       </P>
       <P>
@@ -108,14 +108,14 @@ function TermsContent() {
 
       <H2>6. Booking Policy</H2>
       <P>
-        Sabi facilitates the booking process between professionals and their clients but is
+        Danda facilitates the booking process between professionals and their clients but is
         not a party to the service agreement between them. We are not responsible for:
       </P>
       <Ul items={[
-        'The quality or delivery of any service booked through your Sabi page.',
+        'The quality or delivery of any service booked through your Danda page.',
         'Disputes between you and your clients.',
         'No-shows, cancellations, or refunds between professionals and clients.',
-        'Any loss or damage arising from services arranged via Sabi.',
+        'Any loss or damage arising from services arranged via Danda.',
       ]} />
       <P>
         All agreements about service delivery, pricing, cancellations, and refunds are
@@ -124,7 +124,7 @@ function TermsContent() {
 
       <H2>7. Intellectual Property</H2>
       <P>
-        All content on the Sabi platform (logo, design, code, copy) is owned by Sabi.
+        All content on the Danda platform (logo, design, code, copy) is owned by Sabi Software & Systems Limited.
         You retain ownership of any content you upload (photos, business descriptions, etc.)
         but grant us a licence to display it on your public booking page and in promotional
         materials for the platform.
@@ -147,7 +147,7 @@ function TermsContent() {
 
       <H2>9. Limitation of Liability</H2>
       <P>
-        To the fullest extent permitted by applicable law, Sabi and its operators shall not
+        To the fullest extent permitted by applicable law, Sabi Software & Systems Limited and its operators shall not
         be liable for any indirect, incidental, or consequential damages arising from your
         use of the platform, including but not limited to loss of revenue, loss of data, or
         disruption to your business.
@@ -163,14 +163,14 @@ function TermsContent() {
       <H2>11. Changes to Terms</H2>
       <P>
         We may update these Terms from time to time. We will notify you of significant
-        changes via email or an in-app notice. Your continued use of Sabi after changes
+        changes via email or an in-app notice. Your continued use of Danda after changes
         take effect constitutes your acceptance of the revised Terms.
       </P>
 
       <H2>12. Contact</H2>
       <P>
         For any questions about these Terms, please contact us at{' '}
-        <a href="mailto:legal@sabi.ng" style={S.link}>legal@sabi.ng</a>.
+        <a href="mailto:legal@danda.ng" style={S.link}>legal@danda.ng</a>.
       </P>
     </>
   );
@@ -182,13 +182,13 @@ function PrivacyContent() {
   return (
     <>
       <P>
-        This Privacy Policy explains how Sabi collects, uses, and protects your personal
+        This Privacy Policy explains how Danda collects, uses, and protects your personal
         information when you use our platform. We are committed to safeguarding your privacy
         and handling your data with care.
       </P>
 
       <H2>1. Information We Collect</H2>
-      <P>We collect the following information when you use Sabi:</P>
+      <P>We collect the following information when you use Danda:</P>
       <Ul items={[
         'Account information: your full name, email address, and password.',
         'Business information: business name, type, address, city, state, and WhatsApp number.',
@@ -199,24 +199,24 @@ function PrivacyContent() {
 
       <H2>2. How We Use Your Information</H2>
       <Ul items={[
-        'To create and manage your Sabi account.',
+        'To create and manage your Danda account.',
         'To power your public booking page and display your business information to clients.',
         'To send you booking notifications and account-related emails.',
         'To process your subscription payment via Paystack.',
-        'To improve the Sabi platform based on how it is used.',
+        'To improve the Danda platform based on how it is used.',
         'To contact you about your account, renewals, or important updates.',
       ]} />
 
       <H2>3. WhatsApp Notifications</H2>
       <P>
-        When a client submits a booking through your public page, Sabi opens a WhatsApp
+        When a client submits a booking through your public page, Danda opens a WhatsApp
         message on the client's device directed to your WhatsApp number with the booking
         details. This requires no third-party WhatsApp API — it uses the standard WhatsApp
         deep link. You are responsible for the WhatsApp number you provide.
       </P>
 
       <H2>4. Third-Party Services</H2>
-      <P>Sabi uses the following third-party services to operate:</P>
+      <P>Danda uses the following third-party services to operate:</P>
       <Ul items={[
         'Supabase — our backend and database provider. Your business data and booking records are stored securely on Supabase infrastructure.',
         'Paystack — our payment processor. All payment transactions are handled by Paystack under their terms and privacy policy. We do not store your card details.',
@@ -229,10 +229,10 @@ function PrivacyContent() {
 
       <H2>5. Data Security</H2>
       <P>
-        We take the security of your data seriously. Sabi uses industry-standard encryption
+        We take the security of your data seriously. Danda uses industry-standard encryption
         (HTTPS/TLS) for all data in transit and relies on Supabase's enterprise-grade
         infrastructure for data at rest. Access to your data is restricted to you via your
-        account credentials and to authorised Sabi team members only where necessary for
+        account credentials and to authorised Danda team members only where necessary for
         operations and support.
       </P>
       <P>
@@ -259,13 +259,13 @@ function PrivacyContent() {
       ]} />
       <P>
         To exercise any of these rights, email us at{' '}
-        <a href="mailto:legal@sabi.ng" style={S.link}>legal@sabi.ng</a> with the subject
+        <a href="mailto:legal@danda.ng" style={S.link}>legal@danda.ng</a> with the subject
         line "Data Request". We will respond within 10 business days.
       </P>
 
       <H2>8. Cookies</H2>
       <P>
-        Sabi uses functional cookies and local storage to keep you logged in and remember
+        Danda uses functional cookies and local storage to keep you logged in and remember
         your session. We do not use third-party advertising cookies. Our analytics provider
         (PostHog) may use cookies for session tracking, which you can opt out of by
         contacting us.
@@ -274,14 +274,14 @@ function PrivacyContent() {
       <H2>9. Changes to This Policy</H2>
       <P>
         We may update this Privacy Policy from time to time. We will notify you of
-        significant changes via email or an in-app notice. Your continued use of Sabi
+        significant changes via email or an in-app notice. Your continued use of Danda
         after changes take effect means you accept the updated policy.
       </P>
 
       <H2>10. Contact</H2>
       <P>
         For privacy-related questions or requests, contact us at{' '}
-        <a href="mailto:legal@sabi.ng" style={S.link}>legal@sabi.ng</a>.
+        <a href="mailto:legal@danda.ng" style={S.link}>legal@danda.ng</a>.
       </P>
     </>
   );

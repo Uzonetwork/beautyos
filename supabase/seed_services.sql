@@ -1,4 +1,4 @@
--- BeautyOS — Default services reference table
+-- Danda — Default services reference table
 -- Run this once. The signUp() helper in src/lib/auth.js queries this table
 -- to seed a new business's services automatically on registration.
 --

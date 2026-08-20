@@ -45,15 +45,15 @@ ctx.fillStyle = '#0A2E1A';
 ctx.font = 'bold 110px Georgia, serif';
 ctx.textAlign = 'center';
 ctx.textBaseline = 'middle';
-ctx.fillText('S', badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 8);
+ctx.fillText('D', badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 8);
 
-// ── "Sabi" wordmark ──────────────────────────────────────────────────────────
+// ── "Danda" wordmark ─────────────────────────────────────────────────────────
 const badgeCenterY = badgeY + badgeSize / 2;
 ctx.fillStyle = '#FFFFFF';
 ctx.font = 'bold 120px Georgia, serif';
 ctx.textAlign = 'left';
 ctx.textBaseline = 'middle';
-ctx.fillText('Sabi', badgeX + badgeSize + 44, badgeCenterY + 8);
+ctx.fillText('Danda', badgeX + badgeSize + 44, badgeCenterY + 8);
 
 // ── Tagline ──────────────────────────────────────────────────────────────────
 ctx.fillStyle = '#7AAE90';
@@ -93,7 +93,7 @@ ctx.fillStyle = '#F5C842';
 ctx.font = 'bold 28px Arial, sans-serif';
 ctx.textAlign = 'right';
 ctx.textBaseline = 'top';
-ctx.fillText('sabipro.ng', WIDTH - 60, 60);
+ctx.fillText('danda.ng', WIDTH - 60, 60);
 
 // ── Write file ───────────────────────────────────────────────────────────────
 const outPath = path.join(__dirname, '..', 'public', 'og-image.png');

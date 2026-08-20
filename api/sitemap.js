@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SITE_URL = 'https://sabipro.ng';
+const SITE_URL = 'https://danda.ng';
 
 function escapeXml(str) {
   return String(str)

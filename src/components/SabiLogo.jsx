@@ -11,13 +11,13 @@ export default function SabiLogo({ light = false, size = 'md' }) {
         className={`${s.badge} flex items-center justify-center font-black text-sabi-dark bg-sabi-gold flex-shrink-0`}
         style={{ fontFamily: 'Georgia,serif' }}
       >
-        S
+        D
       </div>
       <span
         className={`${s.word} font-bold flex-shrink-0 ${light ? 'text-slate-900' : 'text-white'}`}
         style={{ fontFamily: 'Georgia,serif', letterSpacing: '0.5px' }}
       >
-        Sabi
+        Danda
       </span>
     </div>
   );

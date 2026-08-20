@@ -346,7 +346,7 @@ function buildWhatsAppUrl(whatsapp, submittedForm) {
     `Service: ${service_name}`, `Date: ${readableDate}`, `Time: ${time} ${ampm}`,
   ];
   if (notes?.trim()) lines.push(`Notes: ${notes.trim()}`);
-  lines.push('', 'Open your Sabi dashboard to confirm or cancel this booking.');
+  lines.push('', 'Open your Danda dashboard to confirm or cancel this booking.');
   return `https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
 
@@ -476,11 +476,11 @@ export default function PublicView({
       setLoadingBiz(false);
       if (!biz) { setServicesLoading(false); setGalleryLoading(false); return; }
       setBusiness(biz);
-      document.title = `${biz.name} — Book on Sabi`;
+      document.title = `${biz.name} — Book on Danda`;
       const bizOwnerTitle = ownerTitle(biz.business_type, biz.custom_business_type);
       const bizLocation = [biz.city, biz.state].filter(Boolean).join(', ');
       setMetaDescription(
-        `Book with ${biz.name}${bizLocation ? ` in ${bizLocation}` : ''} — ${bizOwnerTitle.toLowerCase()} on Sabi. Fast, easy online booking.`
+        `Book with ${biz.name}${bizLocation ? ` in ${bizLocation}` : ''} — ${bizOwnerTitle.toLowerCase()} on Danda. Fast, easy online booking.`
       );
 
       const [svcRes, galRes] = await Promise.all([
@@ -497,9 +497,9 @@ export default function PublicView({
     }
     loadAll();
     return () => {
-      document.title = 'Sabi — Booking Pages for Nigerian Professionals';
+      document.title = 'Danda — Booking Pages for Nigerian Professionals';
       setMetaDescription(
-        'Get your own booking page, client dashboard, and earnings tracker. Sabi helps Nigerian professionals look professional and get booked. Nail techs, photographers, tailors, DJs and more.'
+        'Get your own booking page, client dashboard, and earnings tracker. Danda helps Nigerian professionals look professional and get booked. Nail techs, photographers, tailors, DJs and more.'
       );
     };
   }, [propBusinessId]);
@@ -513,7 +513,7 @@ export default function PublicView({
       '@type': 'LocalBusiness',
       name: business.name,
       image: business.avatar_url || undefined,
-      url: `https://sabipro.ng/${business.slug}`,
+      url: `https://danda.ng/${business.slug}`,
       telephone: business.whatsapp || undefined,
       address: {
         '@type': 'PostalAddress',
@@ -683,7 +683,7 @@ export default function PublicView({
     return (
       <div className="min-h-screen bg-sabi-dark flex flex-col items-center justify-center px-6 py-10 text-center font-sans">
         <div className="w-12 h-12 bg-sabi-gold rounded-xl flex items-center justify-center font-black text-sabi-dark text-2xl mb-6"
-          style={{ fontFamily: 'Georgia,serif' }}>S</div>
+          style={{ fontFamily: 'Georgia,serif' }}>D</div>
         <h1 className="font-serif text-3xl font-medium text-white mb-3">{business.name}</h1>
         <p className="text-sabi-muted text-base font-medium mb-2">This business is temporarily unavailable</p>
         <p className="text-sabi-muted/70 text-sm mb-8 max-w-xs leading-relaxed">Check back soon or contact them directly.</p>
@@ -693,7 +693,7 @@ export default function PublicView({
             Contact on WhatsApp
           </a>
         )}
-        <p className="text-sabi-muted/40 text-xs mt-12">Powered by Sabi</p>
+        <p className="text-sabi-muted/40 text-xs mt-12">Powered by Danda</p>
       </div>
     );
   }
@@ -1382,7 +1382,7 @@ export default function PublicView({
           </div>
           <p className="text-xs text-slate-400">
             © 2026 {business?.name} · Powered by{' '}
-            <span className="font-semibold" style={{ color: theme.primary }}>Sabi</span>
+            <span className="font-semibold" style={{ color: theme.primary }}>Danda</span>
           </p>
         </div>
       </footer>
@@ -1494,7 +1494,7 @@ export default function PublicView({
 
             {/* Footer */}
             <p className="text-center text-xs text-white/30 py-5 flex-shrink-0">
-              Powered by Sabi
+              Powered by Danda
             </p>
           </div>
         </>

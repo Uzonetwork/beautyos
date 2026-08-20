@@ -44,14 +44,14 @@ const VIEW_TO_HASH = {
 // Maps view names → document titles (views with dynamic titles, e.g. public
 // booking pages, set document.title themselves and are omitted here)
 const VIEW_TO_TITLE = {
-  landing:     'Sabi — Booking Pages for Nigerian Professionals',
-  marketplace: 'Find a Professional — Sabi Marketplace',
-  login:       'Log in — Sabi',
-  signup:      'Get Started — Sabi',
-  terms:       'Terms of Service — Sabi',
-  privacy:     'Privacy Policy — Sabi',
-  dashboard:   'Dashboard — Sabi',
-  admin:       'Admin — Sabi',
+  landing:     'Danda — Booking Pages for Nigerian Professionals',
+  marketplace: 'Find a Professional — Danda Marketplace',
+  login:       'Log in — Danda',
+  signup:      'Get Started — Danda',
+  terms:       'Terms of Service — Danda',
+  privacy:     'Privacy Policy — Danda',
+  dashboard:   'Dashboard — Danda',
+  admin:       'Admin — Danda',
 };
 
 function PageLoader() {
