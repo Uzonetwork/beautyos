@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
   LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2, ChevronDown,
-  Settings, Eye, EyeOff, Star, MessageCircle, Smartphone, Moon,
+  Settings, Star, MessageCircle, Smartphone, Moon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadBusinessAvatar } from '../lib/auth';
@@ -91,11 +91,10 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const [ownerEmail,     setOwnerEmail]     = useState('');
   const [renewalLoading, setRenewalLoading] = useState(false);
   const [showEarningsHistory, setShowEarningsHistory] = useState(false);
-  const [settings,       setSettings]       = useState({ name: '', owner_name: '', tagline: '', whatsapp: '', pin: '' });
+  const [settings,       setSettings]       = useState({ name: '', owner_name: '', tagline: '', whatsapp: '' });
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSuccess,setSettingsSuccess]= useState(false);
   const [settingsError,  setSettingsError]  = useState('');
-  const [showPin,        setShowPin]        = useState(false);
 
   const categoryOptions = CATEGORY_OPTIONS[businessType] ?? CATEGORY_OPTIONS.other;
   const theme = getBusinessTheme(businessType);
@@ -162,7 +161,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         supabase.from('services').select('*').eq('business_id', businessId).order('category').order('name'),
         supabase.from('clients').select('*').eq('business_id', businessId).order('visit_count', { ascending: false }),
         supabase.from('gallery').select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
-        supabase.from('businesses').select('avatar_url, business_type, name, owner_name, tagline, whatsapp, pin, subscription_status, plan_expires_at, slug').eq('id', businessId).single(),
+        supabase.from('businesses').select('avatar_url, business_type, name, owner_name, tagline, whatsapp, subscription_status, plan_expires_at, slug').eq('id', businessId).single(),
       ]);
       setBookings(bRes.data || []);       setBookingsLoading(false);
       setServices(sRes.data || []);       setServicesLoading(false);
@@ -176,7 +175,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
           const firstCat = (CATEGORY_OPTIONS[biz.business_type] ?? CATEGORY_OPTIONS.other)[0][0];
           setNewSvc(s => ({ ...s, category: firstCat }));
         }
-        setSettings({ name: biz.name ?? '', owner_name: biz.owner_name ?? '', tagline: biz.tagline ?? '', whatsapp: biz.whatsapp ?? '', pin: biz.pin ?? '' });
+        setSettings({ name: biz.name ?? '', owner_name: biz.owner_name ?? '', tagline: biz.tagline ?? '', whatsapp: biz.whatsapp ?? '' });
         setSubStatus(biz.subscription_status ?? 'inactive');
         setSubExpiresAt(biz.plan_expires_at ?? null);
         setBizSlug(biz.slug ?? '');
@@ -293,7 +292,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     setSettingsError(''); setSettingsSuccess(false);
     if (!settings.name.trim()) { setSettingsError('Business name is required'); return; }
     setSettingsSaving(true);
-    const { error } = await supabase.from('businesses').update({ name: settings.name.trim(), owner_name: settings.owner_name.trim(), tagline: settings.tagline.trim(), whatsapp: settings.whatsapp.trim(), pin: settings.pin.trim() }).eq('id', businessId);
+    const { error } = await supabase.from('businesses').update({ name: settings.name.trim(), owner_name: settings.owner_name.trim(), tagline: settings.tagline.trim(), whatsapp: settings.whatsapp.trim() }).eq('id', businessId);
     setSettingsSaving(false);
     if (error) { setSettingsError('Failed to save changes. Please try again.'); }
     else { setSettingsSuccess(true); setTimeout(() => setSettingsSuccess(false), 3500); }
@@ -653,28 +652,6 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
                   <input className={`${inputCls} w-full`} value={settings[key]} placeholder={placeholder} onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))} />
                 </div>
               ))}
-
-              <div>
-                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1">Dashboard PIN
-                  <span className="ml-2 normal-case tracking-normal text-sabi-border">— Used to log into your dashboard</span>
-                </label>
-                <div className="relative">
-                  <input
-                    className={`${inputCls} w-full pr-10`}
-                    type={showPin ? 'text' : 'password'}
-                    value={settings.pin}
-                    placeholder="Enter PIN"
-                    onChange={e => setSettings(s => ({ ...s, pin: e.target.value }))}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sabi-muted hover:text-white bg-transparent border-0 cursor-pointer"
-                    onClick={() => setShowPin(v => !v)}
-                  >
-                    {showPin ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-              </div>
 
               {settingsError && <p className="text-red-400 text-sm">{settingsError}</p>}
               {settingsSuccess && (
