@@ -1,0 +1,34 @@
+-- PHASE 3 of 3 — businesses RLS lockdown. DESTRUCTIVE. Read the whole
+-- header before running this in the Supabase SQL editor.
+--
+-- This drops the blanket "Public read businesses" policy (the one that
+-- let anyone with the anon key select * from businesses) and drops the
+-- pin column outright. There is no undo short of restoring from a
+-- backup — once the policy is gone and the column is dropped, any code
+-- path still depending on either one breaks immediately in production.
+--
+-- Do NOT run this until BOTH of the following are true:
+--   1. Phase 2 (anon-facing reads switched to businesses_public) is
+--      verified live in production. Per the branch that produced this
+--      file, phases 1 and 2 were already verified before phase 3 was
+--      written.
+--   2. The OwnerDashboard.jsx fix that removes the `pin` field from the
+--      authenticated owner-settings select/update (commit ebb3027 on
+--      security/lock-businesses) is deployed to production and you've
+--      confirmed the owner dashboard loads and Settings saves correctly.
+--      Without this, every logged-in owner's dashboard breaks the
+--      moment the column is dropped, because it still does
+--      `select(..., pin, ...)` and `update({..., pin: ...})` against the
+--      base table.
+--
+-- After this runs, the only SELECT policy left on businesses is
+-- "Owner select businesses" (auth.uid() = user_id, added in phase 1 —
+-- see add_businesses_public_view.sql). Anonymous reads have no policy
+-- left to match, so they get zero rows back, same as if RLS denied them
+-- outright. All anonymous traffic must already be going through the
+-- businesses_public view by this point.
+--
+-- Verify afterwards with scripts/verify-rls.sh.
+
+drop policy "Public read businesses" on businesses;
+alter table businesses drop column if exists pin;

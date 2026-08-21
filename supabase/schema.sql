@@ -12,7 +12,6 @@ create table businesses (
   owner_name         text,
   tagline            text,
   whatsapp           text,
-  pin                text        default '1234',
   business_type      text        default 'nail_studio',
   service_categories text[]      default '{}',
   created_at         timestamp   default now()
@@ -107,14 +106,13 @@ insert into default_services (business_type, name, category, default_price) valu
 -- ─── Demo seed data ────────────────────────────────────────────────────────────
 -- user_id is null; link to a real auth user after signing up if needed.
 
-insert into businesses (id, name, owner_name, tagline, whatsapp, pin, business_type, service_categories)
+insert into businesses (id, name, owner_name, tagline, whatsapp, business_type, service_categories)
 values (
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   'CFO Nails & Lash Studio',
   'Chioma Fortunate Ohanusi',
   'Nail Technician & Lash Artist · Lagos, Nigeria',
   '2348000000000',
-  '1234',
   'nail_studio',
   '{nails,lash}'
 );
