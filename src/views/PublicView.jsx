@@ -55,6 +55,7 @@ import { supabase } from '../lib/supabase';
 import { track } from '../lib/posthog';
 import { getBusinessTheme } from '../lib/getBusinessTheme';
 import { normalizeNgPhone, isPlausibleNgPhone } from '../lib/phone';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { StarPicker } from '../components/StarRating';
 import Monogram from '../components/public/Monogram';
 import SectionHeader from '../components/public/SectionHeader';
@@ -391,7 +392,8 @@ export default function PublicView({
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
 
   const [bannerVisible,   setBannerVisible]   = useState(showWelcomeBanner);
-  const [copied,          setCopied]          = useState(false);
+  const bannerLinkRef = useRef(null);
+  const { copied: bannerCopied, copy: copyBannerLink } = useCopyToClipboard();
   const [sessionUserId,   setSessionUserId]   = useState(null);
   const [isActualOwner,   setIsActualOwner]   = useState(false);
   const [business,        setBusiness]        = useState(null);
@@ -908,32 +910,29 @@ export default function PublicView({
 
       {/* ── Welcome banner ─────────────────────────────────────── */}
       {isOwner && bannerVisible && (
-        <div className="flex items-center justify-between px-4 py-3 bg-sabi-green/20 border-b border-sabi-green/30">
+        <div className="flex flex-col gap-2 px-4 py-3 bg-sabi-green/20 border-b border-sabi-green/30 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="flex items-center gap-2 min-w-0">
             <Globe size={15} className="text-sabi-green flex-shrink-0" />
             <p className="text-sm text-white truncate">
-              <strong>Your booking page is live.</strong>{' '}
-              Share:{' '}
-              <span className="flex items-center gap-2 inline-flex">
-                <span className="text-sabi-green">{bookingLink}</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(bookingLink);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  className="bg-transparent border-0 cursor-pointer hover:opacity-80 p-0 flex-shrink-0"
-                  aria-label="Copy link"
-                  style={{ color: copied ? '#22c55e' : 'rgba(255,255,255,0.5)' }}>
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
-                </button>
-              </span>
+              <strong>Your booking page is live.</strong>
             </p>
           </div>
-          <button className="ml-3 w-6 h-6 flex items-center justify-center text-sabi-muted hover:text-white bg-transparent border-0 cursor-pointer flex-shrink-0"
-            onClick={handleBannerDismiss} aria-label="Dismiss">
-            <X size={14} />
-          </button>
+          <div className="flex items-center gap-3 min-w-0">
+            <span ref={bannerLinkRef} className="text-sabi-green text-sm truncate min-w-0">
+              {bookingLink}
+            </span>
+            <button
+              onClick={() => copyBannerLink(bookingLink, bannerLinkRef)}
+              className="bg-transparent border-0 cursor-pointer hover:opacity-80 p-0 flex-shrink-0"
+              aria-label="Copy link"
+              style={{ color: bannerCopied ? '#22c55e' : 'rgba(255,255,255,0.5)' }}>
+              {bannerCopied ? <Check size={16} /> : <Copy size={16} />}
+            </button>
+            <button className="w-6 h-6 flex items-center justify-center text-sabi-muted hover:text-white bg-transparent border-0 cursor-pointer flex-shrink-0"
+              onClick={handleBannerDismiss} aria-label="Dismiss">
+              <X size={14} />
+            </button>
+          </div>
         </div>
       )}
 

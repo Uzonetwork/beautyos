@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
   LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2, ChevronDown,
-  Settings, Star, MessageCircle, Smartphone, Moon,
+  Settings, Star, MessageCircle, Smartphone, Moon, Copy, Link2,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadBusinessAvatar } from '../lib/auth';
 import { track } from '../lib/posthog';
-import { getBusinessTheme } from '../lib/getBusinessTheme';
+import { getBusinessTheme, getOwnerBio } from '../lib/getBusinessTheme';
 import { normalizeNgPhone } from '../lib/phone';
 import { reminderMessage } from '../lib/reminderMessages';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import SabiLogo from '../components/SabiLogo';
 import { openPaystackPopup } from '../components/PaystackPayment';
 import { activateSubscription, isSubscriptionActive, daysUntilExpiry } from '../lib/payments';
@@ -54,6 +55,12 @@ function buildClientWhatsAppUrl(phone, status, booking) {
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
+function buildShareMessage(businessName, ownerName, businessType, link) {
+  const first = (ownerName || '').trim().split(/\s+/)[0];
+  const intro = first ? `Hi! I'm ${first} from ${businessName}.` : `Hi! This is ${businessName}.`;
+  return `${intro} ${getOwnerBio(businessType)} Book your appointment here: ${link}`;
+}
+
 // ── Shared input style ────────────────────────────────────────────────────────
 
 const inputCls = 'bg-sabi-dark border border-sabi-border rounded-lg px-3 py-2 text-white text-sm placeholder:text-sabi-muted outline-none focus:border-sabi-green transition-colors';
@@ -92,9 +99,13 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const [renewalLoading, setRenewalLoading] = useState(false);
   const [showEarningsHistory, setShowEarningsHistory] = useState(false);
   const [settings,       setSettings]       = useState({ name: '', owner_name: '', tagline: '', whatsapp: '' });
+  const [savedSettings,  setSavedSettings]  = useState({ name: '', owner_name: '', tagline: '', whatsapp: '' });
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSuccess,setSettingsSuccess]= useState(false);
   const [settingsError,  setSettingsError]  = useState('');
+  const settingsButtonRef = useRef(null);
+  const bookingLinkRef    = useRef(null);
+  const { copied: linkCopied, copy: copyBookingLink } = useCopyToClipboard();
 
   const categoryOptions = CATEGORY_OPTIONS[businessType] ?? CATEGORY_OPTIONS.other;
   const theme = getBusinessTheme(businessType);
@@ -122,6 +133,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const tomorrowBookings = [...bookings]
     .filter(b => b.date === tomorrowStr && b.status === 'confirmed')
     .sort((a, b) => startsAtMs(a) - startsAtMs(b));
+
+  const isSettingsDirty = Object.keys(savedSettings).some(k => settings[k] !== savedSettings[k]);
+  const bookingLink = bizSlug ? `${window.location.origin}/${bizSlug}` : '';
 
   const subBizSnap = { subscription_status: subStatus, plan_expires_at: subExpiresAt };
   const subActive  = isSubscriptionActive(subBizSnap);
@@ -175,7 +189,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
           const firstCat = (CATEGORY_OPTIONS[biz.business_type] ?? CATEGORY_OPTIONS.other)[0][0];
           setNewSvc(s => ({ ...s, category: firstCat }));
         }
-        setSettings({ name: biz.name ?? '', owner_name: biz.owner_name ?? '', tagline: biz.tagline ?? '', whatsapp: biz.whatsapp ?? '' });
+        const loadedSettings = { name: biz.name ?? '', owner_name: biz.owner_name ?? '', tagline: biz.tagline ?? '', whatsapp: biz.whatsapp ?? '' };
+        setSettings(loadedSettings);
+        setSavedSettings(loadedSettings);
         setSubStatus(biz.subscription_status ?? 'inactive');
         setSubExpiresAt(biz.plan_expires_at ?? null);
         setBizSlug(biz.slug ?? '');
@@ -292,10 +308,30 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     setSettingsError(''); setSettingsSuccess(false);
     if (!settings.name.trim()) { setSettingsError('Business name is required'); return; }
     setSettingsSaving(true);
-    const { error } = await supabase.from('businesses').update({ name: settings.name.trim(), owner_name: settings.owner_name.trim(), tagline: settings.tagline.trim(), whatsapp: settings.whatsapp.trim() }).eq('id', businessId);
+    const trimmed = { name: settings.name.trim(), owner_name: settings.owner_name.trim(), tagline: settings.tagline.trim(), whatsapp: settings.whatsapp.trim() };
+    const { error } = await supabase.from('businesses').update(trimmed).eq('id', businessId);
     setSettingsSaving(false);
     if (error) { setSettingsError('Failed to save changes. Please try again.'); }
-    else { setSettingsSuccess(true); setTimeout(() => setSettingsSuccess(false), 3500); }
+    else {
+      setSettings(trimmed);
+      setSavedSettings(trimmed);
+      setSettingsSuccess(true);
+      setTimeout(() => setSettingsSuccess(false), 3500);
+    }
+  }
+
+  // The button itself carries the confirmation (it's the one thing the
+  // user is guaranteed to be looking at right after the click); this is
+  // a belt-and-braces nudge in case the card sits partly off-screen.
+  useEffect(() => {
+    if ((settingsSuccess || settingsError) && settingsButtonRef.current) {
+      settingsButtonRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [settingsSuccess, settingsError]);
+
+  function handleLogoutClick() {
+    if (isSettingsDirty && !window.confirm('You have unsaved changes to your settings. Log out anyway?')) return;
+    onLogout();
   }
 
   function fmtDate(s) {
@@ -336,7 +372,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
           <button className="bg-transparent border-0 cursor-pointer p-0" onClick={() => { window.location.href = '/'; }}>
             <SabiLogo size="md" />
           </button>
-          <button className="flex items-center gap-1.5 text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={onLogout}>
+          <button className="flex items-center gap-1.5 text-sabi-muted text-sm hover:text-white transition-colors bg-transparent border-0 cursor-pointer" onClick={handleLogoutClick}>
             <LogOut size={15} strokeWidth={1.75} />
             Log out
           </button>
@@ -363,6 +399,41 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
         {/* ── BOOKINGS ─────────────────────────────────────────── */}
         {activeTab === 'bookings' && (
           <div className="flex flex-col gap-6">
+
+            {/* Booking link — permanent, always visible */}
+            {bookingLink && (
+              <div className="bg-sabi-card border border-sabi-border rounded-2xl p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <Link2 size={16} className="text-sabi-gold flex-shrink-0" />
+                  <p className="text-sm font-semibold text-white">Your Booking Link</p>
+                </div>
+                <p className="text-xs text-sabi-muted">Share this so clients can book you directly</p>
+                <div className="flex items-center gap-2 bg-sabi-dark border border-sabi-border rounded-lg pl-3 pr-1.5 py-1.5">
+                  <input
+                    ref={bookingLinkRef}
+                    readOnly
+                    value={bookingLink}
+                    onFocus={e => e.target.select()}
+                    className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sabi-green text-sm py-1"
+                  />
+                  <button
+                    className="flex-shrink-0 flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-lg border-0 cursor-pointer bg-sabi-gold text-sabi-dark hover:opacity-90 transition-opacity"
+                    onClick={() => copyBookingLink(bookingLink, bookingLinkRef)}
+                  >
+                    {linkCopied ? <><Check size={12} strokeWidth={2.5} /> Copied!</> : <><Copy size={12} /> Copy</>}
+                  </button>
+                </div>
+                <button
+                  className="flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-lg cursor-pointer bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-colors"
+                  onClick={() => {
+                    const message = buildShareMessage(settings.name, settings.owner_name, businessType, bookingLink);
+                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <MessageCircle size={13} /> Share on WhatsApp
+                </button>
+              </div>
+            )}
 
             {/* Profile photo card */}
             <div className="bg-sabi-card border border-sabi-border rounded-2xl p-5 flex items-center gap-4">
@@ -654,19 +725,24 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
               ))}
 
               {settingsError && <p className="text-red-400 text-sm">{settingsError}</p>}
+
+              <button
+                ref={settingsButtonRef}
+                className={`font-bold py-3 rounded-xl border-0 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transition-colors ${settingsSuccess ? 'bg-sabi-green text-white' : 'bg-sabi-gold text-sabi-dark'}`}
+                onClick={saveSettings}
+                disabled={settingsSaving || !isSettingsDirty}
+              >
+                {settingsSaving
+                  ? <><Loader2 size={14} className="od-spin" /> Saving…</>
+                  : settingsSuccess
+                    ? <><Check size={16} strokeWidth={2.5} /> Saved</>
+                    : 'Save Changes'}
+              </button>
               {settingsSuccess && (
-                <p className="flex items-center gap-1.5 text-sabi-green text-sm">
+                <p className="flex items-center gap-1.5 text-sabi-green text-sm -mt-2">
                   <Check size={13} strokeWidth={2.5} /> Changes saved successfully
                 </p>
               )}
-
-              <button
-                className="bg-sabi-gold text-sabi-dark font-bold py-3 rounded-xl border-0 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                onClick={saveSettings}
-                disabled={settingsSaving}
-              >
-                {settingsSaving ? <><Loader2 size={14} className="od-spin" /> Saving…</> : 'Save Changes'}
-              </button>
             </div>
           </div>
         )}
@@ -746,17 +822,14 @@ const STATUS_STYLES = {
 
 function BookingCard({ booking, onStatus, onDelete, onRemind, fmtDate, bizSlug, businessName }) {
   const { id, client_name, client_phone, service_name, price, date, time, ampm, status, notes, reminder_sent_at } = booking;
-  const [ratingCopied, setRatingCopied] = useState(false);
+  const { copied: ratingCopied, copy: copyRating } = useCopyToClipboard();
 
   const waPhone = normalizeNgPhone(client_phone);
   const phoneInvalid = !waPhone;
 
   function copyRatingLink() {
     if (!bizSlug) return;
-    const link = `${window.location.origin}/${bizSlug}?rate=${id}`;
-    navigator.clipboard.writeText(link);
-    setRatingCopied(true);
-    setTimeout(() => setRatingCopied(false), 2000);
+    copyRating(`${window.location.origin}/${bizSlug}?rate=${id}`);
   }
 
   function confirmBooking() {
