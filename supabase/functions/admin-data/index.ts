@@ -86,6 +86,7 @@ Deno.serve(async (req: Request) => {
       servicesRes,
       allBkgRes,
       usersRes,
+      affiliatesRes,
     ] = await Promise.all([
       DB.from('businesses').select('*', { count: 'exact', head: true }),
       DB.from('bookings').select('*', { count: 'exact', head: true }),
@@ -98,6 +99,7 @@ Deno.serve(async (req: Request) => {
       DB.from('services').select('id, name, price, business_id, businesses(name)'),
       DB.from('bookings').select('service_name, business_id'),
       DB.auth.admin.listUsers({ perPage: 1000 }),
+      DB.from('affiliates').select('*'),
     ]);
 
     // Reviews may not exist yet — catch independently
@@ -124,6 +126,7 @@ Deno.serve(async (req: Request) => {
         allBookings:     allBkgRes.data          ?? [],
         users,
         reviews,
+        affiliates:      affiliatesRes.data       ?? [],
       }),
       { headers: { ...CORS, 'Content-Type': 'application/json' } },
     );

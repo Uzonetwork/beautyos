@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { signIn, signOut, getSession } from '../lib/auth';
+import { PRICING } from '../config/pricing';
 import SabiLogo from '../components/SabiLogo';
 
 const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-data`;
@@ -75,6 +76,7 @@ export default function AdminDashboard() {
   const [ratings,        setRatings]        = useState({});
   const [recentBookings, setRecentBookings] = useState([]);
   const [topServices,    setTopServices]    = useState([]);
+  const [affiliates,     setAffiliates]     = useState([]);
   const [search,         setSearch]         = useState('');
 
   // Always show the login form on mount — never silently reuse a pre-existing
@@ -112,6 +114,7 @@ export default function AdminDashboard() {
     setBusinesses([]);
     setRecentBookings([]);
     setTopServices([]);
+    setAffiliates([]);
   }
 
   // Called from the dashboard header "Refresh" button
@@ -162,6 +165,20 @@ export default function AdminDashboard() {
       setBusinesses((data.businesses ?? []).map(b => ({ ...b, email: emailMap[b.user_id] ?? '—', booking_count: bizBkgMap[b.id] ?? 0 })));
       setRecentBookings(data.recentBookings ?? []);
       setTopServices(top10);
+
+      const referralStatsMap = {};
+      (data.businesses ?? []).forEach(b => {
+        if (!b.referred_by_affiliate_id) return;
+        const s = referralStatsMap[b.referred_by_affiliate_id] ?? (referralStatsMap[b.referred_by_affiliate_id] = { signups: 0, paidConversions: 0 });
+        s.signups += 1;
+        if (b.subscription_status === 'active' && b.plan_expires_at && new Date(b.plan_expires_at) > new Date()) {
+          s.paidConversions += 1;
+        }
+      });
+      setAffiliates((data.affiliates ?? []).map(a => {
+        const s = referralStatsMap[a.id] ?? { signups: 0, paidConversions: 0 };
+        return { ...a, signups: s.signups, paidConversions: s.paidConversions, commission: s.paidConversions * PRICING.commissionPerReferral };
+      }));
 
       if (data.reviews?.length) {
         const acc = {};
@@ -448,6 +465,37 @@ export default function AdminDashboard() {
                           <td className={`${tdCls} text-sabi-muted`}>{s.businesses?.name ?? '—'}</td>
                           <td className={`${tdCls} text-right`}>{fmtMoney(s.price)}</td>
                           <td className={`${tdCls} text-right font-black text-sabi-gold`}>{s.booking_count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            {/* Affiliates */}
+            <section className="mt-12">
+              <h2 className="font-serif text-2xl font-medium text-white flex items-center gap-3 mb-4">
+                Affiliates
+                <span className="font-sans text-xs font-bold text-sabi-gold bg-sabi-gold/12 px-2 py-0.5 rounded-full">{affiliates.length}</span>
+              </h2>
+              <div className="bg-sabi-card border border-sabi-border rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr>{['Code','Name','Phone','Signups','Paid Conversions','Commission'].map((h, i) => <th key={h} className={`${thCls} ${i >= 3 ? 'text-right' : ''}`}>{h}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                      {affiliates.length === 0 ? (
+                        <tr><td colSpan={6} className="px-4 py-12 text-center text-sabi-muted text-sm">No affiliates yet</td></tr>
+                      ) : affiliates.map(a => (
+                        <tr key={a.id} className="hover:bg-sabi-card/50 transition-colors border-b border-sabi-border/8">
+                          <td className={`${tdCls} font-medium`}>{a.code}</td>
+                          <td className={tdCls}>{a.name}{!a.active && <span className="ml-2 text-xs text-sabi-muted">(inactive)</span>}</td>
+                          <td className={`${tdCls} text-sabi-muted`}>{a.phone || '—'}</td>
+                          <td className={`${tdCls} text-right`}>{a.signups}</td>
+                          <td className={`${tdCls} text-right`}>{a.paidConversions}</td>
+                          <td className={`${tdCls} text-right font-black text-sabi-gold`}>{fmtMoney(a.commission)}</td>
                         </tr>
                       ))}
                     </tbody>

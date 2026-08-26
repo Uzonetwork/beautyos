@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Scissors, Eye, Leaf, User, Sparkles, MoreHorizontal,
   Check, AlertCircle, Loader2, ChevronLeft,
   Shirt, Camera, Home, GraduationCap, Dumbbell, PartyPopper,
   ChefHat, Video, Music2, Briefcase,
 } from 'lucide-react';
-import { signUp, verifySignupOtp, resendSignupOtp, createBusiness, uploadBusinessAvatar } from '../lib/auth';
+import { signUp, verifySignupOtp, resendSignupOtp, createBusiness, uploadBusinessAvatar, checkReferralCode } from '../lib/auth';
 import SabiLogo from '../components/SabiLogo';
+
+const REFERRAL_STORAGE_KEY = 'danda_referral_code';
 
 // ── Business type config ───────────────────────────────────────────────────────
 
@@ -55,6 +57,11 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
   const [city,         setCity]         = useState('');
   const [state,        setState]        = useState('');
   const [step1Errors,  setStep1Errors]  = useState({});
+  const [referralCode, setReferralCode] = useState(() => {
+    try { return localStorage.getItem(REFERRAL_STORAGE_KEY) || ''; } catch { return ''; }
+  });
+  const [referralStatus, setReferralStatus] = useState(''); // '' | checking | valid | invalid
+  const [referralName,   setReferralName]   = useState('');
 
   // Step 2
   const [businessType,       setBusinessType]       = useState(null);
@@ -81,6 +88,25 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
   const [otpLoading,     setOtpLoading]     = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [success,        setSuccess]        = useState(false);
+
+  // Debounced referral-code check — never blocks signup either way, just
+  // gives the person a chance to catch a typo while an agent is standing
+  // next to them, since attribution can't be corrected after the fact.
+  useEffect(() => {
+    const code = referralCode.trim();
+    // Nothing to show when the field is empty — the JSX below also gates
+    // on referralCode.trim(), so a stale result left over from before the
+    // field was cleared never renders. That lets this early exit skip
+    // setState entirely rather than synchronously resetting it here.
+    if (!code) return;
+    const handle = setTimeout(async () => {
+      setReferralStatus('checking');
+      const name = await checkReferralCode(code);
+      if (name) { setReferralStatus('valid'); setReferralName(name); }
+      else      { setReferralStatus('invalid'); setReferralName(''); }
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [referralCode]);
 
   // ── Validation ───────────────────────────────────────────────────────────────
 
@@ -168,8 +194,10 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
         city:               city.trim()    || null,
         state:              state          || null,
         customBusinessType: businessType === 'other_professional' ? customBusinessType.trim() : undefined,
+        referralCode,
       });
       setSuccess(true);
+      try { localStorage.removeItem(REFERRAL_STORAGE_KEY); } catch { /* ignore storage errors */ }
 
       if (photoFile) {
         try {
@@ -279,6 +307,18 @@ export default function SignupView({ onBack, onSuccess, onLogin }) {
                     {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Referral Code <span className="text-sabi-border normal-case tracking-normal">(optional — if an agent gave you one)</span></label>
+                <input className={inputCls(false)} placeholder="e.g. KELV9X" value={referralCode} onChange={e => setReferralCode(e.target.value)} />
+                {referralCode.trim() && referralStatus === 'checking' && <span className="text-xs text-sabi-muted mt-1 block">Checking code…</span>}
+                {referralCode.trim() && referralStatus === 'valid' && (
+                  <span className="flex items-center gap-1 text-xs text-sabi-green mt-1"><Check size={11} /> Referred by {referralName}</span>
+                )}
+                {referralCode.trim() && referralStatus === 'invalid' && (
+                  <span className="flex items-center gap-1 text-xs text-sabi-gold mt-1"><AlertCircle size={11} /> Code not recognized — double-check with your agent</span>
+                )}
               </div>
 
               <button className="btn-gold w-full justify-center py-3 mt-2" onClick={nextFromStep1}>

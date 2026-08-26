@@ -87,10 +87,30 @@ export async function resendSignupOtp(email) {
 }
 
 /**
+ * checkReferralCode — validates a referral code via the is_valid_referral_code
+ * RPC (security definer, callable by anon — see add_referral_attribution.sql).
+ * Returns the affiliate's first name if the code matches an active
+ * affiliate, otherwise null. Never throws — a failed check should read as
+ * "not recognized," not as an app error.
+ */
+export async function checkReferralCode(code) {
+  const trimmed = (code ?? '').trim();
+  if (!trimmed) return null;
+  const { data, error } = await supabase.rpc('is_valid_referral_code', { p_code: trimmed });
+  if (error || !data?.length || !data[0].valid) return null;
+  return data[0].affiliate_first_name ?? null;
+}
+
+/**
  * createBusiness — inserts a businesses row and seeds default services.
  *
  * Requires an active session (i.e. verifySignupOtp() must have succeeded first).
  * The RLS policy "Owner insert businesses" enforces: auth.uid() = user_id.
+ *
+ * referralCode, if present, is written as-is into referral_code_entered —
+ * resolving it into referred_by_affiliate_id happens server-side in the
+ * businesses_resolve_referral trigger, so this function never queries the
+ * (RLS-locked, no anon/authenticated policy) affiliates table itself.
  */
 export async function createBusiness(businessData) {
   if (!businessData?.businessType) {
@@ -121,6 +141,7 @@ export async function createBusiness(businessData) {
       service_categories:   categories,
       custom_business_type: businessData.customBusinessType ?? null,
       slug,
+      referral_code_entered: businessData.referralCode?.trim() || null,
     })
     .select()
     .single();

@@ -124,6 +124,16 @@ export default function App() {
       const params   = new URLSearchParams(window.location.search);
       const bizParam = params.get('business');
 
+      // Referral capture — stashed in localStorage so it survives even a
+      // full page reload between landing on this link and finishing
+      // signup (the signup flow itself never navigates away, since email
+      // confirmation is a typed code, not a link — see SignupView.jsx —
+      // but this costs nothing and removes that fragility entirely).
+      const refParam = params.get('ref');
+      if (refParam) {
+        try { localStorage.setItem('danda_referral_code', refParam); } catch { /* ignore storage errors */ }
+      }
+
       if (bizParam === 'demo' || bizParam === 'cfo-nails') {
         setView('demo');
         return;

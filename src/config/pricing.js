@@ -6,6 +6,7 @@ export const PRICING = {
   planName:        'Danda — Yearly',
   promoLabel:      'Launch Price',
   promoNote:       'Price increases to ₦24,000/yr soon',
+  commissionPerReferral: 4400, // paid to an affiliate per referred business that converts to a paid subscription
   features: [
     'Public booking page with your branding',
     'Unlimited bookings',
