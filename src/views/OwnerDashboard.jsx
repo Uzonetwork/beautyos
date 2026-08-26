@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Calendar, Scissors, Users, Image as ImageIcon,
   LogOut, Plus, Pencil, Trash2, Check, X, Upload, User, Loader2, ChevronDown,
-  Settings, Star, MessageCircle, Smartphone, Moon, Copy, Link2,
+  Settings, Star, MessageCircle, Smartphone, Moon, Copy, Link2, AlertCircle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadBusinessAvatar } from '../lib/auth';
@@ -13,8 +13,9 @@ import { reminderMessage } from '../lib/reminderMessages';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import SabiLogo from '../components/SabiLogo';
 import { openPaystackPopup } from '../components/PaystackPayment';
-import { activateSubscription, isSubscriptionActive, daysUntilExpiry } from '../lib/payments';
+import { isSubscriptionActive, daysUntilExpiry } from '../lib/payments';
 import { PRICING } from '../config/pricing';
+import { SUPPORT_WHATSAPP } from '../config/support';
 
 const TABS = [
   { id: 'bookings',  label: 'Bookings',  Icon: Calendar  },
@@ -61,6 +62,10 @@ function buildShareMessage(businessName, ownerName, businessType, link) {
   return `${intro} ${getOwnerBio(businessType)} Book your appointment here: ${link}`;
 }
 
+function buildActivationSupportMessage(businessName, reference) {
+  return `Hi, my Danda payment for ${businessName || 'my business'} didn't activate automatically. Reference: ${reference}. Please help me activate my account.`;
+}
+
 // ── Shared input style ────────────────────────────────────────────────────────
 
 const inputCls = 'bg-sabi-dark border border-sabi-border rounded-lg px-3 py-2 text-white text-sm placeholder:text-sabi-muted outline-none focus:border-sabi-green transition-colors';
@@ -97,6 +102,9 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const [bizSlug,        setBizSlug]        = useState('');
   const [ownerEmail,     setOwnerEmail]     = useState('');
   const [renewalLoading, setRenewalLoading] = useState(false);
+  const [activationError,setActivationError]= useState(null); // { reference } | null
+  const activationRefRef = useRef(null);
+  const { copied: activationRefCopied, copy: copyActivationRef } = useCopyToClipboard();
   const [showEarningsHistory, setShowEarningsHistory] = useState(false);
   const [settings,       setSettings]       = useState({ name: '', owner_name: '', tagline: '', whatsapp: '' });
   const [savedSettings,  setSavedSettings]  = useState({ name: '', owner_name: '', tagline: '', whatsapp: '' });
@@ -150,19 +158,37 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     });
   }, []);
 
-  async function handleRenew() {
+  // Verifies a Paystack reference server-side and activates the
+  // subscription — called both right after a successful Paystack popup and
+  // from the failure banner's "Try Again" button, so it must be safe to
+  // call more than once with the same reference (the Edge Function treats
+  // a reference already attached to this business as a no-op success).
+  async function verifyPayment(reference) {
+    setActivationError(null);
+    setRenewalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { businessId, reference },
+      });
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Verification failed');
+      }
+      const { data: biz } = await supabase.from('businesses').select('subscription_status, plan_expires_at').eq('id', businessId).single();
+      if (biz) { setSubStatus(biz.subscription_status ?? 'inactive'); setSubExpiresAt(biz.plan_expires_at ?? null); }
+    } catch (err) {
+      console.error('[OwnerDashboard] payment verification failed:', err);
+      setActivationError({ reference });
+    } finally {
+      setRenewalLoading(false);
+    }
+  }
+
+  function handleRenew() {
     if (!businessId || !ownerEmail) return;
     setRenewalLoading(true);
     openPaystackPopup({
       email: ownerEmail, businessId,
-      onSuccess: async (response) => {
-        try {
-          await activateSubscription(businessId, response.reference);
-          const { data: biz } = await supabase.from('businesses').select('subscription_status, plan_expires_at').eq('id', businessId).single();
-          if (biz) { setSubStatus(biz.subscription_status ?? 'inactive'); setSubExpiresAt(biz.plan_expires_at ?? null); }
-        } catch (err) { console.error('[OwnerDashboard] renewal activation failed:', err); }
-        finally { setRenewalLoading(false); }
-      },
+      onSuccess: (response) => verifyPayment(response.reference),
       onClose: () => setRenewalLoading(false),
     });
   }
@@ -348,6 +374,59 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
 
   return (
     <div className="min-h-screen bg-sabi-dark font-sans">
+
+      {/* ── Payment verification failure — fixed, above the expired-plan
+          overlay too, since this can happen during first activation. ── */}
+      {activationError && (
+        <div className="fixed top-0 left-0 right-0 z-[400] bg-red-500/95 border-b border-red-400 px-4 py-3 sm:px-5">
+          <div className="max-w-2xl mx-auto flex flex-col gap-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle size={16} className="text-white flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white font-bold">Payment received, activation failed</p>
+                <p className="text-xs text-white/90 mt-1 leading-relaxed">
+                  Paystack confirmed your payment, but we couldn&rsquo;t activate your account automatically.
+                  Message us on WhatsApp with the reference below and we&rsquo;ll activate it manually — you have not been charged again.
+                </p>
+              </div>
+              <button onClick={() => setActivationError(null)} className="text-white/70 hover:text-white bg-transparent border-0 cursor-pointer flex-shrink-0" aria-label="Dismiss">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="flex items-center gap-2 bg-sabi-dark border border-white/20 rounded-lg pl-3 pr-1.5 py-1.5 max-w-sm">
+              <input
+                ref={activationRefRef}
+                readOnly
+                value={activationError.reference}
+                onFocus={e => e.target.select()}
+                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-white text-xs font-mono py-1"
+              />
+              <button
+                className="flex-shrink-0 flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-md border-0 cursor-pointer bg-white/15 text-white hover:bg-white/25 transition-colors"
+                onClick={() => copyActivationRef(activationError.reference, activationRefRef)}
+              >
+                {activationRefCopied ? <Check size={11} /> : <Copy size={11} />}
+              </button>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <a
+                href={`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(buildActivationSupportMessage(settings.name, activationError.reference))}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-[#25D366] text-white text-xs font-bold px-4 py-2 rounded-lg no-underline"
+              >
+                <MessageCircle size={12} /> Message Support on WhatsApp
+              </a>
+              <button
+                className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg border border-white/30 text-white bg-transparent cursor-pointer disabled:opacity-60 transition-opacity"
+                onClick={() => verifyPayment(activationError.reference)}
+                disabled={renewalLoading}
+              >
+                {renewalLoading && <Loader2 size={12} className="od-spin" />} Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Subscription overlay (activate for new / renew for expired) ── */}
       {showExpiredOverlay && (

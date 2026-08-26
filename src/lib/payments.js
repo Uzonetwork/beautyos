@@ -1,26 +1,10 @@
-import { supabase } from './supabase';
-
-/**
- * Activates (or renews) a business subscription after successful Paystack payment.
- * Sets status to 'active', stamps plan_expires_at to exactly 1 year from now,
- * and records the Paystack reference.
- */
-export async function activateSubscription(businessId, reference) {
-  const expiresAt = new Date();
-  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-
-  const { error } = await supabase
-    .from('businesses')
-    .update({
-      subscription_status: 'active',
-      plan_expires_at:     expiresAt.toISOString(),
-      paystack_reference:  reference,
-    })
-    .eq('id', businessId);
-
-  if (error) throw error;
-  return true;
-}
+// Subscription activation now happens exclusively through the
+// verify-payment Edge Function (see supabase/functions/verify-payment),
+// which verifies the Paystack transaction server-side before writing
+// subscription_status / plan_expires_at / paystack_reference. Those
+// columns are locked to the service role at the database level (see
+// supabase/fix_payment_verification.sql) — a client-side activateSubscription()
+// helper like the one that used to live here can no longer write them at all.
 
 /** Returns true when subscription_status is 'active' AND plan_expires_at is in the future. */
 export function isSubscriptionActive(business) {
