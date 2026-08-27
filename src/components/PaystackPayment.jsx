@@ -23,18 +23,31 @@ function loadPaystackScript() {
 }
 
 /**
+ * Builds a Paystack transaction reference. The SABI_<businessId>_<timestamp>
+ * shape is relied on server-side too — supabase/functions/_shared/paystackActivation.ts
+ * parses the business id back out of it as a fallback if metadata is ever
+ * missing — so this is the one place that format should be generated.
+ */
+export function buildPaystackReference(businessId) {
+  return `SABI_${businessId}_${Date.now()}`;
+}
+
+/**
  * Opens the Paystack inline payment popup.
  *
  * @param {object} opts
  * @param {string}   opts.email      - Payer's email address
  * @param {string}   opts.businessId - Danda business UUID (embedded in ref + metadata)
+ * @param {string}   opts.reference  - Paystack transaction reference (caller-generated —
+ *                                     see buildPaystackReference — so it's known before the
+ *                                     popup resolves, e.g. to show a pending state if the
+ *                                     popup closes without a callback, as happens for a bank
+ *                                     transfer the customer completes outside the popup)
  * @param {function} opts.onSuccess  - Called with Paystack response object on payment success
  * @param {function} [opts.onClose]  - Called when the popup is closed without payment
  */
-export async function openPaystackPopup({ email, businessId, onSuccess, onClose }) {
+export async function openPaystackPopup({ email, businessId, reference, onSuccess, onClose }) {
   await loadPaystackScript();
-
-  const reference = `SABI_${businessId}_${Date.now()}`;
 
   const handler = window.PaystackPop.setup({
     key:      import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,

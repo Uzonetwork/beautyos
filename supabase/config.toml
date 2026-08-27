@@ -1,0 +1,15 @@
+# Only paystack-webhook needs an entry here. Every other deployed function
+# (verify-payment, admin-data) is always called with a real Supabase JWT —
+# the owner's own session, or an admin's — so the platform's default JWT
+# gate is exactly what we want for them and they're intentionally absent
+# from this file.
+#
+# paystack-webhook is called directly by Paystack's servers, which have no
+# Supabase session and authenticate with their own x-paystack-signature
+# header instead (verified inside the function itself). Without
+# verify_jwt = false here, Supabase's platform-level gate would reject
+# every call with 401 before our own signature check ever runs — which
+# would look identical to today's bug (zero invocations reaching the
+# function) until someone checked the platform logs specifically.
+[functions.paystack-webhook]
+verify_jwt = false

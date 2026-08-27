@@ -12,7 +12,7 @@ import { normalizeNgPhone } from '../lib/phone';
 import { reminderMessage } from '../lib/reminderMessages';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import SabiLogo from '../components/SabiLogo';
-import { openPaystackPopup } from '../components/PaystackPayment';
+import { openPaystackPopup, buildPaystackReference } from '../components/PaystackPayment';
 import { isSubscriptionActive, daysUntilExpiry } from '../lib/payments';
 import { PRICING } from '../config/pricing';
 import { SUPPORT_WHATSAPP } from '../config/support';
@@ -105,6 +105,8 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
   const [activationError,setActivationError]= useState(null); // { reference } | null
   const activationRefRef = useRef(null);
   const { copied: activationRefCopied, copy: copyActivationRef } = useCopyToClipboard();
+  const [paymentPending, setPaymentPending] = useState(null); // { reference } | null
+  const pendingIntervalRef = useRef(null);
   const [showEarningsHistory, setShowEarningsHistory] = useState(false);
   const [settings,       setSettings]       = useState({ name: '', owner_name: '', tagline: '', whatsapp: '' });
   const [savedSettings,  setSavedSettings]  = useState({ name: '', owner_name: '', tagline: '', whatsapp: '' });
@@ -158,12 +160,53 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
     });
   }, []);
 
+  function stopPendingCheck() {
+    clearInterval(pendingIntervalRef.current);
+    pendingIntervalRef.current = null;
+    setPaymentPending(null);
+  }
+
+  // Stop polling if the component unmounts mid-check (e.g. the owner logs
+  // out while a transfer is still pending).
+  useEffect(() => () => clearInterval(pendingIntervalRef.current), []);
+
+  // Popup closed without a Paystack callback — either the owner backed
+  // out, or (very commonly, for a bank transfer) they left to their
+  // banking app and the popup was gone by the time it settled. There's no
+  // way to tell those two apart from here, which is exactly why the
+  // pending message can't guess either way — it just watches for the
+  // paystack-webhook Edge Function to activate the account in the
+  // background and reflects that the moment it happens.
+  function beginPendingCheck(reference) {
+    clearInterval(pendingIntervalRef.current);
+    setPaymentPending({ reference });
+    const intervalMs = 4000;
+    const maxChecks = 75; // ~5 minutes
+    let checks = 0;
+    pendingIntervalRef.current = setInterval(async () => {
+      checks += 1;
+      const { data: biz } = await supabase.from('businesses').select('subscription_status, plan_expires_at').eq('id', businessId).single();
+      if (biz?.subscription_status === 'active') {
+        setSubStatus(biz.subscription_status);
+        setSubExpiresAt(biz.plan_expires_at ?? null);
+        stopPendingCheck();
+        return;
+      }
+      // Timing out doesn't mean it failed — the webhook can still arrive
+      // later (Paystack's own detection can take a few minutes). It just
+      // stops asking every few seconds; a fresh page load will pick up
+      // the real state whenever it does land.
+      if (checks >= maxChecks) clearInterval(pendingIntervalRef.current);
+    }, intervalMs);
+  }
+
   // Verifies a Paystack reference server-side and activates the
   // subscription — called both right after a successful Paystack popup and
   // from the failure banner's "Try Again" button, so it must be safe to
   // call more than once with the same reference (the Edge Function treats
   // a reference already attached to this business as a no-op success).
   async function verifyPayment(reference) {
+    stopPendingCheck();
     setActivationError(null);
     setRenewalLoading(true);
     try {
@@ -185,11 +228,14 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
 
   function handleRenew() {
     if (!businessId || !ownerEmail) return;
+    stopPendingCheck();
+    setActivationError(null);
     setRenewalLoading(true);
+    const reference = buildPaystackReference(businessId);
     openPaystackPopup({
-      email: ownerEmail, businessId,
+      email: ownerEmail, businessId, reference,
       onSuccess: (response) => verifyPayment(response.reference),
-      onClose: () => setRenewalLoading(false),
+      onClose: () => { setRenewalLoading(false); beginPendingCheck(reference); },
     });
   }
 
@@ -374,6 +420,29 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
 
   return (
     <div className="min-h-screen bg-sabi-dark font-sans">
+
+      {/* ── Payment pending — the popup closed without confirming success,
+          which happens routinely for a bank transfer completed outside
+          the popup. Neutral wording on purpose: there's no way to tell
+          "abandoned" from "gone to their banking app" from here, and the
+          background poll will pick up the real state once the webhook
+          activates it either way. ── */}
+      {paymentPending && !activationError && (
+        <div className="fixed top-0 left-0 right-0 z-[400] bg-sabi-gold/95 border-b border-sabi-gold px-4 py-3 sm:px-5">
+          <div className="max-w-2xl mx-auto flex items-start gap-2">
+            <Loader2 size={16} className="od-spin text-sabi-dark flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-sabi-dark font-bold">Waiting for your payment to complete</p>
+              <p className="text-xs text-sabi-dark/80 mt-1 leading-relaxed">
+                If you made a bank transfer, this can take a few minutes — we&rsquo;ll activate your account automatically the moment it&rsquo;s confirmed. No need to stay on this page.
+              </p>
+            </div>
+            <button onClick={stopPendingCheck} className="text-sabi-dark/60 hover:text-sabi-dark bg-transparent border-0 cursor-pointer flex-shrink-0" aria-label="Dismiss">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Payment verification failure — fixed, above the expired-plan
           overlay too, since this can happen during first activation. ── */}

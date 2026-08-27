@@ -1,16 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { extractBusinessId, activatePaystackTransaction } from '../_shared/paystackActivation.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-
-// Keep in sync with src/config/pricing.js PRICING.promoPriceKobo / currency —
-// a Deno Edge Function can't import from the Vite app, so this is a
-// deliberate duplication, not an oversight.
-const EXPECTED_AMOUNT_KOBO = 1440000;
-const EXPECTED_CURRENCY = 'NGN';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -67,33 +62,17 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'businessId and reference are required' }, 400);
   }
 
-  // ── 5. Confirm the caller owns this business ──────────────────────────────
+  // ── 5. Confirm the caller owns the business they're claiming to activate ──
   const { data: business, error: bizError } = await DB
     .from('businesses')
-    .select('id, user_id, plan_expires_at, paystack_reference')
+    .select('id, user_id')
     .eq('id', businessId)
     .maybeSingle();
 
   if (bizError || !business) return jsonResponse({ error: 'Business not found' }, 404);
   if (business.user_id !== user.id) return jsonResponse({ error: 'Forbidden — not your business' }, 403);
 
-  // ── 6. Idempotency — retrying with the same reference is always safe ──────
-  if (business.paystack_reference === reference) {
-    return jsonResponse({ success: true, plan_expires_at: business.plan_expires_at, alreadyProcessed: true });
-  }
-
-  // Reject if this reference is already attached to a DIFFERENT business
-  // (belt-and-suspenders alongside the DB-level unique constraint).
-  const { data: conflictRow } = await DB
-    .from('businesses')
-    .select('id')
-    .eq('paystack_reference', reference)
-    .neq('id', businessId)
-    .maybeSingle();
-
-  if (conflictRow) return jsonResponse({ error: 'This payment reference has already been used' }, 409);
-
-  // ── 7. Verify the transaction with Paystack, server-side ──────────────────
+  // ── 6. Verify the transaction with Paystack, server-side ──────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let paystackData: any;
   try {
@@ -111,49 +90,19 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Could not reach Paystack' }, 502);
   }
 
-  if (paystackData?.status !== 'success') {
-    return jsonResponse({ error: 'Payment was not successful' }, 422);
-  }
-  if (paystackData?.amount !== EXPECTED_AMOUNT_KOBO || paystackData?.currency !== EXPECTED_CURRENCY) {
-    console.error('[verify-payment] amount/currency mismatch:', paystackData?.amount, paystackData?.currency);
-    return jsonResponse({ error: 'Payment amount does not match the expected plan price' }, 422);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const metaBusinessId = paystackData?.metadata?.custom_fields?.find(
-    (f: any) => f.variable_name === 'business_id',
-  )?.value;
-  if (metaBusinessId !== businessId) {
-    console.error('[verify-payment] business_id mismatch in metadata:', metaBusinessId, businessId);
+  // ── 7. The transaction must genuinely belong to the business the caller
+  //        owns — otherwise a caller could "confirm" an arbitrary
+  //        stranger's reference just by pairing it with their own
+  //        (already ownership-verified) businessId. ─────────────────────────
+  const derivedBusinessId = extractBusinessId(paystackData);
+  if (derivedBusinessId !== businessId) {
+    console.error('[verify-payment] business_id mismatch:', derivedBusinessId, businessId);
     return jsonResponse({ error: 'Payment reference does not match this business' }, 422);
   }
 
-  // ── 8. Compute the new expiry — extend from whichever is later: now, or
-  //        the business's current (possibly still-future) expiry. This
-  //        means renewing early never costs the owner the remaining days
-  //        on their current plan. ──────────────────────────────────────────
-  const now = new Date();
-  const currentExpiry = business.plan_expires_at ? new Date(business.plan_expires_at) : null;
-  const anchor = currentExpiry && currentExpiry > now ? currentExpiry : now;
-  const newExpiry = new Date(anchor);
-  newExpiry.setFullYear(newExpiry.getFullYear() + 1);
-
-  // ── 9. Activate — this write is only permitted because it runs as
-  //        service_role; see lock_subscription_columns() in
-  //        supabase/fix_payment_verification.sql. ───────────────────────────
-  const { error: updateError } = await DB
-    .from('businesses')
-    .update({
-      subscription_status: 'active',
-      plan_expires_at: newExpiry.toISOString(),
-      paystack_reference: reference,
-    })
-    .eq('id', businessId);
-
-  if (updateError) {
-    console.error('[verify-payment] activation write failed:', updateError);
-    return jsonResponse({ error: 'Failed to activate subscription' }, 500);
-  }
-
-  return jsonResponse({ success: true, plan_expires_at: newExpiry.toISOString() });
+  // ── 8. Amount/currency check, idempotency, expiry anchoring, and the
+  //        service-role write are all shared with paystack-webhook — see
+  //        supabase/functions/_shared/paystackActivation.ts. ────────────────
+  const result = await activatePaystackTransaction(DB, paystackData);
+  return jsonResponse(result.body, result.status);
 });
