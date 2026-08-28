@@ -1,9 +1,10 @@
-import { createCanvas } from 'canvas';
+import { createCanvas, loadImage } from 'canvas';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const logoMark = await loadImage(path.join(__dirname, '..', 'public', 'icon-512.png'));
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -35,17 +36,9 @@ for (let y = 0; y <= HEIGHT; y += 28) {
   }
 }
 
-// ── Badge ────────────────────────────────────────────────────────────────────
-const badgeX = 120, badgeY = 175, badgeSize = 170, badgeR = 36;
-ctx.fillStyle = '#F5C842';
-roundRect(ctx, badgeX, badgeY, badgeSize, badgeSize, badgeR);
-ctx.fill();
-
-ctx.fillStyle = '#0A2E1A';
-ctx.font = 'bold 110px Georgia, serif';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-ctx.fillText('D', badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 8);
+// ── Mark ─────────────────────────────────────────────────────────────────────
+const badgeX = 120, badgeY = 175, badgeSize = 170;
+ctx.drawImage(logoMark, badgeX, badgeY, badgeSize, badgeSize);
 
 // ── "Danda" wordmark ─────────────────────────────────────────────────────────
 const badgeCenterY = badgeY + badgeSize / 2;

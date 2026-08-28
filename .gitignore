@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Raw designer handoffs — extract what's needed into public/ or src/, don't commit the originals
+brand-assets/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
