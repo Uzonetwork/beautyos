@@ -69,7 +69,7 @@ export async function activatePaystackTransaction(
 
   const { data: business, error: bizError } = await DB
     .from('businesses')
-    .select('id, plan_expires_at, paystack_reference')
+    .select('id, plan_expires_at, paystack_reference, first_paid_at')
     .eq('id', businessId)
     .maybeSingle();
 
@@ -107,13 +107,21 @@ export async function activatePaystackTransaction(
   newExpiry.setFullYear(newExpiry.getFullYear() + 1);
 
   // This write is only permitted because it runs as service_role; see
-  // lock_subscription_columns() in supabase/fix_payment_verification.sql.
+  // lock_subscription_columns() in supabase/fix_payment_verification.sql
+  // and lock_payout_columns() in supabase/add_affiliate_payouts.sql.
+  //
+  // first_paid_at is stamped only the first time a business ever
+  // activates — COALESCE, never overwritten on a renewal — since it's
+  // the anchor for the affiliate commission's 7-day payable window
+  // (see add_affiliate_payouts.sql section 3 for why this can't be
+  // derived from plan_expires_at instead).
   const { error: updateError } = await DB
     .from('businesses')
     .update({
       subscription_status: 'active',
       plan_expires_at: newExpiry.toISOString(),
       paystack_reference: reference,
+      first_paid_at: business.first_paid_at ?? now.toISOString(),
     })
     .eq('id', businessId);
 

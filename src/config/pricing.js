@@ -6,7 +6,13 @@ export const PRICING = {
   planName:        'Danda — Yearly',
   promoLabel:      'Launch Price',
   promoNote:       'Price increases to ₦24,000/yr soon',
-  commissionPerReferral: 4400, // paid to an affiliate per referred business that converts to a paid subscription
+  // Paid to an affiliate per referred business that converts to a paid
+  // subscription. KEEP IN SYNC WITH THE HARDCODED 4000 IN
+  // affiliate_status() in supabase/add_affiliate_payouts.sql — that SQL
+  // function can't import this file, so the amount is duplicated there
+  // on purpose. If one changes, the admin dashboard and the public
+  // affiliate status page will silently disagree until the other matches.
+  commissionPerReferral: 4000,
   features: [
     'Public booking page with your branding',
     'Unlimited bookings',

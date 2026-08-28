@@ -12,6 +12,7 @@ const OwnerDashboard  = lazy(() => import('./views/OwnerDashboard'));
 const AdminDashboard  = lazy(() => import('./views/AdminDashboard'));
 const LegalView       = lazy(() => import('./views/LegalView'));
 const MarketplaceView = lazy(() => import('./views/MarketplaceView'));
+const AffiliateStatusView = lazy(() => import('./views/AffiliateStatusView'));
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -27,6 +28,17 @@ function getSlugFromPathname() {
   if (KNOWN_PATHS.has(pathname)) return null;
   // Must be /something with no further slashes
   const match = pathname.match(/^\/([a-z0-9-]+)$/);
+  return match ? match[1] : null;
+}
+
+/**
+ * /a/:code — the public affiliate status page (see AffiliateStatusView).
+ * Two path segments, so it never collides with the single-segment business
+ * slug match above. Requires a matching rewrite in vercel.json so a direct
+ * link (not in-app navigation) doesn't 404 at the CDN before React loads.
+ */
+function getAffiliateCodeFromPathname() {
+  const match = window.location.pathname.match(/^\/a\/([A-Za-z0-9]+)$/);
   return match ? match[1] : null;
 }
 
@@ -52,6 +64,7 @@ const VIEW_TO_TITLE = {
   privacy:     'Privacy Policy — Danda',
   dashboard:   'Dashboard — Danda',
   admin:       'Admin — Danda',
+  'affiliate-status': 'Affiliate Status — Danda',
 };
 
 function PageLoader() {
@@ -69,6 +82,7 @@ export default function App() {
   const [view, setView]                         = useState('loading');
   const [authBusiness, setAuthBusiness]         = useState(null);
   const [publicBusinessId, setPublicBusinessId] = useState(null);
+  const [affiliateCode, setAffiliateCode]       = useState(null);
   // showWelcomeBanner is only true after signup; cleared on dismiss or navigation away
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
 
@@ -141,6 +155,15 @@ export default function App() {
       if (bizParam) {
         setPublicBusinessId(bizParam);
         setView('public');
+        return;
+      }
+
+      // Affiliate status routing: /a/CODE — public, no auth, no lookup
+      // needed before rendering (AffiliateStatusView does its own RPC call).
+      const affCode = getAffiliateCodeFromPathname();
+      if (affCode) {
+        setAffiliateCode(affCode);
+        setView('affiliate-status');
         return;
       }
 
@@ -311,6 +334,7 @@ export default function App() {
       {view === 'admin'   && <AdminDashboard />}
       {view === 'terms'   && <LegalView page="terms" />}
       {view === 'privacy' && <LegalView page="privacy" />}
+      {view === 'affiliate-status' && <AffiliateStatusView code={affiliateCode} />}
 
     </Suspense>
   );

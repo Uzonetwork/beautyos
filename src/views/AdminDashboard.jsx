@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, X } from 'lucide-react';
 import { signIn, signOut, getSession } from '../lib/auth';
 import { PRICING } from '../config/pricing';
 import SabiLogo from '../components/SabiLogo';
 
-const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-data`;
+const EDGE_FN_URL         = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-data`;
+const RECORD_PAYOUT_URL   = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-record-payout`;
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function fmtTimestamp(iso) {
   if (!iso) return '—';
@@ -78,6 +83,16 @@ export default function AdminDashboard() {
   const [topServices,    setTopServices]    = useState([]);
   const [affiliates,     setAffiliates]     = useState([]);
   const [search,         setSearch]         = useState('');
+  const [adminToken,     setAdminToken]     = useState('');
+
+  // Record-payout modal — null when closed, the affiliate row when open.
+  const [payoutModal,      setPayoutModal]      = useState(null);
+  const [payoutAmount,     setPayoutAmount]     = useState('');
+  const [payoutMethod,     setPayoutMethod]     = useState('Bank Transfer');
+  const [payoutNote,       setPayoutNote]       = useState('');
+  const [payoutDate,       setPayoutDate]       = useState(todayStr());
+  const [payoutSubmitting, setPayoutSubmitting] = useState(false);
+  const [payoutErr,        setPayoutErr]        = useState('');
 
   // Always show the login form on mount — never silently reuse a pre-existing
   // session (e.g. from a business owner logged in on the same device).
@@ -115,6 +130,7 @@ export default function AdminDashboard() {
     setRecentBookings([]);
     setTopServices([]);
     setAffiliates([]);
+    setAdminToken('');
   }
 
   // Called from the dashboard header "Refresh" button
@@ -140,6 +156,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error(`Edge Function returned ${res.status}`);
 
       const data = await res.json();
+      setAdminToken(token);
 
       const emailMap = {};
       (data.users ?? []).forEach(u => { if (u.id) emailMap[u.id] = u.email ?? '—'; });
@@ -166,18 +183,40 @@ export default function AdminDashboard() {
       setRecentBookings(data.recentBookings ?? []);
       setTopServices(top10);
 
+      // Commission is earned once, when the business pays — not tied to
+      // whether the subscription is currently active — and becomes
+      // payable 7 days after that payment (matching the refund window
+      // in the Terms). See supabase/add_affiliate_payouts.sql for the
+      // schema this mirrors: first_paid_at (set once, at first payment)
+      // and payout_id (null until swept onto a recorded payout).
+      const PAYABLE_MS = 7 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
       const referralStatsMap = {};
       (data.businesses ?? []).forEach(b => {
         if (!b.referred_by_affiliate_id) return;
-        const s = referralStatsMap[b.referred_by_affiliate_id] ?? (referralStatsMap[b.referred_by_affiliate_id] = { signups: 0, paidConversions: 0 });
+        const s = referralStatsMap[b.referred_by_affiliate_id] ?? (referralStatsMap[b.referred_by_affiliate_id] = { signups: 0, pending: 0, payable: 0, paidOut: 0 });
         s.signups += 1;
-        if (b.subscription_status === 'active' && b.plan_expires_at && new Date(b.plan_expires_at) > new Date()) {
-          s.paidConversions += 1;
-        }
+        if (!b.first_paid_at) return; // not converted yet
+        if (b.payout_id) { s.paidOut += 1; return; }
+        const payableSince = new Date(b.first_paid_at).getTime() + PAYABLE_MS;
+        if (now >= payableSince) s.payable += 1;
+        else s.pending += 1;
+      });
+      const paidTotalByAffiliate = {};
+      (data.payouts ?? []).forEach(p => {
+        paidTotalByAffiliate[p.affiliate_id] = (paidTotalByAffiliate[p.affiliate_id] || 0) + (p.amount || 0);
       });
       setAffiliates((data.affiliates ?? []).map(a => {
-        const s = referralStatsMap[a.id] ?? { signups: 0, paidConversions: 0 };
-        return { ...a, signups: s.signups, paidConversions: s.paidConversions, commission: s.paidConversions * PRICING.commissionPerReferral };
+        const s = referralStatsMap[a.id] ?? { signups: 0, pending: 0, payable: 0, paidOut: 0 };
+        return {
+          ...a,
+          signups:   s.signups,
+          pending:   s.pending,
+          payable:   s.payable,
+          paidOut:   s.paidOut,
+          owed:      s.payable * PRICING.commissionPerReferral,
+          paidTotal: paidTotalByAffiliate[a.id] || 0,
+        };
       }));
 
       if (data.reviews?.length) {
@@ -195,6 +234,56 @@ export default function AdminDashboard() {
       setView('dashboard');
     } finally {
       setLoading(false);
+    }
+  }
+
+  function openPayoutModal(a) {
+    setPayoutModal(a);
+    setPayoutAmount(String(a.owed || ''));
+    setPayoutMethod('Bank Transfer');
+    setPayoutNote('');
+    setPayoutDate(todayStr());
+    setPayoutErr('');
+  }
+
+  function closePayoutModal() {
+    if (payoutSubmitting) return; // don't let the modal close mid-submit
+    setPayoutModal(null);
+  }
+
+  async function submitPayout(e) {
+    e.preventDefault();
+    const amountNum = Number(payoutAmount);
+    if (!Number.isInteger(amountNum) || amountNum <= 0) {
+      setPayoutErr('Enter a whole naira amount greater than 0.');
+      return;
+    }
+    if (!payoutMethod.trim()) {
+      setPayoutErr('Method is required.');
+      return;
+    }
+    setPayoutSubmitting(true);
+    setPayoutErr('');
+    try {
+      const res = await fetch(RECORD_PAYOUT_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          affiliate_id: payoutModal.id,
+          amount: amountNum,
+          method: payoutMethod.trim(),
+          note: payoutNote.trim() || undefined,
+          paid_at: payoutDate || undefined,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || `Edge Function returned ${res.status}`);
+      setPayoutModal(null);
+      await refresh();
+    } catch (err) {
+      setPayoutErr(err.message || 'Failed to record payout.');
+    } finally {
+      setPayoutSubmitting(false);
     }
   }
 
@@ -483,29 +572,123 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr>{['Code','Name','Phone','Signups','Paid Conversions','Commission'].map((h, i) => <th key={h} className={`${thCls} ${i >= 3 ? 'text-right' : ''}`}>{h}</th>)}</tr>
+                      <tr>{['Code','Name','Phone','Signups','Pending','Payable','Owed','Paid to Date',''].map((h, i) => <th key={h || 'action'} className={`${thCls} ${i >= 3 && i <= 7 ? 'text-right' : ''}`}>{h}</th>)}</tr>
                     </thead>
                     <tbody>
                       {affiliates.length === 0 ? (
-                        <tr><td colSpan={6} className="px-4 py-12 text-center text-sabi-muted text-sm">No affiliates yet</td></tr>
+                        <tr><td colSpan={9} className="px-4 py-12 text-center text-sabi-muted text-sm">No affiliates yet</td></tr>
                       ) : affiliates.map(a => (
                         <tr key={a.id} className="hover:bg-sabi-card/50 transition-colors border-b border-sabi-border/8">
                           <td className={`${tdCls} font-medium`}>{a.code}</td>
                           <td className={tdCls}>{a.name}{!a.active && <span className="ml-2 text-xs text-sabi-muted">(inactive)</span>}</td>
                           <td className={`${tdCls} text-sabi-muted`}>{a.phone || '—'}</td>
                           <td className={`${tdCls} text-right`}>{a.signups}</td>
-                          <td className={`${tdCls} text-right`}>{a.paidConversions}</td>
-                          <td className={`${tdCls} text-right font-black text-sabi-gold`}>{fmtMoney(a.commission)}</td>
+                          <td className={`${tdCls} text-right text-sabi-muted`}>{a.pending}</td>
+                          <td className={`${tdCls} text-right`}>{a.payable}</td>
+                          <td className={`${tdCls} text-right font-black text-sabi-gold`}>{fmtMoney(a.owed)}</td>
+                          <td className={`${tdCls} text-right text-sabi-muted`}>{fmtMoney(a.paidTotal)}</td>
+                          <td className={`${tdCls} text-right`}>
+                            <button
+                              className="btn-outline py-1.5 px-3 text-xs disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-sabi-border disabled:hover:text-sabi-muted"
+                              onClick={() => openPayoutModal(a)}
+                              disabled={a.payable === 0}
+                              title={a.payable === 0 ? 'Nothing payable right now' : 'Record a payout'}
+                            >
+                              Record payout
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </div>
+              <p className="text-xs text-sabi-muted mt-2">
+                A code's public status page: <span className="text-sabi-green">danda.ng/a/&lt;code&gt;</span>
+              </p>
             </section>
           </>
         )}
       </main>
+
+      {payoutModal && (
+        <div className="fixed inset-0 z-[300] bg-sabi-dark/80 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="w-full max-w-sm bg-sabi-card border border-sabi-border rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-serif text-xl font-medium text-white">
+                Record payout — {payoutModal.name}
+              </h3>
+              <button
+                className="bg-transparent border-0 cursor-pointer text-sabi-muted hover:text-white p-1"
+                onClick={closePayoutModal}
+                disabled={payoutSubmitting}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs text-sabi-muted mb-5">
+              Covers all {payoutModal.payable} currently payable conversion{payoutModal.payable === 1 ? '' : 's'} for {payoutModal.code} — marks each as paid once recorded.
+            </p>
+            <form onSubmit={submitPayout} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Amount (₦)</label>
+                <input
+                  className="input-dark"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={payoutAmount}
+                  onChange={e => setPayoutAmount(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Method</label>
+                <input
+                  className="input-dark"
+                  type="text"
+                  placeholder="Bank Transfer"
+                  value={payoutMethod}
+                  onChange={e => setPayoutMethod(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Date</label>
+                <input
+                  className="input-dark"
+                  type="date"
+                  value={payoutDate}
+                  onChange={e => setPayoutDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-sabi-muted uppercase tracking-wider mb-1.5">Note (transfer reference)</label>
+                <input
+                  className="input-dark"
+                  type="text"
+                  placeholder="GTB txn ref…"
+                  value={payoutNote}
+                  onChange={e => setPayoutNote(e.target.value)}
+                />
+              </div>
+              {payoutErr && (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
+                  <AlertCircle size={14} className="flex-shrink-0" />
+                  {payoutErr}
+                </div>
+              )}
+              <button
+                className="btn-gold w-full justify-center py-3 mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                type="submit"
+                disabled={payoutSubmitting}
+              >
+                {payoutSubmitting && <Loader2 size={15} className="animate-spin" />}
+                {payoutSubmitting ? 'Recording…' : 'Record Payout'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

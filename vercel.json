@@ -13,6 +13,7 @@
       "destination": "/api/og"
     },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/a/:code", "destination": "/index.html" },
     { "source": "/:slug", "destination": "/index.html" }
   ]
 }
