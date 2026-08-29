@@ -13,10 +13,13 @@ const AdminDashboard  = lazy(() => import('./views/AdminDashboard'));
 const LegalView       = lazy(() => import('./views/LegalView'));
 const MarketplaceView = lazy(() => import('./views/MarketplaceView'));
 const AffiliateStatusView = lazy(() => import('./views/AffiliateStatusView'));
+const NotFoundView = lazy(() => import('./views/NotFoundView'));
 
 const DEMO_BUSINESS_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
-// Known pathname prefixes that are NOT business slugs
+// Known pathname prefixes that are NOT business slugs.
+// RESERVED_SLUGS in api/og.js mirrors this list (minus '' and '/', which
+// a bot request never carries as a :slug) — keep both in sync.
 const KNOWN_PATHS = new Set(['', '/', '/marketplace', '/terms', '/privacy', '/signup', '/login']);
 
 /**
@@ -65,6 +68,7 @@ const VIEW_TO_TITLE = {
   dashboard:   'Dashboard — Danda',
   admin:       'Admin — Danda',
   'affiliate-status': 'Affiliate Status — Danda',
+  'slug-not-found': 'Page Not Found — Danda',
 };
 
 function PageLoader() {
@@ -177,7 +181,14 @@ export default function App() {
           setView('public');
           return;
         }
-        // Slug not found — fall through to normal routing
+        // Slug genuinely matches no business — terminal state, before
+        // session restoration is ever reached below. Falling through
+        // from here used to mean a typo could silently resolve to
+        // whichever business the browser's own session belongs to
+        // (getCurrentBusiness() has no idea what URL was requested) —
+        // a wrong business is worse than an honest not-found page.
+        setView('slug-not-found');
+        return;
       }
 
       const hash = window.location.hash.slice(1);
@@ -335,6 +346,7 @@ export default function App() {
       {view === 'terms'   && <LegalView page="terms" />}
       {view === 'privacy' && <LegalView page="privacy" />}
       {view === 'affiliate-status' && <AffiliateStatusView code={affiliateCode} />}
+      {view === 'slug-not-found' && <NotFoundView onMarketplace={() => navigateTo('marketplace')} />}
 
     </Suspense>
   );

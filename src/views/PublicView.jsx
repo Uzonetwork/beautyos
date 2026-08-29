@@ -478,7 +478,10 @@ export default function PublicView({
       setLoadingBiz(false);
       if (!biz) { setServicesLoading(false); setGalleryLoading(false); return; }
       setBusiness(biz);
-      document.title = `${biz.name} — Book on Danda`;
+      // Matches the two states this component actually renders below (see
+      // the subscription gate) — the tab title must not promise a booking
+      // flow a lapsed business's page won't offer a visitor.
+      document.title = biz.is_active ? `${biz.name} — Book on Danda` : `${biz.name} — Danda`;
       const bizOwnerTitle = ownerTitle(biz.business_type, biz.custom_business_type);
       const bizLocation = [biz.city, biz.state].filter(Boolean).join(', ');
       setMetaDescription(
