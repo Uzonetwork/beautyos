@@ -94,33 +94,49 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Anon key, same as api/sitemap.js — deliberately not the service role.
+  // That key is kept out of Vercel entirely (it lives only in Supabase
+  // Edge Function secrets); everything this function reads is already
+  // public on the booking page itself, so businesses_public (anon-
+  // readable, RLS-safe) is the right source, not the base table.
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error('[og] missing env vars — returning 500');
-    res.status(500).send('Server configuration error');
+  // A missing env var is our misconfiguration, not evidence the business
+  // doesn't exist — degrade to generic metadata, don't 500 a crawler.
+  if (!supabaseUrl || !anonKey) {
+    console.error('[og] missing env vars — serving generic metadata');
+    renderGeneric(res);
     return;
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const supabase = createClient(supabaseUrl, anonKey);
 
   // Legacy id-based lookup (nothing generates a `?business=` link today,
   // but nothing should break it either) or the real path: by slug, which
-  // is what a shared /:slug link actually carries.
+  // is what a shared /:slug link actually carries. businesses_public
+  // exposes id, name, tagline, avatar_url, slug, and a precomputed
+  // is_active (subscription_status = 'active' and plan_expires_at in
+  // the future — see fix_payment_verification.sql) — everything below,
+  // no base-table access needed.
   let query = supabase
-    .from('businesses')
-    .select('name, tagline, avatar_url, slug, subscription_status, plan_expires_at');
+    .from('businesses_public')
+    .select('name, tagline, avatar_url, slug, is_active');
   query = businessId ? query.eq('id', businessId) : query.eq('slug', slugParam);
 
   // maybeSingle, not single — a miss here is an ordinary not-found, not
-  // an error worth a 500 for. slug has a unique constraint
-  // (businesses_slug_key) so this can never resolve to more than one row.
+  // an error. slug has a unique constraint (businesses_slug_key) so this
+  // can never resolve to more than one row.
   const { data: biz, error: bizError } = await query.maybeSingle();
 
+  // A failed lookup (network blip, Supabase hiccup) is not the same
+  // claim as "this business doesn't exist" — only an actually-empty,
+  // error-free result earns the real 404 below. Anything else degrades
+  // to generic metadata: a recoverable, honest-enough preview beats
+  // telling Google every business page is broken.
   if (bizError) {
     console.error('[og] supabase query error:', JSON.stringify(bizError));
-    res.status(500).send('Server error');
+    renderGeneric(res);
     return;
   }
 
@@ -129,16 +145,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Same definition as businesses_public's is_active (see
-  // add_businesses_public_view.sql) and isSubscriptionActive() in
-  // src/lib/payments.js — status must be 'active' AND plan_expires_at
-  // must be non-null and in the future. Recomputed here rather than
-  // read from the view because this function needs columns (tagline,
-  // avatar_url) that businesses_public doesn't expose.
-  const isActive = biz.subscription_status === 'active'
-    && !!biz.plan_expires_at
-    && new Date(biz.plan_expires_at) > new Date();
-
+  const isActive = biz.is_active === true;
   const name = biz.name ?? 'Danda';
 
   // Mirrors the two real states PublicView.jsx renders for a visitor:
