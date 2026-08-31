@@ -8,26 +8,31 @@ import { PRICING } from '../config/pricing';
 import SabiLogo from '../components/SabiLogo';
 
 // ── Category tiles ───────────────────────────────────────────────────────────
-// Canonical order + icon per business_type. Mirrors the labels
-// MarketplaceView.jsx uses for its own filter pills, since a tile's whole
-// job is to hand you off into that same category filter — wording should
-// match on both sides of the click.
+// Canonical order + icon/photo per business_type. Labels mirror
+// MarketplaceView.jsx's own filter pills, since a tile's whole job is to
+// hand you off into that same category filter — wording should match on
+// both sides of the click.
+//
+// `photo` names a file in public/categories/ (self-hosted, compressed
+// WebP). Not every business_type has one yet — other_professional
+// doesn't — so Icon stays on every entry as the fallback for whichever
+// tile has no photo, not just as a design backup.
 const CATEGORY_TILES = [
-  { value: 'nail_studio',        label: 'Nail Studio',     Icon: Sparkles      },
-  { value: 'lash_studio',        label: 'Lash Studio',     Icon: Eye           },
-  { value: 'spa',                label: 'Spa',             Icon: Flower2       },
-  { value: 'barbershop',         label: 'Barbershop',      Icon: Scissors      },
-  { value: 'mua',                label: 'MUA',             Icon: Brush         },
-  { value: 'tailor',             label: 'Tailor',          Icon: Shirt         },
-  { value: 'photography',        label: 'Photography',     Icon: Camera        },
-  { value: 'home_services',      label: 'Home Services',   Icon: Home          },
-  { value: 'tutor',              label: 'Tutor',           Icon: GraduationCap },
-  { value: 'fitness',            label: 'Fitness',         Icon: Dumbbell      },
-  { value: 'events',             label: 'Events',          Icon: PartyPopper   },
-  { value: 'private_chef',       label: 'Private Chef',    Icon: ChefHat       },
-  { value: 'dj',                 label: 'DJ',              Icon: Music2        },
-  { value: 'content_creator',    label: 'Content Creator', Icon: Video         },
-  { value: 'other_professional', label: 'Professional',    Icon: Briefcase     },
+  { value: 'nail_studio',        label: 'Nail Studio',     Icon: Sparkles,      photo: 'nail-studio.webp'   },
+  { value: 'lash_studio',        label: 'Lash Studio',     Icon: Eye,           photo: null                 },
+  { value: 'spa',                label: 'Spa',             Icon: Flower2,       photo: null                 },
+  { value: 'barbershop',         label: 'Barbershop',      Icon: Scissors,      photo: null                 },
+  { value: 'mua',                label: 'MUA',             Icon: Brush,         photo: null                 },
+  { value: 'tailor',             label: 'Tailor',          Icon: Shirt,         photo: null                 },
+  { value: 'photography',        label: 'Photography',     Icon: Camera,        photo: 'photography.webp'   },
+  { value: 'home_services',      label: 'Home Services',   Icon: Home,          photo: 'home-services.webp' },
+  { value: 'tutor',              label: 'Tutor',           Icon: GraduationCap, photo: null                 },
+  { value: 'fitness',            label: 'Fitness',         Icon: Dumbbell,      photo: 'fitness.webp'       },
+  { value: 'events',             label: 'Events',          Icon: PartyPopper,   photo: 'events.webp'        },
+  { value: 'private_chef',       label: 'Private Chef',    Icon: ChefHat,       photo: null                 },
+  { value: 'dj',                 label: 'DJ',              Icon: Music2,        photo: 'dj.webp'            },
+  { value: 'content_creator',    label: 'Content Creator', Icon: Video,         photo: null                 },
+  { value: 'other_professional', label: 'Professional',    Icon: Briefcase,     photo: null                 },
   { value: 'other',              label: 'Other',           Icon: Briefcase     },
 ];
 
@@ -65,17 +70,37 @@ export default function LandingPage({ onGetStarted, onLogin, onMarketplace, onBr
     document.getElementById('lp-pro')?.scrollIntoView({ behavior: 'smooth' });
   }
 
-  function handleSearchSubmit(e) {
-    e.preventDefault();
-    // The typed term takes priority over the selected location — both
-    // seed the same single search field on the marketplace (see
-    // MarketplaceView.jsx), which matches name/owner/tagline/city/state
-    // as one substring test, not per-field, so combining "nails" +
-    // "Lagos" into one query would under-match rather than narrow the
-    // results. Picking one is honest; concatenating them would look
-    // like a working AND filter and quietly not be one.
+  // The typed term takes priority over the selected location — both
+  // seed the same single search field on the marketplace (see
+  // MarketplaceView.jsx), which matches name/owner/tagline/city/state
+  // as one substring test, not per-field, so combining "nails" +
+  // "Lagos" into one query would under-match rather than narrow the
+  // results. Picking one is honest; concatenating them would look
+  // like a working AND filter and quietly not be one.
+  function submitSearch() {
     const seed = search.trim() || location;
     onBrowse({ search: seed });
+  }
+
+  function handleSearchSubmit(e) {
+    e.preventDefault();
+    submitSearch();
+  }
+
+  // Belt-and-suspenders alongside the form's onSubmit: some mobile
+  // keyboards' "Search"/"Go"/"Done" action key on a virtual keyboard
+  // don't reliably translate into a native form submission for every
+  // browser, which is exactly the reported bug — typing a term and
+  // tapping that key did nothing. Handling Enter directly on the input
+  // means it no longer matters whether the browser treats that key as a
+  // "submit" trigger at all. preventDefault() here also stops the
+  // browser's own default action for the keypress, so this can't
+  // double-fire alongside a native form submission.
+  function handleSearchKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitSearch();
+    }
   }
 
   return (
@@ -109,18 +134,34 @@ export default function LandingPage({ onGetStarted, onLogin, onMarketplace, onBr
                 {cities.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </label>
-            <div className="flex-1 flex items-center gap-2 bg-white rounded-xl px-3.5">
+            <div className="flex-1 min-w-0 flex items-center gap-1.5 bg-white rounded-xl pl-3 pr-1 py-1">
               <Search size={16} className="text-slate-400 flex-shrink-0" />
+              {/* type="text", not "search" — a native type="search" input
+                  grows its own clear (×) button once there's text, which
+                  isn't accounted for in this row's width budget and was
+                  pushing the button below off the edge on a real 390px
+                  viewport (confirmed — its own submit button ended up
+                  partly beyond the viewport, not just visually tight). */}
               <input
-                type="search"
+                type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 placeholder="Nails, barber, photographer…"
                 aria-label="Search"
-                className="flex-1 min-w-0 bg-transparent border-0 outline-none py-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400"
+                enterKeyHint="search"
+                className="flex-1 min-w-0 bg-transparent border-0 outline-none py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400"
               />
+              {/* Doesn't depend on the keyboard's action key at all — a
+                  real, always-visible tap target. */}
+              <button
+                type="submit"
+                aria-label="Search"
+                className="flex-shrink-0 bg-sabi-gold text-sabi-dark rounded-lg p-2 border-0 cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                <Search size={16} strokeWidth={2.5} />
+              </button>
             </div>
-            <button type="submit" className="sr-only">Search</button>
           </form>
         </div>
       </header>
@@ -135,14 +176,18 @@ export default function LandingPage({ onGetStarted, onLogin, onMarketplace, onBr
             </button>
           </div>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {tiles.map(({ value, label, Icon }) => (
+            {tiles.map(({ value, label, Icon, photo }) => (
               <button
                 key={value}
                 onClick={() => onBrowse({ category: value })}
                 className="text-center bg-transparent border-0 cursor-pointer p-0 group"
               >
-                <div className="aspect-square rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center group-hover:shadow-md group-hover:border-sabi-green transition-all">
-                  <Icon size={26} strokeWidth={1.75} className="text-sabi-dark" />
+                <div className="aspect-square rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center group-hover:shadow-md group-hover:border-sabi-green transition-all">
+                  {photo ? (
+                    <img src={`/categories/${photo}`} alt={label} className="w-full h-full object-cover" />
+                  ) : (
+                    <Icon size={26} strokeWidth={1.75} className="text-sabi-dark" />
+                  )}
                 </div>
                 <p className="mt-2 text-xs font-bold text-slate-900 leading-tight">{label}</p>
               </button>

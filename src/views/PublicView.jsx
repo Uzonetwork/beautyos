@@ -950,13 +950,25 @@ export default function PublicView({
             {business?.name}
           </span>
 
-          {/* Nav anchors — desktop only */}
+          {/* Nav anchors — desktop only. Buttons + scrollIntoView, not real
+              <a href="#..."> anchors: a hash-anchor click changes
+              location.hash, which fires popstate, which App.jsx's
+              onPopState doesn't recognize as a route and falls through to
+              the landing view — the same pattern the mobile drawer nav
+              already avoids below by never touching the hash at all. */}
           <div className="hidden md:flex items-center gap-7">
-            {[['#services-section', 'Services'], ['#about-section', 'About'], ['#gallery-section', 'Gallery']].map(([href, label]) => (
-              <a key={href} href={href}
-                className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 no-underline">
+            {[
+              { label: 'Services', target: 'services-section' },
+              { label: 'About',    target: 'about-section' },
+              ...(gallery.length > 0 || galleryLoading
+                ? [{ label: 'Gallery', target: 'gallery-section' }]
+                : []),
+            ].map(({ label, target }) => (
+              <button key={target}
+                onClick={() => document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 bg-transparent border-0 cursor-pointer p-0">
                 {label}
-              </a>
+              </button>
             ))}
           </div>
 
@@ -1033,11 +1045,12 @@ export default function PublicView({
                 style={{ background: theme.btnBg, color: theme.btnText }}>
                 Book Appointment
               </button>
-              <a href="#services-section"
-                className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm border border-slate-200 text-slate-500 no-underline transition-all hover:border-slate-300 hover:text-slate-700 bg-white">
+              <button
+                onClick={() => document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm border border-slate-200 text-slate-500 transition-all hover:border-slate-300 hover:text-slate-700 bg-white cursor-pointer">
                 Explore Services
                 <ChevronDown size={14} />
-              </a>
+              </button>
             </div>
 
             {/* Trust badges */}
