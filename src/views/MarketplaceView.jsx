@@ -46,14 +46,18 @@ function fmtPrice(n) {
   return '₦' + Number(n).toLocaleString('en-NG');
 }
 
-export default function MarketplaceView({ onBack }) {
+export default function MarketplaceView({ onBack, initialSearch = '', initialCategory = null }) {
   const [businesses, setBusinesses] = useState([]);
   const [services,   setServices]   = useState({});
   const [ratings,    setRatings]    = useState({});
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
-  const [search,     setSearch]     = useState('');
-  const [category,   setCategory]   = useState(null);
+  // Seeded from the homepage's search/location row or a "Browse by
+  // service" tile (see LandingPage.jsx) — reuses this exact filtering
+  // logic rather than duplicating it, so there's only one place that
+  // knows how to match a business against a query.
+  const [search,     setSearch]     = useState(initialSearch);
+  const [category,   setCategory]   = useState(initialCategory);
 
   useEffect(() => { load(); }, []);
 

@@ -87,6 +87,10 @@ export default function App() {
   const [authBusiness, setAuthBusiness]         = useState(null);
   const [publicBusinessId, setPublicBusinessId] = useState(null);
   const [affiliateCode, setAffiliateCode]       = useState(null);
+  // Seeds MarketplaceView's own search/category state on mount — set by
+  // every entry point into 'marketplace' (never left stale from a
+  // previous visit), consumed once, see goToMarketplace() below.
+  const [marketplaceSeed, setMarketplaceSeed]   = useState({ search: '', category: null });
   // showWelcomeBanner is only true after signup; cleared on dismiss or navigation away
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
 
@@ -116,6 +120,14 @@ export default function App() {
     }
     setView(newView);
   }, []);
+
+  // Every path into 'marketplace' goes through here, seed defaulting to
+  // empty — so a plain "Marketplace" nav click never inherits a search
+  // or category left over from a homepage tile/search click earlier.
+  const goToMarketplace = useCallback((seed = {}) => {
+    setMarketplaceSeed({ search: seed.search ?? '', category: seed.category ?? null });
+    navigateTo('marketplace');
+  }, [navigateTo]);
 
   // ── Browser back / forward ──────────────────────────────────────────────────
   useEffect(() => {
@@ -248,10 +260,10 @@ export default function App() {
 
       {view === 'landing' && (
         <LandingPage
-          onGetStarted={()   => { track('signup_started'); navigateTo('signup'); }}
-          onSeeDemo={()      => navigateTo('demo')}
-          onLogin={()        => navigateTo('login')}
-          onMarketplace={()  => navigateTo('marketplace')}
+          onGetStarted={()  => { track('signup_started'); navigateTo('signup'); }}
+          onLogin={()       => navigateTo('login')}
+          onMarketplace={() => goToMarketplace()}
+          onBrowse={(seed)  => goToMarketplace(seed)}
         />
       )}
 
@@ -339,6 +351,8 @@ export default function App() {
       {view === 'marketplace' && (
         <MarketplaceView
           onBack={() => navigateTo('landing')}
+          initialSearch={marketplaceSeed.search}
+          initialCategory={marketplaceSeed.category}
         />
       )}
 
@@ -346,7 +360,7 @@ export default function App() {
       {view === 'terms'   && <LegalView page="terms" />}
       {view === 'privacy' && <LegalView page="privacy" />}
       {view === 'affiliate-status' && <AffiliateStatusView code={affiliateCode} />}
-      {view === 'slug-not-found' && <NotFoundView onMarketplace={() => navigateTo('marketplace')} />}
+      {view === 'slug-not-found' && <NotFoundView onMarketplace={() => goToMarketplace()} />}
 
     </Suspense>
   );
