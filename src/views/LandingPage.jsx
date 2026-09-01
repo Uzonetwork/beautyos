@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import {
   Search, MapPin, Sparkles, Eye, Flower2, Scissors, Brush, Shirt, Camera,
   Home, GraduationCap, Dumbbell, PartyPopper, ChefHat, Music2, Video, Briefcase,
+  LayoutGrid,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PRICING } from '../config/pricing';
+import { SUPPORT_WHATSAPP } from '../config/support';
 import SabiLogo from '../components/SabiLogo';
 
 // ── Category tiles ───────────────────────────────────────────────────────────
@@ -175,46 +177,49 @@ export default function LandingPage({ onGetStarted, onLogin, onMarketplace, onBr
               See all →
             </button>
           </div>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          {/* Small thumbnail + label, not a full-bleed photo — the photo
+              identifies the category, it isn't the content. Cards are
+              sized to be scanned, not browsed. */}
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-2.5">
             {tiles.map(({ value, label, Icon, photo }) => (
               <button
                 key={value}
                 onClick={() => onBrowse({ category: value })}
-                className="text-center bg-transparent border-0 cursor-pointer p-0 group"
+                className="flex flex-col items-center gap-2 bg-white border border-slate-200 rounded-2xl py-3.5 px-1 hover:border-sabi-green hover:shadow-sm transition-all cursor-pointer"
               >
-                <div className="aspect-square rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center group-hover:shadow-md group-hover:border-sabi-green transition-all">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
                   {photo ? (
-                    <img src={`/categories/${photo}`} alt={label} className="w-full h-full object-cover" />
+                    <img src={`/categories/${photo}`} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <Icon size={26} strokeWidth={1.75} className="text-sabi-dark" />
+                    <Icon size={20} strokeWidth={1.75} className="text-sabi-dark" />
                   )}
                 </div>
-                <p className="mt-2 text-xs font-bold text-slate-900 leading-tight">{label}</p>
+                <p className="text-xs font-bold text-slate-900 leading-tight text-center">{label}</p>
               </button>
             ))}
             <button
               onClick={onMarketplace}
-              className="text-center bg-transparent border-0 cursor-pointer p-0"
+              className="flex flex-col items-center gap-2 bg-sabi-dark rounded-2xl py-3.5 px-1 hover:opacity-90 transition-opacity cursor-pointer"
             >
-              <div className="aspect-square rounded-2xl bg-sabi-dark flex items-center justify-center text-sabi-gold text-xs font-bold text-center px-2 leading-snug">
-                All services
+              <div className="w-12 h-12 rounded-full bg-sabi-gold/15 flex items-center justify-center flex-shrink-0">
+                <LayoutGrid size={20} strokeWidth={1.75} className="text-sabi-gold" />
               </div>
-              <p className="mt-2 text-xs font-bold text-slate-900 leading-tight">See everything</p>
+              <p className="text-xs font-bold text-sabi-gold leading-tight text-center">All services</p>
             </button>
           </div>
         </section>
       )}
 
-      {/* ── Professionals strip ─────────────────────────────────── */}
-      <section id="lp-pro" className="max-w-5xl mx-auto px-6 mt-10">
-        <div className="bg-sabi-dark rounded-2xl p-6 flex flex-wrap items-center gap-4">
+      {/* ── Professionals strip — a quiet prompt, not a banner ──── */}
+      <section id="lp-pro" className="max-w-5xl mx-auto px-6 mt-8">
+        <div className="bg-sabi-dark rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[220px]">
-            <h3 className="text-white font-extrabold text-base tracking-tight">You do the work. Danda handles the bookings.</h3>
-            <p className="text-sabi-muted text-sm mt-1">
+            <h3 className="text-white font-bold text-sm">You do the work. Danda handles the bookings.</h3>
+            <p className="text-sabi-muted text-xs mt-0.5">
               Your own booking page, client list and earnings — ₦{PRICING.promoPrice.toLocaleString()}/year.
             </p>
           </div>
-          <button onClick={onGetStarted} className="btn-gold text-sm px-5 py-2.5 flex-shrink-0">
+          <button onClick={onGetStarted} className="btn-gold text-xs px-4 py-2 flex-shrink-0">
             List your business
           </button>
         </div>
@@ -222,14 +227,36 @@ export default function LandingPage({ onGetStarted, onLogin, onMarketplace, onBr
 
       {/* ── Footer ──────────────────────────────────────────────── */}
       <footer className="max-w-5xl mx-auto px-6 mt-10 pt-6 pb-10 border-t border-slate-200">
-        <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
-          <button onClick={scrollToPro} className="bg-transparent border-0 cursor-pointer p-0 hover:text-slate-900 transition-colors">For professionals</button>
-          <button onClick={onMarketplace} className="bg-transparent border-0 cursor-pointer p-0 hover:text-slate-900 transition-colors">Marketplace</button>
-          <a href="/#/terms" className="hover:text-slate-900 transition-colors">Terms</a>
-          <a href="/#/privacy" className="hover:text-slate-900 transition-colors">Privacy</a>
-          <a href="mailto:hello@danda.ng" className="hover:text-slate-900 transition-colors">Contact</a>
-        </nav>
-        <p className="text-xs text-slate-400 mt-4">© {new Date().getFullYear()} Danda · Sabi Software &amp; Systems Ltd</p>
+        <div className="flex flex-wrap gap-x-10 gap-y-6 mb-6">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">For customers</p>
+            <nav className="flex flex-col gap-1.5 text-sm font-semibold text-slate-500">
+              <button onClick={onMarketplace} className="bg-transparent border-0 cursor-pointer p-0 text-left hover:text-slate-900 transition-colors">Marketplace</button>
+              <a href="/#/terms" className="hover:text-slate-900 transition-colors">Terms</a>
+              <a href="/#/privacy" className="hover:text-slate-900 transition-colors">Privacy</a>
+            </nav>
+          </div>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">For professionals</p>
+            <nav className="flex flex-col gap-1.5 text-sm font-semibold text-slate-500">
+              <button onClick={onGetStarted} className="bg-transparent border-0 cursor-pointer p-0 text-left hover:text-slate-900 transition-colors">List your business</button>
+              <button onClick={onLogin} className="bg-transparent border-0 cursor-pointer p-0 text-left hover:text-slate-900 transition-colors">Log in</button>
+            </nav>
+          </div>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Get in touch</p>
+            <nav className="flex flex-col gap-1.5 text-sm font-semibold text-slate-500">
+              {/* WhatsApp only for now — no @danda.ng mailbox exists yet
+                  (confirmed: MX resolves to the web host itself, and it
+                  never sends an SMTP greeting on port 25 — nothing is
+                  actually listening for mail), and the old sabipro.ng
+                  social accounts haven't been renamed to Danda yet. Add
+                  both back once there's somewhere real for them to go. */}
+              <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 transition-colors">WhatsApp</a>
+            </nav>
+          </div>
+        </div>
+        <p className="text-xs text-slate-400 pt-4 border-t border-slate-200">© {new Date().getFullYear()} Danda · Sabi Software &amp; Systems Ltd</p>
       </footer>
 
     </div>
