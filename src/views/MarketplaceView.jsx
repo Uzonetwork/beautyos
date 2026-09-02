@@ -161,7 +161,7 @@ export default function MarketplaceView({ onBack, initialSearch = '', initialCat
           page still speaking the old marketing-page language) ────── */}
       <div className="max-w-2xl mx-auto px-6 pt-8 pb-6 text-center">
         <h1 className="text-white font-extrabold text-xl tracking-tight mb-1.5">Find a professional near you</h1>
-        <p className="text-sabi-muted text-sm mb-6">Browse verified Nigerian professionals.</p>
+        <p className="text-sabi-muted text-sm mb-6">Browse Nigerian professionals.</p>
         {/* Same white-pill search field as the homepage header. */}
         <div className="flex items-center gap-2 bg-white rounded-xl pl-3.5 pr-3 py-1 max-w-md mx-auto">
           <Search size={16} className="text-slate-400 flex-shrink-0" />

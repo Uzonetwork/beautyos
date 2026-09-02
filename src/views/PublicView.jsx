@@ -7,7 +7,6 @@ import {
   X,
   Globe,
   LayoutDashboard,
-  Shield,
   Clock,
   Star,
   Copy,
@@ -1220,22 +1219,18 @@ export default function PublicView({
           {/* Owner profile card */}
           <div className="rounded-3xl overflow-hidden border border-slate-200/60 shadow-md grid md:grid-cols-2">
 
-            {/* Left: avatar + badge */}
+            {/* Left: avatar. No badge here — it used to be a shield icon
+                implying verification nothing behind it actually performs;
+                it was a pure absolute-positioned overlay, so removing it
+                leaves no gap to backfill. */}
             <div className="flex flex-col items-center justify-center p-10 gap-5 bg-gradient-to-br from-slate-50 to-white">
-              <div className="relative">
-                <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-slate-200 bg-white">
-                  {business?.avatar_url ? (
-                    <img src={business.avatar_url} alt={business.owner_name}
-                      className="w-full h-full object-cover" />
-                  ) : (
-                    <Monogram name={business?.name} size={112} rounded="2xl" primary={theme.primary} />
-                  )}
-                </div>
-                {/* Verified badge */}
-                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
-                  style={{ background: theme.primary }}>
-                  <Shield size={14} style={{ color: theme.btnText }} />
-                </div>
+              <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-slate-200 bg-white">
+                {business?.avatar_url ? (
+                  <img src={business.avatar_url} alt={business.owner_name}
+                    className="w-full h-full object-cover" />
+                ) : (
+                  <Monogram name={business?.name} size={112} rounded="2xl" primary={theme.primary} />
+                )}
               </div>
 
               <div className="text-center">
@@ -1282,10 +1277,13 @@ export default function PublicView({
                 {ownerBio(business?.business_type, business?.owner_name, business?.name)}
               </p>
 
-              {/* Trust bullets */}
+              {/* Trust bullets — no "Verified & professional" entry. It
+                  was the one unconditional item in a list that's
+                  otherwise real (rating, WhatsApp confirmation); dropped
+                  rather than replaced, since a fabricated third item
+                  would have weakened the two real ones next to it. */}
               <div className="flex flex-col gap-2 mt-1">
                 {[
-                  { icon: <CheckCircle size={14} />, text: 'Verified & professional' },
                   business?.rating_count > 0 && {
                     icon: <Star size={14} />,
                     text: `${Number(business.avg_rating).toFixed(1)} average client rating`,
