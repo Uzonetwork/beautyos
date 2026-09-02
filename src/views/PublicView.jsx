@@ -101,7 +101,7 @@ const WHY_CARDS = {
     { icon: Zap, title: 'On-Time, Every Time', desc: 'We respect your time with punctual, efficient appointments and no long waits.' },
   ],
   mua: [
-    { icon: Brush, title: 'Pro-Grade Products', desc: 'Premium, long-lasting makeup brands trusted by professional artists worldwide.' },
+    { icon: Brush, title: 'Pro-Grade Products', desc: 'Premium, long-lasting products applied with precision for makeup that holds through long days and photos.' },
     { icon: Flower2, title: 'Every Occasion', desc: 'Bridal, editorial, glam, natural — every look crafted to your exact vision.' },
     { icon: Camera, title: 'Camera-Ready', desc: 'Flawless application that looks stunning in person and in every photograph.' },
   ],
@@ -115,9 +115,11 @@ const WHY_CARDS = {
     { icon: ImageIcon, title: 'Expert Editing', desc: 'Every image professionally edited to look its absolute best inside and out.' },
     { icon: Zap, title: 'Fast Turnaround', desc: 'Receive your full gallery in high resolution within the agreed timeline.' },
   ],
+  // Two cards, not three — the third used to claim "post-service checks"
+  // that don't exist. Describing a QA process Danda doesn't perform is
+  // worse than a short row, so it's gone rather than replaced.
   home_services: [
     { icon: Wrench, title: 'Skilled Tradespeople', desc: 'Experienced professionals for plumbing, electrical, AC, and all home repairs.' },
-    { icon: CircleCheck, title: 'Quality Guaranteed', desc: 'All work is performed to a professional standard with post-service checks.' },
     { icon: Phone, title: 'Responsive Support', desc: 'Quick response times and clear communication from booking to completion.' },
   ],
   tutor: [
