@@ -7,8 +7,6 @@ import {
   X,
   Globe,
   LayoutDashboard,
-  MapPin,
-  ChevronDown,
   Shield,
   Clock,
   Star,
@@ -60,7 +58,6 @@ import { StarPicker } from '../components/StarRating';
 import Monogram from '../components/public/Monogram';
 import SectionHeader from '../components/public/SectionHeader';
 import ServiceCard from '../components/public/ServiceCard';
-import TrustStrip from '../components/public/TrustStrip';
 import StickyBookBar from '../components/public/StickyBookBar';
 
 // ── Static content maps ───────────────────────────────────────────────────────
@@ -81,44 +78,6 @@ const OWNER_TITLES = {
   private_chef:       'Private Chef',
   content_creator:    'Content Creator',
   dj:                 'Music DJ',
-};
-
-const HERO_HEADLINES = {
-  nail_studio:        'Flawless Nail Care,\nCrafted to Perfect\nYour Style',
-  lash_studio:        'Beautiful Lashes,\nTailored to Elevate\nYour Look',
-  spa:                'Relax, Rejuvenate &\nRestore Your\nWellbeing',
-  barbershop:         'Sharp Cuts.\nClean Fades.\nPrecision Grooming.',
-  mua:                'Transformative Makeup\nArtistry for Every\nOccasion',
-  tailor:             'Bespoke Fashion,\nCrafted to Fit\nYour Vision',
-  photography:        'Capturing Your Story\nThrough a\nProfessional Lens',
-  home_services:      'Reliable Home\nServices — Done Right,\nEvery Time',
-  tutor:              'Personalised Learning\nThat Unlocks Your\nFull Potential',
-  fitness:            'Train Smarter.\nLive Better.\nReach Your Goals.',
-  events:             'Making Every Event\nTruly\nUnforgettable',
-  private_chef:       'Restaurant-Quality\nDining, At Your\nLocation',
-  content_creator:    'Compelling Content\nThat Tells Your\nBrand\'s Story',
-  dj:                 'Premium DJ Sets\nfor Every\nOccasion',
-  other_professional: 'Professional Services,\nDelivered with\nExcellence',
-  other:              'Quality Services,\nEvery Time',
-};
-
-const HERO_SUBS = {
-  nail_studio:        'From everyday manicures to intricate nail art — every detail is perfected with precision and care for hands that always look their best.',
-  lash_studio:        'Whether you want a subtle lift or dramatic volume, every set is crafted with care to complement your unique features and personal style.',
-  spa:                'Step into a sanctuary of calm. Every treatment is designed to restore, renew, and leave you feeling completely refreshed.',
-  barbershop:         'Walk in looking good — walk out looking your absolute best. Expert cuts, clean fades, and precise grooming, every single visit.',
-  mua:                'From natural glam to full bridal, your vision comes to life with professional artistry and premium products at every appointment.',
-  tailor:             'Every stitch tells a story. Beautifully crafted bespoke outfits for weddings, events, and everyday elegance.',
-  photography:        'Professional photography that preserves your most important moments with clarity, artistry, and a timeless eye for detail.',
-  home_services:      'Trusted, skilled professionals for all your home maintenance and repair needs — delivered on time, every time.',
-  tutor:              'Personalised one-on-one lessons designed to build confidence, improve grades, and help students reach their full academic potential.',
-  fitness:            'Customised training programs and expert coaching to help you build the body and the life you deserve.',
-  events:             'Full-service event planning and execution — every detail handled so you can focus entirely on enjoying the moment.',
-  private_chef:       'Bringing the restaurant experience to your home. Exquisite meals crafted from premium, fresh ingredients.',
-  content_creator:    'Engaging, high-quality content that connects your brand with your audience and drives real results across every platform.',
-  dj:                 'From intimate gatherings to massive events — professional DJ services that keep the energy high and the crowd moving all night.',
-  other_professional: 'Exceptional professional services delivered with expertise, care, and a genuine commitment to your satisfaction.',
-  other:              'Dedicated to delivering quality results and an exceptional experience with every single appointment.',
 };
 
 const WHY_CARDS = {
@@ -1002,59 +961,48 @@ export default function PublicView({
             backgroundSize: '32px 32px',
           }} />
 
-        <div className="relative z-10 max-w-6xl mx-auto w-full px-5 md:px-8 py-12 md:py-24 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+        <div className="relative z-10 max-w-6xl mx-auto w-full px-5 md:px-8 py-7 md:py-24 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
 
-          {/* ── Left: Headline + CTAs ── */}
+          {/* ── Left: Compact identity block ──────────────────────
+              No generated copy — HERO_HEADLINES/HERO_SUBS were the
+              same text for every business of a given type. This is
+              just what's real: avatar, name, type · location, an
+              owner-written tagline if there is one (never a fallback
+              sentence in its place), and the book action. Services
+              sit directly below (see id="services-section" further
+              down), not past a scroll on mobile. */}
           <div className="animate-slide-up">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-5"
-              style={{ background: `${theme.primary}12`, borderColor: `${theme.primary}28`, color: theme.primary }}>
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse-dot" style={{ background: theme.primary }} />
-              <span className="text-xs font-bold uppercase tracking-widest">
-                {ownerTitle(business?.business_type, business?.custom_business_type)}
-              </span>
+            <div className="flex items-center gap-4 mb-4">
+              {business?.avatar_url ? (
+                <img src={business.avatar_url} alt={business.name}
+                  className="w-16 h-16 rounded-full object-cover flex-shrink-0"
+                  style={{ border: `3px solid ${theme.primary}` }} />
+              ) : (
+                <Monogram name={business?.name} size={64} rounded="full" primary={theme.primary} />
+              )}
+              <div className="min-w-0">
+                <h1 className="font-serif font-semibold text-2xl md:text-3xl leading-tight text-slate-900 truncate">
+                  {business?.name}
+                </h1>
+                <p className="text-sm text-slate-500 mt-0.5 truncate">
+                  {ownerTitle(business?.business_type, business?.custom_business_type)}
+                  {location && ` · ${location}`}
+                </p>
+              </div>
             </div>
 
-            {/* Headline */}
-            <h1 className="font-serif font-semibold leading-[1.05] mb-5 text-slate-900"
-              style={{ fontSize: 'clamp(2.4rem, 5vw, 3.6rem)', whiteSpace: 'pre-line' }}>
-              {HERO_HEADLINES[business?.business_type]
-                ? HERO_HEADLINES[business?.business_type].replace(/\n/g, '\n')
-                : `Welcome to\n${business?.name}`
-              }
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-base leading-relaxed mb-8 max-w-md text-slate-500">
-              {business?.tagline || HERO_SUBS[business?.business_type] || HERO_SUBS.other}
-            </p>
-
-            {/* Location */}
-            {location && (
-              <div className="flex items-center gap-1.5 mb-7">
-                <MapPin size={13} className="text-slate-400" />
-                <span className="text-sm font-medium text-slate-400">{location}</span>
-              </div>
+            {business?.tagline?.trim() && (
+              <p className="text-sm leading-relaxed mb-5 max-w-md text-slate-500">
+                {business.tagline}
+              </p>
             )}
 
-            {/* CTA buttons */}
-            <div className="flex flex-wrap gap-3 mb-8">
-              <button
-                onClick={() => setDrawerOpen(true)}
-                className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-base border-0 cursor-pointer transition-all active:scale-95 hover:opacity-90"
-                style={{ background: theme.btnBg, color: theme.btnText }}>
-                Book Appointment
-              </button>
-              <button
-                onClick={() => document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm border border-slate-200 text-slate-500 transition-all hover:border-slate-300 hover:text-slate-700 bg-white cursor-pointer">
-                Explore Services
-                <ChevronDown size={14} />
-              </button>
-            </div>
-
-            {/* Trust badges */}
-            <TrustStrip business={business} />
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-base border-0 cursor-pointer transition-all active:scale-95 hover:opacity-90 mb-2"
+              style={{ background: theme.btnBg, color: theme.btnText }}>
+              Book Appointment
+            </button>
           </div>
 
           {/* ── Right: Media frame ── */}
@@ -1122,43 +1070,12 @@ export default function PublicView({
       </section>
 
       {/* ══════════════════════════════════════════════════════════
-          3. WHY CHOOSE US GRID
+          3. SERVICES SECTION — directly beneath the hero now (used to
+          sit behind "Why Choose Us"). What someone arriving from a
+          shared link is here to see; it shouldn't need a scroll past
+          marketing copy first.
       ══════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-5 md:px-8 bg-white">
-        <div className="max-w-5xl mx-auto">
-
-          <SectionHeader eyebrow="Why us" title={`Why Choose ${business?.name}?`} color={theme.primary} />
-
-          {/* Grid — 2 columns on mobile to keep each card compact, 3 from tablet up */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
-            {whyCards.map((card, i) => {
-              const Icon = card.icon;
-              return (
-                <div key={i}
-                  className="rounded-2xl p-4 sm:p-6 bg-white border border-slate-200/60 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-                  {/* Icon box */}
-                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4"
-                    style={{ background: `${theme.primary}12` }}>
-                    <Icon size={18} className="sm:hidden" style={{ color: theme.primary }} />
-                    <Icon size={22} className="hidden sm:block" style={{ color: theme.primary }} />
-                  </div>
-                  <h3 className="font-bold text-sm sm:text-base mb-1.5 sm:mb-2 text-slate-900">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm leading-relaxed text-slate-500">
-                    {card.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════
-          4. SERVICES SECTION
-      ══════════════════════════════════════════════════════════ */}
-      <section id="services-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA]" ref={bookingRef}>
+      <section id="services-section" className="pt-8 md:pt-20 pb-20 px-5 md:px-8 bg-[#FAFAFA]" ref={bookingRef}>
         <div className="max-w-5xl mx-auto">
 
           <SectionHeader
@@ -1213,6 +1130,40 @@ export default function PublicView({
                 <AlertCircle size={12} />{fieldErrors.service_name}
               </span>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          4. WHY CHOOSE US GRID
+      ══════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-5 md:px-8 bg-white">
+        <div className="max-w-5xl mx-auto">
+
+          <SectionHeader eyebrow="Why us" title={`Why Choose ${business?.name}?`} color={theme.primary} />
+
+          {/* Grid — 2 columns on mobile to keep each card compact, 3 from tablet up */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
+            {whyCards.map((card, i) => {
+              const Icon = card.icon;
+              return (
+                <div key={i}
+                  className="rounded-2xl p-4 sm:p-6 bg-white border border-slate-200/60 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+                  {/* Icon box */}
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4"
+                    style={{ background: `${theme.primary}12` }}>
+                    <Icon size={18} className="sm:hidden" style={{ color: theme.primary }} />
+                    <Icon size={22} className="hidden sm:block" style={{ color: theme.primary }} />
+                  </div>
+                  <h3 className="font-bold text-sm sm:text-base mb-1.5 sm:mb-2 text-slate-900">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm leading-relaxed text-slate-500">
+                    {card.desc}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
