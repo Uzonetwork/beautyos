@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Image as ImageIcon,
   CheckCircle,
   AlertCircle,
   Loader2,
   X,
   Globe,
   LayoutDashboard,
-  Clock,
   Star,
   Copy,
   Check,
@@ -26,25 +24,16 @@ import {
   Ruler,
   Camera,
   Wrench,
-  Phone,
   BookOpen,
   GraduationCap,
-  Target,
-  Laptop,
   Dumbbell,
   Salad,
-  TrendingUp,
   PartyPopper,
   MessageCircle,
   ChefHat,
   Utensils,
   Clapperboard,
-  Smartphone,
-  Rocket,
-  Headphones,
   Music2,
-  Handshake,
-  Calendar,
   CircleCheck,
   Lock,
 } from 'lucide-react';
@@ -78,87 +67,6 @@ const OWNER_TITLES = {
   content_creator:    'Content Creator',
   dj:                 'Music DJ',
 };
-
-const WHY_CARDS = {
-  nail_studio: [
-    { icon: Sparkles, title: 'Premium Products', desc: 'Professional-grade gels and polishes for long-lasting, beautiful results every time.' },
-    { icon: Brush, title: 'Custom Nail Art', desc: 'From minimalist designs to intricate nail art — every set is unique to your style.' },
-    { icon: Calendar, title: 'Easy Online Booking', desc: 'Book your appointment in under 2 minutes, any time, from any device.' },
-  ],
-  lash_studio: [
-    { icon: Sparkles, title: 'Certified Technique', desc: 'Trained in the latest lash extension and lift methods for safe, stunning results.' },
-    { icon: Eye, title: 'Custom Lash Mapping', desc: 'Every set mapped to complement your unique eye shape and personal aesthetic.' },
-    { icon: Clock, title: 'Flexible Slots', desc: 'Morning, afternoon, and weekend slots available to fit your schedule.' },
-  ],
-  spa: [
-    { icon: Leaf, title: 'Luxury Treatments', desc: 'Premium products and expert therapists committed to your total relaxation.' },
-    { icon: HeartPulse, title: 'Holistic Wellness', desc: 'Treatments designed to nurture mind, body, and spirit in a calm environment.' },
-    { icon: Lock, title: 'Private & Discreet', desc: 'A peaceful sanctuary where your comfort and privacy always come first.' },
-  ],
-  barbershop: [
-    { icon: Scissors, title: 'Precision Cuts', desc: 'Expert barbers trained in the latest techniques for clean fades and sharp lines.' },
-    { icon: Sparkles, title: 'Full Grooming', desc: 'From haircuts to beard trims and hot towel shaves — complete grooming in one place.' },
-    { icon: Zap, title: 'On-Time, Every Time', desc: 'We respect your time with punctual, efficient appointments and no long waits.' },
-  ],
-  mua: [
-    { icon: Brush, title: 'Pro-Grade Products', desc: 'Premium, long-lasting products applied with precision for makeup that holds through long days and photos.' },
-    { icon: Flower2, title: 'Every Occasion', desc: 'Bridal, editorial, glam, natural — every look crafted to your exact vision.' },
-    { icon: Camera, title: 'Camera-Ready', desc: 'Flawless application that looks stunning in person and in every photograph.' },
-  ],
-  tailor: [
-    { icon: Shirt, title: 'Bespoke Craftsmanship', desc: 'Cut and sewn to your exact measurements for a flawless, custom-fit every time.' },
-    { icon: Ruler, title: 'Premium Fabrics', desc: 'Quality Ankara, lace, velvet and imported fabrics for every style and budget.' },
-    { icon: Clock, title: 'On-Time Delivery', desc: 'We respect your deadlines — your outfit will be ready when promised.' },
-  ],
-  photography: [
-    { icon: Camera, title: 'Pro Equipment', desc: 'Full-frame cameras, premium lenses, and professional lighting for stunning shots.' },
-    { icon: ImageIcon, title: 'Expert Editing', desc: 'Every image professionally edited to look its absolute best inside and out.' },
-    { icon: Zap, title: 'Fast Turnaround', desc: 'Receive your full gallery in high resolution within the agreed timeline.' },
-  ],
-  // Two cards, not three — the third used to claim "post-service checks"
-  // that don't exist. Describing a QA process Danda doesn't perform is
-  // worse than a short row, so it's gone rather than replaced.
-  home_services: [
-    { icon: Wrench, title: 'Skilled Tradespeople', desc: 'Experienced professionals for plumbing, electrical, AC, and all home repairs.' },
-    { icon: Phone, title: 'Responsive Support', desc: 'Quick response times and clear communication from booking to completion.' },
-  ],
-  tutor: [
-    { icon: BookOpen, title: 'Personalised Lessons', desc: 'Curriculum tailored to each student\'s learning style, pace, and objectives.' },
-    { icon: Target, title: 'Proven Results', desc: 'A track record of helping students improve grades and pass key examinations.' },
-    { icon: Laptop, title: 'Flexible Delivery', desc: 'In-person and online sessions to fit your schedule and location.' },
-  ],
-  fitness: [
-    { icon: Dumbbell, title: 'Expert Coaching', desc: 'Certified fitness professionals creating programs that deliver real results.' },
-    { icon: Salad, title: 'Holistic Approach', desc: 'Training, nutrition, and lifestyle guidance for sustainable transformation.' },
-    { icon: TrendingUp, title: 'Progress Tracking', desc: 'Regular assessments to keep you on track toward your personal fitness goals.' },
-  ],
-  events: [
-    { icon: PartyPopper, title: 'Full-Service Planning', desc: 'Decoration, MC, catering, music — every element handled with perfection.' },
-    { icon: Star, title: 'Flawless Execution', desc: 'Meticulous attention to detail ensures every event runs smoothly on schedule.' },
-    { icon: MessageCircle, title: 'Clear Communication', desc: 'Regular updates and open dialogue from first booking to your event day.' },
-  ],
-  private_chef: [
-    { icon: ChefHat, title: 'Restaurant-Quality', desc: 'Michelin-inspired menus crafted from fresh, premium ingredients at your home.' },
-    { icon: Utensils, title: 'Custom Menus', desc: 'Every menu designed around your preferences, dietary needs, and occasion.' },
-    { icon: CircleCheck, title: 'Full Cleanup Included', desc: 'We handle everything from setup to cleanup — you just enjoy the experience.' },
-  ],
-  content_creator: [
-    { icon: Clapperboard, title: 'High Production Quality', desc: 'Professional-grade video and photography that makes your content stand out.' },
-    { icon: Smartphone, title: 'Platform Expertise', desc: 'Content optimised for Instagram, TikTok, YouTube, and all major platforms.' },
-    { icon: Rocket, title: 'Quick Turnaround', desc: 'Timely delivery without compromising on quality — content when you need it.' },
-  ],
-  dj: [
-    { icon: Headphones, title: 'Pro Equipment', desc: 'Pioneer CDJs and a premium sound system that delivers the perfect audio.' },
-    { icon: Music2, title: 'Any Genre, Any Vibe', desc: 'Afrobeats, Amapiano, R&B, Hip-Hop, House — the perfect soundtrack for your event.' },
-    { icon: Zap, title: 'High Energy Sets', desc: 'Reading the crowd and keeping energy levels at their peak all night long.' },
-  ],
-};
-
-const DEFAULT_WHY_CARDS = [
-  { icon: Star, title: 'Premium Quality', desc: 'Committed to delivering exceptional results with every single appointment.' },
-  { icon: Handshake, title: 'Personalised Service', desc: 'Every client receives individual attention and a tailored experience.' },
-  { icon: Calendar, title: 'Easy Scheduling', desc: 'Simple online booking available 24/7 from any device, in under 2 minutes.' },
-];
 
 const SERVICE_SUBTITLES = {
   nail_studio:        'Professional nail care, every detail perfected',
@@ -624,7 +532,6 @@ export default function PublicView({
   const theme    = getBusinessTheme(business?.business_type ?? 'other');
   const location = [business?.city, business?.state].filter(Boolean).join(', ');
   const bizInitial = (business?.name || '?')[0].toUpperCase();
-  const whyCards = WHY_CARDS[business?.business_type] ?? DEFAULT_WHY_CARDS;
 
   // Drawer input base style — neutral light canvas
   const IS = {
@@ -1136,44 +1043,14 @@ export default function PublicView({
       </section>
 
       {/* ══════════════════════════════════════════════════════════
-          4. WHY CHOOSE US GRID
-      ══════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-5 md:px-8 bg-white">
-        <div className="max-w-5xl mx-auto">
-
-          <SectionHeader eyebrow="Why us" title={`Why Choose ${business?.name}?`} color={theme.primary} />
-
-          {/* Grid — 2 columns on mobile to keep each card compact, 3 from tablet up */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
-            {whyCards.map((card, i) => {
-              const Icon = card.icon;
-              return (
-                <div key={i}
-                  className="rounded-2xl p-4 sm:p-6 bg-white border border-slate-200/60 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
-                  {/* Icon box */}
-                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4"
-                    style={{ background: `${theme.primary}12` }}>
-                    <Icon size={18} className="sm:hidden" style={{ color: theme.primary }} />
-                    <Icon size={22} className="hidden sm:block" style={{ color: theme.primary }} />
-                  </div>
-                  <h3 className="font-bold text-sm sm:text-base mb-1.5 sm:mb-2 text-slate-900">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm leading-relaxed text-slate-500">
-                    {card.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════
-          5. GALLERY SECTION
+          4. GALLERY SECTION
       ══════════════════════════════════════════════════════════ */}
       {(galleryLoading || gallery.length > 0) && (
-        <section id="gallery-section" className="py-20 px-5 md:px-8 bg-white">
+        // border-t, not a background swap, marks the section boundary —
+        // this section is conditional, so whatever's actually above it
+        // (Services, most of the time) doesn't need to know this exists
+        // to stay visually separated from it.
+        <section id="gallery-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA] border-t border-slate-200">
           <div className="max-w-5xl mx-auto">
 
             <SectionHeader eyebrow="Portfolio" title="Our Work" subtitle="A glimpse of the craft" color={theme.primary} />
@@ -1206,9 +1083,13 @@ export default function PublicView({
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          6. ABOUT / MEET THE OWNER SECTION
+          5. ABOUT / MEET THE OWNER SECTION
       ══════════════════════════════════════════════════════════ */}
-      <section id="about-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA]">
+      {/* border-t, same reasoning as Gallery above — separates from
+          whichever section actually precedes it (Gallery when there's
+          one, Services otherwise) without either needing to know
+          about the other. */}
+      <section id="about-section" className="py-20 px-5 md:px-8 bg-[#FAFAFA] border-t border-slate-200">
         <div className="max-w-5xl mx-auto">
 
           <SectionHeader
@@ -1313,7 +1194,7 @@ export default function PublicView({
       </section>
 
       {/* ══════════════════════════════════════════════════════════
-          7. FOOTER BOOKING CTA BAND
+          6. FOOTER BOOKING CTA BAND
       ══════════════════════════════════════════════════════════ */}
       <section id="booking-cta-section" className="py-16 px-5 md:px-8 bg-slate-900">
         <div className="max-w-3xl mx-auto text-center">
