@@ -738,7 +738,7 @@ export default function OwnerDashboard({ businessId, onLogout, onViewPublicPage 
                             <td className="px-4 py-3">
                               {isEditing
                                 ? <input className={`${inputCls} text-xs w-24`} type="number" min="0" value={editDraft.price} onChange={e => setEditDraft(d => ({ ...d, price: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') saveEdit(svc.id); if (e.key === 'Escape') setEditingId(null); }} />
-                                : <span className="text-sabi-gold font-semibold">₦{svc.price.toLocaleString()}</span>
+                                : <span className="text-sabi-gold font-semibold">₦{(svc.price || 0).toLocaleString()}</span>
                               }
                             </td>
                             <td className="px-4 py-3">

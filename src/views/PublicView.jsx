@@ -419,7 +419,9 @@ export default function PublicView({
   }
 
   function handleServiceCard(svc) {
-    setForm(f => ({ ...f, service_name: svc.name, price: svc.price }));
+    // price is a nullable column (see schema.sql) — match the <select>
+    // handler below, which already guards this the same way.
+    setForm(f => ({ ...f, service_name: svc.name, price: svc.price ?? 0 }));
     setFieldErrors(fe => ({ ...fe, service_name: '' }));
   }
 
@@ -581,7 +583,7 @@ export default function PublicView({
           </h2>
           {form.service_name && (
             <p className="text-xs mt-0.5 text-slate-500">
-              {form.service_name} — ₦{form.price.toLocaleString()}
+              {form.service_name} — ₦{(form.price || 0).toLocaleString()}
             </p>
           )}
         </div>
@@ -649,7 +651,7 @@ export default function PublicView({
                     <option value="">Select a service…</option>
                     {services.map(svc => (
                       <option key={svc.id} value={svc.name}>
-                        {svc.name} — ₦{svc.price.toLocaleString()}
+                        {svc.name} — ₦{(svc.price || 0).toLocaleString()}
                       </option>
                     ))}
                   </select>

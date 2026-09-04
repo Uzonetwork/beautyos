@@ -41,7 +41,7 @@ export default function ServiceCard({ svc, isSelected, Icon, theme, onSelect, on
         {/* Price + Select */}
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <span className="font-black text-lg leading-none" style={{ color: theme.primary }}>
-            ₦{svc.price.toLocaleString()}
+            ₦{(svc.price || 0).toLocaleString()}
           </span>
           <button
             type="button"
