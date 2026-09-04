@@ -4,14 +4,15 @@ import { getSession, getCurrentBusiness, signOut } from './lib/auth';
 import { supabase } from './lib/supabase';
 import { posthog, track } from './lib/posthog';
 
-const LandingPage     = lazy(() => import('./views/LandingPage'));
-const SignupView      = lazy(() => import('./views/SignupView'));
-const LoginView       = lazy(() => import('./views/LoginView'));
-const PublicView      = lazy(() => import('./views/PublicView'));
-const OwnerDashboard  = lazy(() => import('./views/OwnerDashboard'));
-const AdminDashboard  = lazy(() => import('./views/AdminDashboard'));
-const LegalView       = lazy(() => import('./views/LegalView'));
-const MarketplaceView = lazy(() => import('./views/MarketplaceView'));
+const LandingPage       = lazy(() => import('./views/LandingPage'));
+const SignupView        = lazy(() => import('./views/SignupView'));
+const LoginView         = lazy(() => import('./views/LoginView'));
+const ResetPasswordView = lazy(() => import('./views/ResetPasswordView'));
+const PublicView        = lazy(() => import('./views/PublicView'));
+const OwnerDashboard    = lazy(() => import('./views/OwnerDashboard'));
+const AdminDashboard    = lazy(() => import('./views/AdminDashboard'));
+const LegalView         = lazy(() => import('./views/LegalView'));
+const MarketplaceView   = lazy(() => import('./views/MarketplaceView'));
 const AffiliateStatusView = lazy(() => import('./views/AffiliateStatusView'));
 const NotFoundView = lazy(() => import('./views/NotFoundView'));
 
@@ -62,6 +63,7 @@ const VIEW_TO_TITLE = {
   landing:     'Danda — Booking Pages for Nigerian Professionals',
   marketplace: 'Find a Professional — Danda Marketplace',
   login:       'Log in — Danda',
+  'reset-password': 'Reset Password — Danda',
   signup:      'Get Started — Danda',
   terms:       'Terms of Service — Danda',
   privacy:     'Privacy Policy — Danda',
@@ -93,6 +95,28 @@ export default function App() {
   const [marketplaceSeed, setMarketplaceSeed]   = useState({ search: '', category: null });
   // showWelcomeBanner is only true after signup; cleared on dismiss or navigation away
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  // Set only for an expired/already-used recovery link (see the
+  // onAuthStateChange effect and init() below) — non-null gates
+  // ResetPasswordView into its "request a new link" branch.
+  const [resetPasswordError, setResetPasswordError] = useState(null);
+
+  // ── Password recovery — Supabase's client auto-detects a recovery token
+  // in the URL hash on load (detectSessionInUrl, on by default) and, once
+  // it has exchanged it for a session, emits a PASSWORD_RECOVERY auth
+  // event. This listener is registered synchronously on mount, well before
+  // that exchange's network round-trip can resolve, so it never misses the
+  // event. It intentionally ignores every other event this fires (INITIAL_
+  // SESSION, SIGNED_IN, etc.) — those are handled by the normal sign-in/
+  // signup flows.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setResetPasswordError(null);
+        setView('reset-password');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // ── Analytics — fire page_viewed on every view change ──────────────────────
   useEffect(() => {
@@ -151,6 +175,33 @@ export default function App() {
   // ── Initialise: URL params → hash → auth session → landing ─────────────────
   useEffect(() => {
     async function init() {
+      // Password recovery — checked first since the hash it arrives in
+      // matches none of the routes below. Two cases, both set by Supabase
+      // redirecting back from the recovery email:
+      //
+      //  - `#access_token=...&type=recovery&...` (a valid link): handled by
+      //    the onAuthStateChange effect above, not here — supabase-js is
+      //    already exchanging it for a session in the background and will
+      //    fire PASSWORD_RECOVERY when done. Just stay on the loading
+      //    splash instead of falling through to landing.
+      //  - `#error=...&error_description=...` (expired or already used):
+      //    supabase-js sees this too, but only debug-logs it — no event is
+      //    emitted and the hash is left untouched (verified against
+      //    @supabase/auth-js 2.106.2's _getSessionFromURL), so it has to be
+      //    read here directly or it fails silently.
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      if (hashParams.get('error') || hashParams.get('error_description')) {
+        setResetPasswordError(
+          hashParams.get('error_description')?.replace(/\+/g, ' ') || 'This link is invalid or has expired.'
+        );
+        history.replaceState({}, '', window.location.pathname + window.location.search);
+        setView('reset-password');
+        return;
+      }
+      if (hashParams.get('type') === 'recovery' && hashParams.get('access_token')) {
+        return;
+      }
+
       const params   = new URLSearchParams(window.location.search);
       const bizParam = params.get('business');
 
@@ -303,6 +354,24 @@ export default function App() {
             navigateTo('public-own');
           }}
           onSignup={() => navigateTo('signup')}
+        />
+      )}
+
+      {view === 'reset-password' && (
+        <ResetPasswordView
+          expiredMessage={resetPasswordError}
+          onSuccess={(biz) => {
+            if (biz?.user_id) {
+              posthog.identify(biz.user_id, {
+                business_name: biz.name,
+                business_type: biz.business_type,
+              });
+            }
+            track('password_reset_completed', { business_id: biz?.id });
+            setAuthBusiness(biz);
+            navigateTo(biz ? 'public-own' : 'login');
+          }}
+          onBackToLogin={() => navigateTo('login')}
         />
       )}
 
