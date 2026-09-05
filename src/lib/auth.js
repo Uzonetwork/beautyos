@@ -197,6 +197,39 @@ export async function signIn(email, password) {
 }
 
 /**
+ * requestPasswordReset — sends a recovery email via Supabase Auth.
+ *
+ * redirectTo is the bare origin (no trailing slash, no hash of its own) —
+ * matches what Supabase was already observed redirecting to before this
+ * was ever set explicitly, i.e. the project's configured Site URL. Must
+ * also be present in Supabase's Authentication → URL Configuration →
+ * Redirect URLs allow list, or Supabase silently falls back to the Site
+ * URL instead of honoring this. Supabase appends the recovery token as a
+ * URL hash fragment (#access_token=...&type=recovery) to whatever URL is
+ * passed here; App.jsx's onAuthStateChange listener picks up the
+ * resulting PASSWORD_RECOVERY event.
+ */
+export async function requestPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  });
+  if (error) throw error;
+}
+
+/**
+ * updatePassword — sets a new password for the signed-in user.
+ *
+ * Only works with an active session. The recovery-link flow establishes
+ * one automatically once Supabase's client detects the token in the URL
+ * (see App.jsx's PASSWORD_RECOVERY handling) — this throws
+ * AuthSessionMissingError if called without that session in place.
+ */
+export async function updatePassword(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
+}
+
+/**
  * signOut — clears the active session and removes all Supabase tokens from
  * local/session storage so a refresh can never restore the session.
  */
